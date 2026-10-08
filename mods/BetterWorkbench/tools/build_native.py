@@ -17,7 +17,7 @@ from palmods import GAME_EXE, PALCOMBO_BUILD, UE4SS_SOURCE, build_directory, ROO
 ROOT = Path(__file__).resolve().parents[1]
 CACHE = PALCOMBO_BUILD
 if not (CACHE / 'Game__Shipping__Win64/lib/UE4SS.lib').is_file():
-    legacy_cache = REPOSITORY_ROOT / '.tools/palcombo-sdk-cache'
+    legacy_cache = REPOSITORY_ROOT / '.tools/ue4ss-sdk-cache'
     if legacy_cache.is_dir():
         CACHE = legacy_cache
 PROJECT = CACHE / 'PalComboFillerNative.vcxproj'

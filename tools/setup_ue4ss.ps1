@@ -4,6 +4,9 @@ param(
 $ErrorActionPreference = 'Stop'
 $revision = '2281fa311e417b1dfddedbcd49972d764fddb244'
 if (Test-Path -LiteralPath $DependencyDirectory) {
+    if (-not (Test-Path -LiteralPath (Join-Path $DependencyDirectory '.git'))) {
+        throw 'Existing UE4SS directory is a source snapshot without Git metadata. Keep it for cached builds; use -DependencyDirectory with a new empty path for a pinned clone. Do not delete the snapshot before preserving its Unreal dependency.'
+    }
     $actual = git -C $DependencyDirectory rev-parse HEAD
     if ($LASTEXITCODE -ne 0 -or $actual -ne $revision) { throw 'Existing UE4SS checkout does not match pinned revision' }
 } else {
