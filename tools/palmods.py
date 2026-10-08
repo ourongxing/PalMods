@@ -22,7 +22,8 @@ UNREAL_ROOT = configured_path('UNREAL_ROOT', r'D:\Epic Games\UE_5.1')
 UNREAL_EDITOR = UNREAL_ROOT / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 REPAK = configured_path('REPAK', ROOT / 'tools/bin/repak.exe')
 PALCOMBO_BUILD = configured_path('PALCOMBO_BUILD', BUILD_ROOT / 'PalCombo')
-UE4SS_SOURCE = ROOT / '.tools/RE-UE4SS'
+UE4SS_SOURCE = configured_path('UE4SS_SOURCE', ROOT / '.tools/RE-UE4SS')
+UE4SS_BUILD = configured_path('UE4SS_BUILD', BUILD_ROOT / 'UE4SS')
 
 
 def load_lua_runtime():

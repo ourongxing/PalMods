@@ -8,21 +8,13 @@ import hashlib
 import re
 import struct
 import subprocess
-import xml.etree.ElementTree as ET
 import argparse
 import sys
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'tools'))
-from palmods import GAME_EXE, PALCOMBO_BUILD, UE4SS_SOURCE, build_directory, ROOT as REPOSITORY_ROOT
+from palmods import GAME_EXE, UE4SS_BUILD, UE4SS_SOURCE, build_directory, ROOT as REPOSITORY_ROOT
+from build_sdk import toolset_environment
 
 ROOT = Path(__file__).resolve().parents[1]
-CACHE = PALCOMBO_BUILD
-if not (CACHE / 'Game__Shipping__Win64/lib/UE4SS.lib').is_file():
-    legacy_cache = REPOSITORY_ROOT / '.tools/ue4ss-sdk-cache'
-    if legacy_cache.is_dir():
-        CACHE = legacy_cache
-PROJECT = CACHE / 'PalComboFillerNative.vcxproj'
-if not PROJECT.is_file():
-    PROJECT = CACHE / 'MyCPPMods/PalComboFillerNative/PalComboFillerNative.vcxproj'
 EXE = GAME_EXE
 BUILD = build_directory('BetterWorkbench')
 BUILD.mkdir(parents=True, exist_ok=True)
@@ -31,7 +23,10 @@ parser.add_argument('--enable-readonly', action='store_true')
 parser.add_argument('--build-dir', type=Path, default=BUILD / 'native',
                     help='CMake output directory; use a fresh directory after moving the project')
 parser.add_argument('--toolset', help='CMake MSVC toolset, e.g. version=14.44.35207; must match cached SDK libraries')
+parser.add_argument('--parallel', type=int, default=4, help='CMake build workers (default: 4)')
 args = parser.parse_args()
+if args.parallel < 1:
+    parser.error('--parallel must be at least 1')
 if args.enable_readonly:
     pinned = REPOSITORY_ROOT / '.tools/sdk-2281fa31/source/RE-UE4SS-2281fa311e417b1dfddedbcd49972d764fddb244'
     cached = UE4SS_SOURCE
@@ -89,40 +84,11 @@ image_size = struct.unpack_from("<I", data, pe + 24 + 56)[0]
     f"constexpr std::array<uint8_t, {len(batch_window)}> expected_batch_window{{" + ",".join(hex(b) for b in batch_window) + "};\n"
     f"constexpr std::array<uint8_t, {len(counts_call_window)}> expected_counts_call_window{{" + ",".join(hex(b) for b in counts_call_window) + "};\n",
     encoding="utf-8")
-ns = {"m": "http://schemas.microsoft.com/developer/msbuild/2003"}
-xml = ET.parse(PROJECT)
-groups = xml.findall("m:ItemDefinitionGroup", ns)
-group = next(g for g in groups if "Game__Shipping__Win64|x64" in g.get("Condition", ""))
-def values(field):
-    return [value for value in group.find(field, ns).text.split(";") if value and not value.startswith("%(")]
-includes = values("m:ClCompile/m:AdditionalIncludeDirectories")
-options = group.find("m:ClCompile/m:AdditionalOptions", ns).text
-includes.extend(re.findall(r'/external:I\s+"([^"]+)"', options))
-# Projects copied from the former standalone checkout retain absolute SDK paths.
-# Prefer freshly generated projects; this keeps the original local cache usable.
-old_checkout = 'D:/Dev/PalCombo/NativeSrc'
-new_checkout = ROOT.parent / 'PalCombo/native'
-def relocate_cached_path(value):
-    normalized = value.replace('\\', '/')
-    if normalized.lower().startswith(old_checkout.lower() + '/'):
-        suffix = normalized[len(old_checkout):].lstrip('/')
-        if suffix.startswith('RE-UE4SS/'):
-            normalized = UE4SS_SOURCE.as_posix() + '/' + suffix[len('RE-UE4SS/'):]
-        elif suffix.startswith('build/'):
-            normalized = CACHE.as_posix() + '/' + suffix[len('build/'):]
-        else:
-            normalized = new_checkout.as_posix() + '/' + suffix
-    return normalized
-includes = [relocate_cached_path(value) for value in includes]
-definitions = values("m:ClCompile/m:PreprocessorDefinitions")
-if args.enable_readonly:
-    definitions.append('BETTERWORKBENCH_SDK_ABI_VERIFIED=1')
-libraries = values("m:Link/m:AdditionalDependencies")
-libraries = [(PROJECT.parent / relocate_cached_path(lib)).resolve().as_posix() if "\\" in lib or '/' in lib else lib for lib in libraries]
 def quoted(value):
     return '[=[' + value.replace('\\', '/') + ']=]'
 cmake = ["cmake_minimum_required(VERSION 3.22)", "project(BetterWorkbenchNativeCandidate LANGUAGES CXX)",
          "enable_testing()",
+         "find_package(PalModsSDK CONFIG REQUIRED PATHS " + quoted(UE4SS_BUILD.as_posix()) + " NO_DEFAULT_PATH)",
          "add_executable(BetterWorkbenchViewTests " + quoted((ROOT / 'tests/native/recipe_view_test.cpp').as_posix()) + ")",
          "target_compile_features(BetterWorkbenchViewTests PRIVATE cxx_std_20)",
          "add_test(NAME recipe_view_isolation COMMAND BetterWorkbenchViewTests)",
@@ -134,21 +100,23 @@ cmake = ["cmake_minimum_required(VERSION 3.22)", "project(BetterWorkbenchNativeC
          "target_compile_features(BetterWorkbenchNative PRIVATE cxx_std_20)",
          "set_property(TARGET BetterWorkbenchNative PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDLL)",
          "target_compile_options(BetterWorkbenchNative PRIVATE /EHsc /Zc:__cplusplus /utf-8)",
-         "target_include_directories(BetterWorkbenchNative PRIVATE " + ' '.join(quoted(p) for p in [BUILD.as_posix(), *includes]) + ")",
-         "target_compile_definitions(BetterWorkbenchNative PRIVATE " + ' '.join(quoted(d) for d in definitions) + ")",
-         "target_link_libraries(BetterWorkbenchNative PRIVATE " + ' '.join(quoted(lib) for lib in libraries) + ")"]
+         "target_include_directories(BetterWorkbenchNative PRIVATE " + ' '.join(quoted(p) for p in [BUILD.as_posix()]) + ")",
+         "target_compile_definitions(BetterWorkbenchNative PRIVATE " + (quoted('BETTERWORKBENCH_SDK_ABI_VERIFIED=1') if args.enable_readonly else '') + ")",
+         "target_link_libraries(BetterWorkbenchNative PRIVATE PalMods::UE4SS)"]
 (BUILD / "CMakeLists.txt").write_text('\n'.join(cmake), encoding="utf-8")
 (BUILD / "game-sha256.txt").write_text(game_hash + '\n', encoding="ascii")
-configure = ["cmake", "-S", str(BUILD), "-B", str(args.build_dir), "-G", "Visual Studio 17 2022", "-A", "x64"]
+configure = ["cmake", "-S", str(BUILD), "-B", str(args.build_dir), "-G", "Visual Studio 17 2022", "-A", "x64",
+             '-DPalModsSDK_DIR=' + str(UE4SS_BUILD)]
 if args.toolset:
     configure.extend(['-T', args.toolset])
-subprocess.run(configure, check=True)
-build_command = ["cmake", "--build", str(args.build_dir), "--config", "Release", "--parallel", "4"]
+env = toolset_environment(args.toolset)
+subprocess.run(configure, env=env, check=True)
+build_command = ["cmake", "--build", str(args.build_dir), "--config", "Release", "--parallel", str(args.parallel)]
 version = re.search(r'(?:^|,)version=([^,]+)', args.toolset or '')
 if version:
     # MSBuild's default toolset can override the version selected by CMake.
     build_command.extend(['--', '/p:VCToolsVersion=' + version.group(1)])
-subprocess.run(build_command, check=True)
+subprocess.run(build_command, env=env, check=True)
 subprocess.run(["ctest", '--test-dir', str(args.build_dir), '-C', 'Release', '--output-on-failure'], check=True)
 print('Current-workbench native crafting bridge compiled; not yet deployed.' if args.enable_readonly else
       'Disabled candidate compiled; not deployed.')

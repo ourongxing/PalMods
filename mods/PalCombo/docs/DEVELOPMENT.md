@@ -1,22 +1,25 @@
-# PalCombo native development
+# PalCombo 实现与调试
 
-## Current build
+原生模块为玩家 Otomo 战斗动作替换技能槽选择结果，保留原选择器的副作用。
+连招状态按帕鲁保存，以技能实际进入冷却作为推进条件；同一动作切换中的重复选择返回同一槽。
+目标变化时重置待选状态。默认提前窗口为 3 秒，用户配置见 [README](../README.md)。
 
-Version 1.0.6-dev replaces the native active-skill slot selector used by player-controlled Otomo combat actions. It keeps the original selector's side effects and substitutes the slot result by slot position for every player Pal. Repeated selections before a skill enters cooldown return the same slot, so two native calls during one action transition cannot advance 0 to 1 prematurely. After slot 0 enters cooldown, slot 1 is selected when ready. After slot 1 enters cooldown, the pair resets; slot 2 can fill until the next pair qualifies. A target change resets the pending selection. `EarlyStartSeconds` compares against remaining cooldown calculated from the elapsed cooldown and its rate. The default is 3.0 seconds. It does not call `CancelAction`.
+## 冷却与状态
 
-The active runtime is `Mods/PalCombo`, enabled by `Mods/mods.txt` (`PalCombo : 1`). Its `dlls/main.dll` is now 1.0.6-dev (SHA-256 `FAF161A0BE90D2978BDF873CF4EBFB9DA5FABAFCCB4B31BB42F53A849C73ACBF`); `config.ini` sets `EarlyStartSeconds=3.0`. The replacement compiled and passed the pure rotation test but still needs in-game verification. The diagnostic log at 17:25:34 shows two selector calls 0.00024 seconds apart with all slots ready: selected 0 then selected 1. This confirms phase advancement on selection rather than on actual cooldown as the cause of the immediate slot-2 action. Log values for `GetCoolTime(1)` increase from 0 after casting, proving they are elapsed time, not remaining time; the new build combines `GetCoolTime` with `GetCoolTimeRate` to calculate remaining seconds. The prior diagnostic DLL is backed up at `.tools/ue4ss-sdk-cache/PalCombo-1.0.4-diagnostic-backup.dll`.
+`GetCoolTime` 返回已流逝冷却时间，`GetCoolTimeRate` 返回已流逝比例。
+两者为正有限值时，剩余秒数为 `elapsed * (1 - rate) / rate`。
+曾观察到两次选择调用仅间隔 0.00024 秒；状态必须在冷却开始后推进，才能避免跳过第一技能。
 
-## Reverse engineering
+## Hook 边界
 
-See [DECOMPILATION.md](DECOMPILATION.md) for the extracted Blueprint path and the actual native call chain. The direct native call explains why earlier UFunction hooks registered but did not affect the selected skill.
+调用链见 [DECOMPILATION.md](DECOMPILATION.md)。战斗动作直接调用 C++ 选择器，UFunction Hook 无法覆盖该路径。
+安装前核对选择器前 15 字节和直接调用目标；未知二进制记录 `unsupported game binary`。
+同步 `CancelAction` 会递归触发 `StartNextAction_Event`，因此选择器只替换返回槽位。
 
-## Past failure
+## 验证与排查
 
-- `PlayAction_ToALL` could be skipped but the same skill still entered `OnBeginAction`.
-- Synchronous `CancelAction` in `OnBeginAction` recursively triggered `StartNextAction_Event` and froze the game. The cancellation build is retained in the cleanup backup outside this repository.
-- A previous post-hook rewrite of `NextWazaSlotIndex` and `NextActionClass` did not prevent the game from choosing slots 1 and 2 separately.
-- Hooking `ChoiceEnableSlotIDByRandom` and `FindMostEffectiveSlotID` as UFunctions registered successfully but callbacks did not fire for the real combat selection path.
+纯连招回归在 `tests/native/rotation_test.cpp`，通过 `python tools/test.py` 运行。
+DLL 编译和纯逻辑回归已通过，当前连招的游戏效果仍需验证。
 
-## Build and verification
-
-Build `PalComboFillerNative` in `Game__Shipping__Win64`, then copy its DLL to `dlls/main.dll` while the game is stopped. The pure rotation test is `tests/native/rotation_test.cpp`. The hook checks the native selector's first 15 bytes and the direct call target before installing; an unknown game build logs `unsupported game binary` and leaves game behavior alone.
+未命中选择器时检查有界诊断和 `SelfActor` 所属控制器；选择日志正确而实际施放不同技能时，
+继续追踪 `NextActionClass` 赋值与 `StartNextAction_Event` 分发。
