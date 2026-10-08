@@ -1,12 +1,13 @@
 # PalMods
 
-三个 Palworld mod 的统一源码仓库。
+四个 Palworld mod 的统一源码仓库。
 
 | Mod | 功能 |
 | --- | --- |
 | [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
 | [PalCombo](mods/PalCombo/README.md) | 技能槽 1 → 2 连招，槽 3 填空 |
 | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
+| [CloseRangeBurstSkills](mods/CloseRangeBurstSkills/README.md) | 缩短三种近身范围技能的 AI 最大施放距离 |
 
 ## 统一目录约定
 
@@ -15,6 +16,7 @@ mods/
   BetterWorkbench/
   PalCombo/
   UpdraftElevator/
+  CloseRangeBurstSkills/
 tools/                 共享路径、依赖与测试入口
 .tools/                本地 SDK、Python 依赖和外部工具（不提交）
 .build/<Mod>/          编译、打包暂存、日志与部署备份（不提交）
@@ -35,6 +37,7 @@ dist/<Mod>/            发布包（不提交）
 
 源码目录与游戏安装目录分开：`mods/<名称>/mod/` 的内容安装到 UE4SS 的 `Mods/<名称>/`。
 UpdraftElevator 的 PalSchema 配方和 PAK 由打包器另行生成到 `Mods/PalSchema/mods/UpdraftElevator/`。
+CloseRangeBurstSkills 是纯 PalSchema 数据 mod，`mods/CloseRangeBurstSkills/mod/` 的内容安装到 `Mods/PalSchema/mods/CloseRangeBurstSkills/`。
 Unreal 按引擎约定在 `native/` 下生成 `Binaries/`、`Intermediate/`、`Saved/` 等缓存，均忽略。
 
 ## 测试

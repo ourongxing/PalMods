@@ -1,0 +1,14 @@
+{
+  "DT_WazaDataTable": {
+    "*": {
+      "$Filters": [
+        {
+          "FieldName": "WazaType",
+          "Operation": "Equal",
+          "Values": ["Eruption", "Tremor", "BubbleShower"]
+        }
+      ],
+      "MaxRange": 50
+    }
+  }
+}
