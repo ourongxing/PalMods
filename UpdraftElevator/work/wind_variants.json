@@ -1,0 +1,44 @@
+[
+  {
+    "Suffix": "Small",
+    "Label": "小型",
+    "RadiusCm": 100,
+    "Accent": [
+      72,
+      224,
+      214
+    ],
+    "Badge": "S",
+    "SortId": 9900,
+    "LiftHeightCm": 800,
+    "FXHeightScale": 1
+  },
+  {
+    "Suffix": "Medium",
+    "Label": "中型",
+    "RadiusCm": 200,
+    "Accent": [
+      74,
+      190,
+      246
+    ],
+    "Badge": "M",
+    "SortId": 9901,
+    "LiftHeightCm": 1600,
+    "FXHeightScale": 2
+  },
+  {
+    "Suffix": "Large",
+    "Label": "大型",
+    "RadiusCm": 300,
+    "Accent": [
+      124,
+      152,
+      255
+    ],
+    "Badge": "L",
+    "SortId": 9902,
+    "LiftHeightCm": 3200,
+    "FXHeightScale": 4
+  }
+]

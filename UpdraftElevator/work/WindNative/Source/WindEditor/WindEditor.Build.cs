@@ -1,0 +1,2 @@
+using UnrealBuildTool;
+public class WindEditor : ModuleRules { public WindEditor(ReadOnlyTargetRules Target) : base(Target) { PCHUsage=PCHUsageMode.UseExplicitOrSharedPCHs; PrivateDependencyModuleNames.AddRange(new string[]{"Core","CoreUObject","Engine","UnrealEd","Kismet","KismetCompiler","BlueprintGraph","AssetRegistry","Niagara","NiagaraEditor","ScriptDisassembler","ImageWrapper","Json","RenderCore","Pal"}); } }

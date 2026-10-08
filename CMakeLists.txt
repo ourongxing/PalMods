@@ -1,0 +1,18 @@
+cmake_minimum_required(VERSION 3.22)
+project(PalModsTests LANGUAGES CXX)
+enable_testing()
+
+function(palmods_test target source)
+    add_executable(${target} ${source})
+    target_compile_features(${target} PRIVATE cxx_std_20)
+    if(MSVC)
+        target_compile_options(${target} PRIVATE /UNDEBUG /utf-8)
+    else()
+        target_compile_options(${target} PRIVATE -UNDEBUG)
+    endif()
+    add_test(NAME ${target} COMMAND ${target})
+endfunction()
+
+palmods_test(palcombo_rotation PalCombo/NativeSrc/MyCPPMods/PalComboFillerNative/tests/rotation_test.cpp)
+palmods_test(workbench_recipe_view BetterWorkbench/Native/tests/recipe_view_test.cpp)
+palmods_test(workbench_job_schedule BetterWorkbench/Native/tests/job_schedule_test.cpp)

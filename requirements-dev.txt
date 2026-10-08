@@ -1,0 +1,6 @@
+lupa==2.8
+jsonschema>=4.23,<5
+numpy>=2,<3
+Pillow>=11,<13
+pefile==2024.8.26
+capstone>=5,<6
