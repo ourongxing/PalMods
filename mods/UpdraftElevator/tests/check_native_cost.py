@@ -34,9 +34,9 @@ end
 local count=0
 for path in pairs(hooks) do
  count=count+1
- assert(path=="/Script/Pal.PalTechnologyData:IsUnlockBuildObject" or path=="/Script/Pal.PalCharacter:OnJump")
+ assert(path=="/Script/Pal.PalTechnologyData:IsUnlockBuildObject" or path=="/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorBeginOverlap" or path=="/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorEndOverlap")
 end
-assert(count==2)
+assert(count==3)
 ''')
 assert all(x not in source for x in ['RequestUnlockRecipeTechnology','IsExistsMaterialForBuildObject','IsEnoughMaterials','IsExistsMaterial','ExecuteWithDelay','FindAllOf','SpawnActor','RegisterKeyBind'])
 print('PASS: all sizes require new paid technology, legacy free IDs cannot bypass, ordinary recipes untouched, no auto unlock or free material/menu hooks')

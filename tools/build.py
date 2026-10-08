@@ -88,7 +88,7 @@ def main(argv=None):
     artifacts = {
         'PalCombo': PALCOMBO_BUILD / 'Game__Shipping__Win64/bin/PalComboFillerNative.dll',
         'BetterWorkbench': BUILD_ROOT / 'BetterWorkbench/native/Release/BetterWorkbenchNative.dll',
-        'UpdraftElevator': ROOT / 'dist/UpdraftElevator/UpdraftElevator-v9.zip',
+        'UpdraftElevator': ROOT / 'dist/UpdraftElevator/UpdraftElevator-v10.zip',
         'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
     }
     try:

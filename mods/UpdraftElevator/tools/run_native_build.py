@@ -12,6 +12,7 @@ backup=Path('../../.build/UpdraftElevator/backups/assets-'+datetime.now().strfti
 backup.mkdir(parents=True)
 assets=list((root/'Content/Mods/CodexWindNative').rglob('*.uasset'))
 assets.append(root/'Content/Pal/Effect/Common/JumpSpot/NS_JumpSpot.uasset')
+assets.append(root/'Content/Pal/Blueprint/Action/Common/BP_Action_JumpFromJumpSpot.uasset')
 for p in assets:
     if p.exists():
         dest=backup/p.relative_to(root/'Content')

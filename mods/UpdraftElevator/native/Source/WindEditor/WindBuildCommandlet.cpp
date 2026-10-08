@@ -7,6 +7,7 @@
 #include "Components/StaticMeshComponent.h"
 #include "Components/BoxComponent.h"
 #include "Components/SceneComponent.h"
+#include "Components/ChildActorComponent.h"
 #include "GameFramework/Character.h"
 #include "GameFramework/Pawn.h"
 #include "GameFramework/PlayerController.h"
@@ -73,10 +74,32 @@ static void HideWindMeshes(UEdGraph* Graph,UEdGraphPin* Exec,bool Hidden,UEdGrap
  }
 }
 
-static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Radius,float FXHeightScale,UMaterial* Deck) {
+static int32 BuildWindVariant(UNiagaraSystem* FX,UClass* JumpAction,const FString& Suffix,float Radius,float LiftHeight,float FXHeightScale,UMaterial* Deck) {
  const FString BlueprintName=TEXT("BP_Wind")+Suffix;
  const FName BuildingId=*(TEXT("CodexWindNative")+Suffix);
  const float Size=Radius/100.f;
+ // A collision-only child uses the game's jump modifier, action and montage.
+ // The editor declarations and the original action placeholder are not shipped.
+ const FString JumpName=TEXT("BP_WindJump")+Suffix;
+ auto JumpPackage=CreatePackage(*(TEXT("/Game/Mods/CodexWindNative/")+JumpName));
+ auto JumpBP=FKismetEditorUtilities::CreateBlueprint(APalLevelGimmickJumpSpot::StaticClass(),JumpPackage,*JumpName,BPTYPE_Normal,UBlueprint::StaticClass(),UBlueprintGeneratedClass::StaticClass());
+ auto JumpVolumeNode=JumpBP->SimpleConstructionScript->CreateNode(UBoxComponent::StaticClass(),TEXT("JumpVolume"));
+ JumpBP->SimpleConstructionScript->AddNode(JumpVolumeNode);
+ auto JumpVolume=CastChecked<UBoxComponent>(JumpVolumeNode->ComponentTemplate);
+ JumpVolume->SetRelativeLocation(FVector(0,0,210));
+ JumpVolume->SetBoxExtent(FVector(0.9f*Radius,0.9f*Radius,200));
+ JumpVolume->SetCollisionEnabled(ECollisionEnabled::QueryOnly);
+ JumpVolume->SetCollisionResponseToAllChannels(ECR_Ignore);
+ JumpVolume->SetCollisionResponseToChannel(ECC_Pawn,ECR_Overlap);
+ JumpVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel3,ECR_Overlap);
+ JumpVolume->SetCollisionResponseToChannel(ECC_GameTraceChannel8,ECR_Overlap);
+ JumpVolume->SetGenerateOverlapEvents(true); JumpVolume->SetMobility(EComponentMobility::Movable);
+ FKismetEditorUtilities::CompileBlueprint(JumpBP);
+ auto JumpCDO=CastChecked<APalLevelGimmickJumpSpot>(JumpBP->GeneratedClass->GetDefaultObject());
+ JumpCDO->JumpActionClass=JumpAction; JumpCDO->bPlayJumpPrepareMontage=true;
+ JumpCDO->JumpZVelocity=FMath::Sqrt(2.f*980.f*LiftHeight);
+ CastChecked<UBlueprintGeneratedClass>(JumpBP->GeneratedClass)->UpdateCustomPropertyListForPostConstruction();
+ if(!SaveAsset(JumpBP)) return 10;
  UPackage* Package=CreatePackage(*(TEXT("/Game/Mods/CodexWindNative/")+BlueprintName));
  auto BP=FKismetEditorUtilities::CreateBlueprint(APalBuildObject::StaticClass(),Package,*BlueprintName,BPTYPE_Normal,UBlueprint::StaticClass(),UBlueprintGeneratedClass::StaticClass());
  auto SCS=BP->SimpleConstructionScript;
@@ -84,6 +107,8 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  // the thin cylinder's nonuniform scale or its offset above the ground.
  auto RootNode=SCS->CreateNode(USceneComponent::StaticClass(),TEXT("WindRoot")); SCS->AddNode(RootNode);
  CastChecked<USceneComponent>(RootNode->ComponentTemplate)->SetMobility(EComponentMobility::Movable);
+ auto JumpNode=SCS->CreateNode(UChildActorComponent::StaticClass(),TEXT("WindJump")); RootNode->AddChildNode(JumpNode);
+ CastChecked<UChildActorComponent>(JumpNode->ComponentTemplate)->SetMobility(EComponentMobility::Movable);
  auto BaseNode=SCS->CreateNode(UStaticMeshComponent::StaticClass(),TEXT("StaticMesh")); RootNode->AddChildNode(BaseNode);
  auto Base=CastChecked<UStaticMeshComponent>(BaseNode->ComponentTemplate);
  Base->SetStaticMesh(LoadObject<UStaticMesh>(nullptr,TEXT("/Engine/BasicShapes/Cylinder.Cylinder")));
@@ -142,8 +167,8 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  CDO->ArrowInSimulatingRelativeTransform=FTransform(FRotator::ZeroRotator,FVector(0,0,30));
 
  UEdGraph* Graph=BP->UbergraphPages[0];
- // Actual player jump events are handled by the scoped Lua hook.
- // Walking or falling into the volume never launches characters.
+ // Only available buildings own a native jump modifier. Overlap registers it;
+ // the game starts the prepare montage only when the character requests a jump.
  for(int Mode=0;Mode<2;Mode++) {
    auto State=Event(Graph,APalBuildObject::StaticClass(),Mode==0?TEXT("OnAvailable_BlueprintImpl"):TEXT("OnNotAvailable_BlueprintImpl"));
    auto FXGet=Get(Graph,TEXT("WindFX"));
@@ -156,9 +181,14 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
    Link(FXCall->GetThenPin(),Collision->GetExecPin());
    Link(VolumeGet->FindPinChecked(TEXT("WindVolume")),Collision->FindPinChecked(UEdGraphSchema_K2::PN_Self));
    Default(Collision->FindPinChecked(TEXT("NewType")),Mode==0?TEXT("QueryOnly"):TEXT("NoCollision"));
+   auto JumpGet=Get(Graph,TEXT("WindJump"));
+   auto JumpClass=Call(Graph,UChildActorComponent::StaticClass(),TEXT("SetChildActorClass"));
+   Link(Collision->GetThenPin(),JumpClass->GetExecPin());
+   Link(JumpGet->FindPinChecked(TEXT("WindJump")),JumpClass->FindPinChecked(UEdGraphSchema_K2::PN_Self));
+   if(Mode==0) JumpClass->FindPinChecked(TEXT("InClass"))->DefaultObject=JumpBP->GeneratedClass;
    auto MeshGet=Get(Graph,TEXT("StaticMesh"));
    auto MeshCollision=Call(Graph,UPrimitiveComponent::StaticClass(),TEXT("SetCollisionEnabled"));
-   Link(Collision->GetThenPin(),MeshCollision->GetExecPin());
+   Link(JumpClass->GetThenPin(),MeshCollision->GetExecPin());
    Link(MeshGet->FindPinChecked(TEXT("StaticMesh")),MeshCollision->FindPinChecked(UEdGraphSchema_K2::PN_Self));
    Default(MeshCollision->FindPinChecked(TEXT("NewType")),TEXT("NoCollision"));
    auto TargetGet=Get(Graph,TEXT("DismantleTarget"));
@@ -181,6 +211,12 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  CDO->OverlapCheckCollisionRef.ComponentProperty=TEXT("CheckOverlapCollision");
  CDO->bIgnoreBuildInstallConnection=true; CDO->bNotConstructConnectorInGame=true;
  CDO->bExistsArrowInSimulatingTransform=false; CDO->ArrowInSimulatingRelativeTransform=FTransform::Identity;
+ // Compiling the owning Blueprint can reinstance its child class as well.
+ JumpCDO=CastChecked<APalLevelGimmickJumpSpot>(JumpBP->GeneratedClass->GetDefaultObject());
+ JumpCDO->JumpActionClass=JumpAction; JumpCDO->bPlayJumpPrepareMontage=true;
+ JumpCDO->JumpZVelocity=FMath::Sqrt(2.f*980.f*LiftHeight);
+ CastChecked<UBlueprintGeneratedClass>(JumpBP->GeneratedClass)->UpdateCustomPropertyListForPostConstruction();
+ if(!SaveAsset(JumpBP)) return 36;
  if(!SaveAsset(BP)) return 3;
  const auto IVS=UWorld::InitializationValues().AllowAudioPlayback(false).CreatePhysicsScene(true).EnableTraceCollision(true).CreateNavigation(false).CreateAISystem(false).ShouldSimulatePhysics(false).SetTransactional(false);
  UWorld* World=UWorld::CreateWorld(EWorldType::Game,false,TEXT("WindValidation"),nullptr,true,ERHIFeatureLevel::Num,&IVS);
@@ -191,6 +227,8 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  auto OwnedPlacement=::Cast<UBoxComponent>(Pad->OverlapCheckCollisionRef.GetComponent(Pad));
  auto OwnedBase=::Cast<UStaticMeshComponent>(Pad->MainMeshRef.GetComponent(Pad));
  auto PreviewVolume=FindObject<UBoxComponent>(Pad,TEXT("WindVolume"));
+ auto OwnedJump=FindObject<UChildActorComponent>(Pad,TEXT("WindJump"));
+ if(!OwnedJump || OwnedJump->GetChildActor()) return 31;
  if(!OwnedPlacement || !OwnedBase || !PreviewVolume) return 11;
  if(Pad->BuildObjectId!=BuildingId || OwnedBase->GetMaterial(0)!=Deck) return 19;
  if(!OwnedPlacement->GetScaledBoxExtent().Equals(FVector(0.85f*Radius,0.85f*Radius,3),0.01f) ||
@@ -229,6 +267,12 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  Pad->ProcessEvent(OverlapEvent,&OverlapParams);
  if(!Character->GetCharacterMovement()->PendingLaunchVelocity.IsZero()) return 5;
  Pad->bEditorAvailable=true; Pad->OnAvailable_BlueprintImpl();
+ auto JumpActor=Cast<APalLevelGimmickJumpSpot>(OwnedJump->GetChildActor());
+ UE_LOG(LogTemp,Display,TEXT("WIND_JUMP_CHILD: child=%s parent=%s prepare=%d action=%s expected=%s"),*GetNameSafe(JumpActor),*GetNameSafe(JumpActor?JumpActor->GetParentActor():nullptr),JumpActor?JumpActor->bPlayJumpPrepareMontage:0,*GetNameSafe(JumpActor?JumpActor->JumpActionClass.Get():nullptr),*GetNameSafe(JumpAction));
+ if(!JumpActor || JumpActor->GetParentActor()!=Pad || !JumpActor->bPlayJumpPrepareMontage || JumpActor->JumpActionClass!=JumpAction) return 32;
+ auto ChildVolume=FindObject<UBoxComponent>(JumpActor,TEXT("JumpVolume"));
+ if(!ChildVolume || ChildVolume->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || !ChildVolume->GetComponentLocation().Equals(PreviewVolume->GetComponentLocation())) return 33;
+ if(!FMath::IsNearlyEqual(JumpActor->JumpZVelocity,FMath::Sqrt(2.f*980.f*LiftHeight)) || JumpActor->FindComponentByClass<UNiagaraComponent>()) return 34;
  auto OwnedTarget=FindObject<UBoxComponent>(Pad,TEXT("DismantleTarget"));
  if(PreviewVolume->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly || OwnedBase->GetCollisionEnabled()!=ECollisionEnabled::NoCollision) return 17;
  if(!OwnedTarget || !OwnedBase->bHiddenInGame || OwnedTarget->GetCollisionEnabled()!=ECollisionEnabled::QueryOnly) return 24;
@@ -248,6 +292,7 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  if(!OwnedFX || !OwnedVolume || OwnedFX->GetOwner()!=Pad || OwnedVolume->GetOwner()!=Pad) return 7;
  if(!FMath::IsNearlyEqual(OwnedFX->GetRelativeScale3D().Z,FXHeightScale)) return 30;
  Pad->bEditorAvailable=false; Pad->OnNotAvailable_BlueprintImpl();
+ if(OwnedJump->GetChildActor()) return 35;
  if(OwnedFX->IsActive() || OwnedVolume->GetCollisionEnabled()!=ECollisionEnabled::NoCollision || OwnedBase->GetCollisionEnabled()!=ECollisionEnabled::NoCollision || OwnedTarget->GetCollisionEnabled()!=ECollisionEnabled::NoCollision) return 8;
  Character->GetCharacterMovement()->PendingLaunchVelocity=FVector::ZeroVector;
  Pad->ProcessEvent(OverlapEvent,&OverlapParams);
@@ -256,7 +301,7 @@ static int32 BuildWindVariant(UNiagaraSystem* FX,const FString& Suffix,float Rad
  if(!Pad->IsActorBeingDestroyed()) return 10;
  GEngine->DestroyWorldContext(World); World->DestroyWorld(false);
  UE_LOG(LogTemp,Display,TEXT("WIND_TEST_SUCCESS: preview and walking entry never launch, owned FX/volume, inactive collision cleared, destruction accepted. Native game availability is mocked by editor stub."));
- UE_LOG(LogTemp,Display,TEXT("WIND_BUILD_SUCCESS: independent building Blueprint, owned components, no actor spawning or world scan."));
+ UE_LOG(LogTemp,Display,TEXT("WIND_BUILD_SUCCESS: building-owned native jump spot, original action reference and prepare montage enabled, child removed when inactive; no world scan."));
  UE_LOG(LogTemp,Display,TEXT("WIND_VARIANT_SUCCESS: %s radius=%g FX-height-scale=%g material=%s"),*Suffix,Radius,FXHeightScale,*Deck->GetName());
  return 0;
 }
@@ -268,6 +313,10 @@ int32 UWindBuildCommandlet::Main(const FString& Params) {
  auto Factory=NewObject<UFactory>(GetTransientPackage(),LoadObject<UClass>(nullptr,TEXT("/Script/NiagaraEditor.NiagaraSystemFactoryNew")));
  auto FX=Cast<UNiagaraSystem>(Factory->FactoryCreateNew(UNiagaraSystem::StaticClass(),FXPackage,TEXT("NS_JumpSpot"),RF_Public|RF_Standalone,nullptr,GWarn));
  if(!FX || !SaveAsset(FX)) return 1;
+ auto ActionPackage=CreatePackage(TEXT("/Game/Pal/Blueprint/Action/Common/BP_Action_JumpFromJumpSpot"));
+ auto ActionBP=FKismetEditorUtilities::CreateBlueprint(UPalAction_JumpFromJumpSpot::StaticClass(),ActionPackage,TEXT("BP_Action_JumpFromJumpSpot"),BPTYPE_Normal,UBlueprint::StaticClass(),UBlueprintGeneratedClass::StaticClass());
+ FKismetEditorUtilities::CompileBlueprint(ActionBP);
+ if(!SaveAsset(ActionBP)) return 24;
  FString JSON; TArray<TSharedPtr<FJsonValue>> Variants;
  const FString File=FPaths::ConvertRelativePathToFull(FPaths::ProjectDir()/TEXT("../data/variants.json"));
  if(!FFileHelper::LoadFileToString(JSON,*File) || !FJsonSerializer::Deserialize(TJsonReaderFactory<>::Create(JSON),Variants) || Variants.Num()!=3) return 21;
@@ -280,7 +329,7 @@ int32 UWindBuildCommandlet::Main(const FString& Params) {
    const FLinearColor Color=FLinearColor(FColor(RGB[0]->AsNumber(),RGB[1]->AsNumber(),RGB[2]->AsNumber()));
    auto Deck=WindDeckMaterial(Suffix,Texture);
    if(!Deck) return 23;
-   const int32 Result=BuildWindVariant(FX,Suffix,Spec->GetNumberField(TEXT("RadiusCm")),Spec->GetNumberField(TEXT("FXHeightScale")),Deck);
+   const int32 Result=BuildWindVariant(FX,ActionBP->GeneratedClass,Suffix,Spec->GetNumberField(TEXT("RadiusCm")),Spec->GetNumberField(TEXT("LiftHeightCm")),Spec->GetNumberField(TEXT("FXHeightScale")),Deck);
    if(Result) { UE_LOG(LogTemp,Error,TEXT("WIND_VARIANT_FAILED: %s code=%d"),*Suffix,Result); return Result; }
  }
  UE_LOG(LogTemp,Display,TEXT("WIND_ALL_VARIANTS_SUCCESS: small/medium/large, textures and native UI icons."));

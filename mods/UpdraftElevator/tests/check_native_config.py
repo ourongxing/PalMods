@@ -13,6 +13,7 @@ def verify(config_source, expected):
     lua.execute('''
 hooks={}; messages={}; configReads=0
 function RegisterHook(p,a,b) hooks[p]=b or a end
+function StaticFindObject() return {IsValid=function() return true end} end
 function print(s) table.insert(messages,s) end
 ''')
     if config_source is not None:
@@ -27,16 +28,19 @@ end''')
     lua.execute(source)
     lua.execute('''
 movement={IsValid=function() return true end,GetGravityZ=function() return -980 end}
-wind={IsValid=function() return true end,IsAvailable=function() return true end,
+parent={BuildObjectId='',IsValid=function() return true end,IsAvailable=function() return true end,
  IsActorBeingDestroyed=function() return false end}
-player={IsValid=function() return true end,IsPlayerControlled=function() return true end,
+wind={IsValid=function() return true end,IsActorBeingDestroyed=function() return false end,
+ IsOverlappingActor=function() return true end,GetParentActor=function() return parent end,
+ GetClass=function() return {GetFName=function() return 'BP_WindJumpSmall_C' end} end,
+ EventOnActorBeginOverlap=function(self) measured=self.JumpZVelocity*self.JumpZVelocity/(2*980)/100 end}
+player={CharacterMovement=movement,IsValid=function() return true end,IsPlayerControlled=function() return true end,
  IsLocallyControlled=function() return true end,
- GetOverlappingActors=function(self,out) out[1]=wind end,
- LaunchCharacter=function(self,v) measured=v.Z*v.Z/(2*980)/100 end}
+ GetOverlappingActors=function(self,out) out[1]=wind end}
 ''')
     for size, meters in zip(['Small','Medium','Large'],expected):
-        lua.globals().wind.BuildObjectId='CodexWindNative'+size
-        lua.execute('hooks["/Script/Pal.PalCharacter:OnJump"](player,movement)')
+        lua.globals().parent.BuildObjectId='CodexWindNative'+size
+        lua.execute('hooks["/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorBeginOverlap"](wind,wind,player)')
         assert abs(lua.globals().measured-meters)<0.00001
     assert lua.globals().configReads==1 # no per-jump file reads or polling
 

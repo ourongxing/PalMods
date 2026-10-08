@@ -17,7 +17,7 @@ variants=json.loads(Path('data/variants.json').read_text(encoding='utf-8'))
 expected=set()
 for v in variants:
     s=v['Suffix']
-    expected.update({f'BP_Wind{s}',f'Materials/M_WindDeck{s}',
+    expected.update({f'BP_Wind{s}',f'BP_WindJump{s}',f'Materials/M_WindDeck{s}',
                      f'Textures/T_WindDeck{s}',f'Textures/T_WindIcon{s}'})
 files=[]
 for name in sorted(expected):
@@ -36,9 +36,16 @@ for p in files:
 content=b''.join(p.read_bytes() for p in files)
 assert b'/Script/Pal' in content and b'/Script/WindEditor' not in content
 assert b'/Game/Pal/Effect/Common/JumpSpot/NS_JumpSpot' in content
+assert b'/Game/Pal/Blueprint/Action/Common/BP_Action_JumpFromJumpSpot' in content
+assert b'PalLevelGimmickJumpSpot' in content
 for v in variants:
     blueprint=b''.join((cooked/(f"BP_Wind{v['Suffix']}"+ext)).read_bytes() for ext in ['.uasset','.uexp'])
     assert b'SpawnActor' not in blueprint and b'ReceiveTick' not in blueprint
+    helper=b''.join((cooked/(f"BP_WindJump{v['Suffix']}"+ext)).read_bytes() for ext in ['.uasset','.uexp'])
+    for reference in [b'PalLevelGimmickJumpSpot', b'BP_Action_JumpFromJumpSpot',
+                      b'bPlayJumpPrepareMontage', b'JumpZVelocity']:
+        assert reference in helper, f'Missing cooked jump-spot reference {reference!r}'
+    assert b'NiagaraComponent' not in helper and b'ReceiveTick' not in helper
 schema=stage/'Mods/PalSchema/mods/UpdraftElevator'
 (schema/'buildings').mkdir(parents=True,exist_ok=True)
 (schema/'paks').mkdir(exist_ok=True)
@@ -74,13 +81,13 @@ shutil.copy2('mod/Scripts/config.lua',helper/'Scripts/config.lua')
 readme=Path('mod/README.txt').read_text(encoding='utf-8')
 (stage/'使用说明.txt').write_text(readme,encoding='utf-8')
 out=Path('../../dist/UpdraftElevator'); out.mkdir(parents=True,exist_ok=True)
-(out/'上升气流-v9-说明.txt').write_text(readme,encoding='utf-8')
-archive=out/'UpdraftElevator-v9'
+(out/'上升气流-v10-说明.txt').write_text(readme,encoding='utf-8')
+archive=out/'UpdraftElevator-v10'
 shutil.make_archive(str(archive),'zip',stage)
-report={'Name':'Updraft Elevator','Version':9,'ConfigFile':'Mods/UpdraftElevator/Scripts/config.lua','Variants':variants,'TechnologyId':'CodexWindTechnology','TechnologyLevel':9,'IsAncientTechnology':True,'TechnologyCost':1,'MaterialCosts':{'Pal_crystal_S':10,'Stone':30,'PalCrystal_Ex':3},'Assets':sorted(expected),'PakEntries':sorted(entries),
-        'PakSHA256':hashlib.sha256(pak.read_bytes()).hexdigest(),'GameTest':'v7 gameplay confirmed; v8 configuration regression passed; v9 copy simplified'}
-(out/'UpdraftElevator-v9-manifest.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
-print('Built v9 package:',archive.with_suffix('.zip').resolve())
+report={'Name':'Updraft Elevator','Version':10,'ConfigFile':'Mods/UpdraftElevator/Scripts/config.lua','Variants':variants,'TechnologyId':'CodexWindTechnology','TechnologyLevel':9,'IsAncientTechnology':True,'TechnologyCost':1,'MaterialCosts':{'Pal_crystal_S':10,'Stone':30,'PalCrystal_Ex':3},'Assets':sorted(expected),'PakEntries':sorted(entries),
+        'PakSHA256':hashlib.sha256(pak.read_bytes()).hexdigest(),'GameTest':'User confirmed original jump action and animation in game on 2026-10-08; editor lifecycle and Lua regressions passed'}
+(out/'UpdraftElevator-v10-manifest.json').write_text(json.dumps(report,ensure_ascii=False,indent=2),encoding='utf-8')
+print('Built v10 package:',archive.with_suffix('.zip').resolve())
 if '--stage-only' in sys.argv: raise SystemExit(0)
 running=subprocess.check_output(['tasklist','/FI','IMAGENAME eq Palworld-Win64-Shipping.exe','/NH'])
 if b'Palworld-Win64-Shipping.exe' in running:
@@ -119,5 +126,5 @@ for rel in ['PalSchema/mods/UpdraftElevator/paks/UpdraftElevator_P.pak',
     assert (mods/rel).read_bytes()==(stage/'Mods'/rel).read_bytes()
 assert not legacy_installed.exists()
 assert (mods/'UpdraftElevator/Scripts/config.lua').is_file()
-print('Installed v9. PAK SHA256:',report['PakSHA256'])
+print('Installed v10. PAK SHA256:',report['PakSHA256'])
 print('Backup:',backup.resolve())

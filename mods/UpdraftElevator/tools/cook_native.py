@@ -8,7 +8,7 @@ import subprocess
 from palmods import UNREAL_EDITOR
 root=Path('native').resolve()
 assets=sorted((root/'Content/Mods/CodexWindNative').rglob('*.uasset'))
-assert len(assets)==12, f'Expected 3 blueprints, 3 materials, 6 textures; found {len(assets)}'
+assert len(assets)==15, f'Expected 6 blueprints, 3 materials, 6 textures; found {len(assets)}'
 packages=['/Game/'+p.relative_to(root/'Content').with_suffix('').as_posix() for p in assets]
 log=Path('../../.build/UpdraftElevator/cook-variants.log').resolve()
 args=[str(UNREAL_EDITOR),str(root/'Pal.uproject'),

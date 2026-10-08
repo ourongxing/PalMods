@@ -1,5 +1,6 @@
--- The PAK owns wind components; a native successful-jump hook activates lift.
--- No actor tracking, world scans, update loop, spawn calls or keyboard bindings.
+-- The PAK owns collision-only native jump-spot children. The game owns
+-- jump eligibility, the original prepare montage, animation notify and launch.
+-- Lua selects a modifier on overlap changes; no polling or keyboard bindings.
 local TECHNOLOGY = "CodexWindTechnology"
 local WIND = {CodexWindNativeSmall=true, CodexWindNativeMedium=true, CodexWindNativeLarge=true}
 local function Valid(object)
@@ -34,43 +35,75 @@ end
 print(string.format("[Updraft Elevator] Height configuration (m): Small=%g Medium=%g Large=%g\n",
     HEIGHTS.CodexWindNativeSmall / 100, HEIGHTS.CodexWindNativeMedium / 100, HEIGHTS.CodexWindNativeLarge / 100))
 local jumpErrors = 0
-local function JumpLift(context, component)
+local selecting = false
+local PROXIES = {BP_WindJumpSmall_C=true, BP_WindJumpMedium_C=true, BP_WindJumpLarge_C=true}
+local function IsProxy(actor)
+    local ok, name = pcall(function() return Name(actor:GetClass():GetFName()) end)
+    return ok and PROXIES[name] == true
+end
+local function SelectJumpSpot(context, _, other)
+    if selecting then return end
+    local changed = Value(context)
+    local player = Value(other)
+    if not Valid(changed) or not Valid(player) then return end
+    local owned = IsProxy(changed)
+    -- Preserve vanilla behavior for AI and remote characters on map spots.
+    local isCharacter, localPlayer = pcall(function()
+        return player:IsPlayerControlled() and player:IsLocallyControlled()
+    end)
+    if not isCharacter then return end
+    if not localPlayer and not owned then return end
     local ok, err = pcall(function()
-        local player = Value(context)
-        if not Valid(player) or not player:IsPlayerControlled() or not player:IsLocallyControlled() then return end
-        local movement = Value(component)
-        if not Valid(movement) then return end
-        -- Only inspect the jumping player's existing overlap list, once per jump.
         local overlapping = {}
         player:GetOverlappingActors(overlapping, nil)
-        local height = 0
+        local selected, height, original = nil, 0, nil
+        local jumpSpotType = StaticFindObject("/Script/Pal.PalLevelGimmickJumpSpot")
         for _, wrapped in pairs(overlapping) do
-            local wind = Value(wrapped)
-            if Valid(wind) then
-                -- Ordinary actors need not expose BuildObjectId.
-                local isWind, id = pcall(function() return Name(wind.BuildObjectId) end)
-                local candidate = isWind and HEIGHTS[id] or nil
-                if candidate and wind:IsAvailable() and not wind:IsActorBeingDestroyed() then
-                    height = math.max(height, candidate)
+            local spot = Value(wrapped)
+            if Valid(spot) and not spot:IsActorBeingDestroyed() and spot:IsOverlappingActor(player) then
+                if IsProxy(spot) then
+                    local wind = spot:GetParentActor()
+                    if localPlayer and Valid(wind) and not wind:IsActorBeingDestroyed() and wind:IsAvailable() then
+                        local candidate = HEIGHTS[Name(wind.BuildObjectId)]
+                        if candidate and candidate > height then selected, height = spot, candidate end
+                    end
+                elseif Valid(jumpSpotType) and spot:IsA(jumpSpotType) then
+                    -- Do not replace a map spot's own height, direction or animations.
+                    original = spot
                 end
             end
         end
-        if height == 0 then return end
-        local gravity = math.abs(movement:GetGravityZ())
-        if gravity < 1 then return end
-        -- Preserve horizontal movement, replace Z once; overlapping winds do not stack.
-        player:LaunchCharacter({X=0, Y=0, Z=math.sqrt(2 * gravity * height)}, false, true)
+        if not owned and height == 0 then return end
+        selected = original or selected
+        if selected and not original then
+            local movement = player.CharacterMovement
+            local gravity = Valid(movement) and math.abs(movement:GetGravityZ()) or 0
+            if gravity < 1 then
+                selected = nil
+            else
+                selected.JumpZVelocity = math.sqrt(2 * gravity * height)
+                selected.JumpFowardVelocity = 0
+                selected.bPlayJumpPrepareMontage = true
+            end
+        end
+        selecting = true
+        if selected then
+            selected:EventOnActorBeginOverlap(selected, player)
+        elseif owned then
+            changed:EventOnActorEndOverlap(changed, player)
+        end
     end)
+    selecting = false
     if not ok and jumpErrors < 3 then
         jumpErrors = jumpErrors + 1
-        print("[Updraft Elevator] Jump lift error: " .. tostring(err) .. "\n")
+        print("[Updraft Elevator] Jump modifier error: " .. tostring(err) .. "\n")
     end
 end
--- Pal movement broadcasts this only after a successful jump, unlike RequestJump.
 local jumpHookOk, jumpHookError = pcall(function()
-    RegisterHook("/Script/Pal.PalCharacter:OnJump", function() end, JumpLift)
+    RegisterHook("/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorBeginOverlap", function() end, SelectJumpSpot)
+    RegisterHook("/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorEndOverlap", function() end, SelectJumpSpot)
 end)
-if not jumpHookOk then print("[Updraft Elevator] Jump hook unavailable: " .. tostring(jumpHookError) .. "\n") end
+if not jumpHookOk then print("[Updraft Elevator] Jump hooks unavailable: " .. tostring(jumpHookError) .. "\n") end
 -- Require the new paid technology even in saves with old free unlock IDs.
 -- Leave material checks and point spending entirely to the game.
 RegisterHook("/Script/Pal.PalTechnologyData:IsUnlockBuildObject", function() end,
@@ -82,4 +115,4 @@ RegisterHook("/Script/Pal.PalTechnologyData:IsUnlockBuildObject", function() end
             return tech:IsUnlockRecipeTechnology(FName(TECHNOLOGY))
         end
     end)
-print("[Updraft Elevator] Wind lift v8: configurable heights; level 9 ancient technology, cost 1.\n")
+print("[Updraft Elevator] Wind lift v10: original jump-spot action and prepare montage; configurable heights; level 9 ancient technology, cost 1.\n")

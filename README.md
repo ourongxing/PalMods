@@ -41,7 +41,7 @@ python -m unittest discover -s tools/tests
 | sdk | 编译 UE4SS、导出 CMake 包 | `.build/UE4SS/PalModsSDKConfig.cmake`、`sdk.json` |
 | PalCombo | 编译 DLL | `.build/PalCombo/Game__Shipping__Win64/bin/PalComboFillerNative.dll` |
 | BetterWorkbench | 头文件审核、编译、C++ 测试、导入审核 | `.build/BetterWorkbench/native/Release/BetterWorkbenchNative.dll`、`import-audit.json` |
-| UpdraftElevator | 编辑器构建、生成资源、Cook、打包 | `dist/UpdraftElevator/UpdraftElevator-v9.zip` |
+| UpdraftElevator | 编辑器构建、生成资源、Cook、打包 | `dist/UpdraftElevator/UpdraftElevator-v10.zip` |
 | PointBlankBurstSkills | JSON 校验、暂存 | `.build/PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills/` |
 
 2026-10-08：本机全部构建通过；共享 SDK 在新目录中从现有源码副本重建，并由两个原生 mod 链接通过。
