@@ -15,7 +15,7 @@
   "BuildingData": {
     "TypeA": "Infrastructure",
     "TypeB": "Infra_Environment",
-    "TypeUIDisplay": "Other",
+    "TypeUIDisplay": "CodexWindUpdraft",
     "SortId": 9900,
     "Rank": 1,
     "BuildCapacity": 1,

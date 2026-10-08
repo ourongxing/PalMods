@@ -13,7 +13,7 @@ def main():
     scripts = [ROOT / 'mods/BetterWorkbench/tests/run.py']
     scripts.extend(ROOT / 'mods/UpdraftElevator/tests' / name for name in (
         'check_native_cost.py', 'check_native_jump.py', 'check_native_config.py',
-        'check_native_package.py'))
+        'check_native_package.py', 'check_native_category.py'))
     for script in scripts:
         print(f'Running {script.relative_to(ROOT)}', flush=True)
         subprocess.run([sys.executable, str(script)], cwd=ROOT, check=True)

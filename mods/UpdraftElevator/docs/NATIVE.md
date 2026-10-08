@@ -17,6 +17,7 @@ UE 缓存位于 `native/`；日志、备份、PAK 输入和暂存位于 `.build/
 打包脚本的 `--stage-only` 生成安装包；省略时备份并安装，执行前退出游戏。
 
 `tools/wind_data.py` 从 `data/building_template.json` 生成建筑和科技元数据。
+建造菜单使用独立的 `CodexWindUpdraft` 显示分组。Lua 启动时在显示分类枚举的 MAX 项之前注册它，再由 PalSchema 读取建筑配置；已有分类的值保持不变。分组标题复用科技名称的四语翻译，通过 `GetBuildObjectUIDIsplayCategoryTextId` 的输出参数提供。
 源贴图可通过 `tools/generate_wind_art.py` 重生成，需 numpy、Pillow 和 `C:/Windows/Fonts/bahnschrift.ttf`。
 Schema 来源及许可见 [data/schema](../data/schema/README.md)。
 
