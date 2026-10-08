@@ -1,6 +1,8 @@
-# Shared local dependencies, previous repositories and retired experiments
+# Local dependencies, generated builds, release packages and historical files
 .local/
 .tools/
+.build/
+dist/
 .venv/
 **/__pycache__/
 *.pyc
@@ -18,38 +20,22 @@
 *.dmp
 *.pak
 *.zip
-.vs/
-Thumbs.db
-Desktop.ini
-BetterWorkbench/dist/
-PalCombo/dlls/
-PalCombo/NativeSrc/build/
-PalCombo/NativeSrc/RE-UE4SS/
 *.bak
 *.previous.*
 *.next.*
 *.user
-install-status*.txt
+.vs/
+Thumbs.db
+Desktop.ini
 
-# Unreal generated assets are rebuilt from Source, variants and artwork
-UpdraftElevator/diagnostics/
-UpdraftElevator/existing-files-backup/
-UpdraftElevator/installed-snapshot/
-UpdraftElevator/outputs/
-UpdraftElevator/FILE_MANIFEST.json
-UpdraftElevator/work/*backup*/
-UpdraftElevator/work/native-assets-*/
-UpdraftElevator/work/PalworldModdingKit/
-UpdraftElevator/work/PalSchema-source/
-UpdraftElevator/work/lua-check/
-UpdraftElevator/work/native-pak-input/
-UpdraftElevator/work/native-package/
-UpdraftElevator/work/WindNative/Binaries/
-UpdraftElevator/work/WindNative/Intermediate/
-UpdraftElevator/work/WindNative/Saved/
-UpdraftElevator/work/WindNative/DerivedDataCache/
-UpdraftElevator/work/WindNative/Content/
-UpdraftElevator/work/WindNative/.vs/
-UpdraftElevator/work/WindNative/*.sln
-UpdraftElevator/work/wind-art/wind-art-review.png
-UpdraftElevator/work/wind-art/wind-in-engine.png
+# Unreal keeps its generated artifacts beside its source project.
+mods/*/native/Binaries/
+mods/*/native/Build/
+mods/*/native/Intermediate/
+mods/*/native/Saved/
+mods/*/native/DerivedDataCache/
+mods/*/native/Content/
+mods/*/native/.vs/
+mods/*/native/*.sln
+mods/*/assets/wind-art-review.png
+mods/*/assets/wind-in-engine.png

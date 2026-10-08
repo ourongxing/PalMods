@@ -4,6 +4,10 @@ import os
 import sys
 
 ROOT = Path(__file__).resolve().parents[1]
+MODS_ROOT = ROOT / 'mods'
+BUILD_ROOT = ROOT / '.build'
+DIST_ROOT = ROOT / 'dist'
+GAME_DATA_ROOT = ROOT / '.tools/game-data'
 sys.path.append(str(ROOT / '.tools/python'))
 
 
@@ -17,18 +21,11 @@ UE4SS_ROOT = GAME_ROOT / 'Mods/NativeMods/UE4SS'
 UNREAL_ROOT = configured_path('UNREAL_ROOT', r'D:\Epic Games\UE_5.1')
 UNREAL_EDITOR = UNREAL_ROOT / 'Engine/Binaries/Win64/UnrealEditor-Cmd.exe'
 REPAK = configured_path('REPAK', ROOT / 'tools/bin/repak.exe')
-PALCOMBO_BUILD = configured_path('PALCOMBO_BUILD', ROOT / 'PalCombo/NativeSrc/build')
+PALCOMBO_BUILD = configured_path('PALCOMBO_BUILD', BUILD_ROOT / 'PalCombo')
 UE4SS_SOURCE = ROOT / '.tools/RE-UE4SS'
-if not UE4SS_SOURCE.is_dir():
-    UE4SS_SOURCE = ROOT / 'PalCombo/NativeSrc/RE-UE4SS'
 
 
 def load_lua_runtime():
-    # A single repository environment is preferred; old local caches remain usable.
-    for directory in (ROOT / '.tools/python', ROOT / 'BetterWorkbench/.tools/python',
-                      ROOT / 'UpdraftElevator/work/lua-check'):
-        if directory.is_dir():
-            sys.path.append(str(directory))
     try:
         from lupa.lua54 import LuaRuntime
     except ImportError as error:
@@ -37,7 +34,13 @@ def load_lua_runtime():
 
 
 def use_mod_directory(name):
-    """Anchor legacy relative asset paths to the mod, independent of caller cwd."""
-    directory = ROOT / name
+    """Anchor asset paths to the mod, independent of caller cwd."""
+    directory = MODS_ROOT / name
     os.chdir(directory)
+    return directory
+
+
+def build_directory(name):
+    directory = BUILD_ROOT / name
+    directory.mkdir(parents=True, exist_ok=True)
     return directory
