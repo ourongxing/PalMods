@@ -1,0 +1,25 @@
+{
+  "ModName": "Point-Blank Burst Skills / 爆发技能贴脸释放",
+  "PackageName": "PointBlankBurstSkills",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW",
+    "PalSchema"
+  ],
+  "Tags": [
+    "PalSchema",
+    "Gameplay"
+  ],
+  "InstallRule": [
+    {
+      "Type": "PalSchema",
+      "Targets": [
+        "./PalSchema"
+      ]
+    }
+  ]
+}

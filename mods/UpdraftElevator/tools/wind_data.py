@@ -13,8 +13,9 @@ def build_rows():
     for variant in variants:
         suffix = variant['Suffix']
         row = deepcopy(template)
-        row['Name'] = f"上升气流 · {variant['Label']}"
-        row['Description'] = f"在直径{variant['RadiusCm'] * 2 // 100}米的气流区域内起跳升空。"
+        # Names and descriptions are supplied by language tables, not global overrides.
+        row.pop('Name', None)
+        row.pop('Description', None)
         row['BlueprintClassName'] = 'BP_Wind' + suffix
         row['BlueprintClassSoft'] = f'/Game/Mods/CodexWindNative/BP_Wind{suffix}.BP_Wind{suffix}_C'
         row['IconTexture'] = f'/Game/Mods/CodexWindNative/Textures/T_WindIcon{suffix}.T_WindIcon{suffix}'
@@ -22,13 +23,15 @@ def build_rows():
         rows['CodexWindNative' + suffix] = row
     small = rows['CodexWindNativeSmall']
     rows['CodexWindTechnology'] = {
-        'Name': '上升气流',
         **{field: small[field] for field in ('BlueprintClassName', 'BlueprintClassSoft', 'IconTexture')},
         'bInDevelop': True,
         'Technology': {
-            'Name': '上升气流', 'Description': '解锁小、中、大型上升气流。',
             'UnlockBuildObjects': ['CodexWindNative' + v['Suffix'] for v in variants],
             'IconName': 'CodexWindTechnology', 'LevelCap': 9, 'Cost': 1, 'IsBossTechnology': True,
         },
     }
     return rows
+
+
+def translation_files():
+    return sorted((WORK / 'mod/translations').rglob('*.json'))

@@ -15,6 +15,10 @@
 安装到 UE4SS 的 `Mods/BetterWorkbench/`，包含 `Scripts/` 和 `dlls/main.dll`；`mods.txt` 启用 `BetterWorkbench : 1`。
 配置位于安装目录的 `Scripts/config.lua`：
 
+新增分解界面文字支持简体中文、繁体中文、日语和英语，默认跟随游戏语言。
+`Disassembly.Language` 可设为 `auto`、`zh-Hans`、`zh-Hant`、`ja`、`en`；物品名称沿用游戏官方译名。
+工坊四语使用说明和介绍位于 `workshop/README.*.md` 与 `workshop/listing.json`。
+
 | 配置 | 用途 |
 | --- | --- |
 | `Enabled` | Lua 入口 |

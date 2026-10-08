@@ -6,7 +6,8 @@ return {
     -- Multiple recipes may yield the same item. Select an exact recipe ID here.
     PreferredRecipes = {},
     MaterialScroll = { Enabled = true, VisibleRows = 5, RowHeight = 38 },
-    Disassembly = { Enabled = true },
+    -- auto follows the game language; overrides: zh-Hans, zh-Hant, ja, en.
+    Disassembly = { Enabled = true, Language = "auto" },
     Diagnostics = {
         Enabled = false,
         MaxHitsPerHook = 12,

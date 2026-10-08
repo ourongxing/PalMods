@@ -1,0 +1,19 @@
+{
+  "DT_MapObjectNameText": {
+    "MAPOBJECT_NAME_CodexWindNativeSmall": "上升气流 · 小型",
+    "MAPOBJECT_NAME_CodexWindNativeMedium": "上升气流 · 中型",
+    "MAPOBJECT_NAME_CodexWindNativeLarge": "上升气流 · 大型",
+    "MAPOBJECT_NAME_CodexWindTechnology": "上升气流"
+  },
+  "DT_BuildObjectDescText": {
+    "BUILDOBJECT_DESC_CodexWindNativeSmall": "在气流范围内起跳即可升空。效果范围直径为2米。",
+    "BUILDOBJECT_DESC_CodexWindNativeMedium": "在气流范围内起跳即可升空。效果范围直径为4米。",
+    "BUILDOBJECT_DESC_CodexWindNativeLarge": "在气流范围内起跳即可升空。效果范围直径为6米。"
+  },
+  "DT_TechnologyNameText": {
+    "NAME_RECIPE_CodexWindTechnology": "上升气流"
+  },
+  "DT_TechnologyDescText": {
+    "DESC_RECIPE_CodexWindTechnology": "解锁小型、中型和大型上升气流。"
+  }
+}

@@ -1,0 +1,18 @@
+{
+  "zh-Hans": {
+    "Title": "帕鲁连招",
+    "Description": "让玩家帕鲁优先按技能槽1→2连续出招，槽3在两轮连招之间补充攻击。\n\n当槽1就绪，且槽2就绪或剩余冷却不超过设定值时，开始连招。槽1进入冷却后等待槽2，期间槽3不插入；槽2进入冷却后开始下一轮判定。骑乘时使用手动技能，下马后恢复自动战斗。\n\n配置：config.ini 中的 EarlyStartSeconds，默认3秒，范围0～30秒。设为0时等待槽2完全就绪。修改后重启游戏。此 mod 不添加新的游戏内文字。\n\n先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的mod管理中启用本mod，并重新启动游戏。"
+  },
+  "ja": {
+    "Title": "パルの連続攻撃",
+    "Description": "プレイヤーのパルがスキルスロット1→2の順で連続攻撃するようになります。スロット3は、次の連続攻撃を始められるまでの間に使います。\n\nスロット1が使用可能で、スロット2も使用可能、またはクールタイムの残り時間が設定値以下になると、連続攻撃を開始します。スロット1のクールタイムが始まったらスロット2を待ち、その間はスロット3を使いません。スロット2のクールタイムが始まると、次の連続攻撃を判定します。ライド中は手動操作になり、降りると自動戦闘に戻ります。\n\n設定：config.ini の EarlyStartSeconds。初期値は3秒、設定範囲は0～30秒です。0にすると、スロット2のクールタイムが完全に終わるまで待ちます。変更後はゲームを再起動してください。このmodはゲーム内の表示テキストを追加しません。\n\n必要なmod（UE4SSExperimentalPW）をサブスクライブして有効にしてください。その後、ゲームのmod管理でこのmodを有効にし、ゲームを再起動してください。"
+  },
+  "en": {
+    "Title": "Pal Combo",
+    "Description": "Makes the player's Pals chain skill slot 1 into slot 2, using slot 3 between combos.\n\nA combo starts when slot 1 is ready and slot 2 is either ready or within the configured cooldown window. Once slot 1 enters cooldown, the Pal waits for slot 2 without inserting slot 3. When slot 2 enters cooldown, the combo resets. Mounted skills remain manually controlled; automatic combat resumes after dismounting.\n\nConfiguration: EarlyStartSeconds in config.ini. The default is 3 seconds; the supported range is 0–30 seconds. Set it to 0 to wait until slot 2 is fully ready. Restart the game after changing the setting. This mod adds no in-game text.\n\nSubscribe to and enable the required mods: UE4SSExperimentalPW. Then enable this mod in the game’s Mod Management menu and restart the game."
+  },
+  "zh-Hant": {
+    "Title": "帕魯連招",
+    "Description": "讓玩家的帕魯優先依技能欄位1→2的順序連續出招，技能欄位3則在兩輪連招之間補上攻擊。\n\n當技能欄位1可用，且技能欄位2也可用或剩餘冷卻時間不超過設定值時，便會開始連招。技能欄位1進入冷卻後會等待欄位2，期間不插入欄位3；技能欄位2進入冷卻後，再判斷下一輪連招。騎乘時由玩家手動使用技能，下坐騎後恢復自動戰鬥。\n\n設定：config.ini 中的 EarlyStartSeconds，預設3秒，範圍0～30秒。設為0時，會等到技能欄位2完全冷卻後再開始。變更後請重新啟動遊戲。本模組不新增遊戲內文字。\n\n請先訂閱並啟用必要模組：UE4SSExperimentalPW。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。"
+  }
+}

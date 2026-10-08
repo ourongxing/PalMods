@@ -53,9 +53,13 @@ legacy_stage=stage/'Mods/PalSchema/mods/WindBuildMenu'
 if legacy_stage.exists():
     assert legacy_stage.resolve().is_relative_to(stage.resolve())
     shutil.rmtree(legacy_stage)
-from wind_data import build_rows
+from wind_data import build_rows, translation_files
 rows=build_rows()
 (schema/'buildings/wind_small.json').write_text(json.dumps(rows,ensure_ascii=False,indent=2),encoding='utf-8')
+for translation in translation_files():
+    dest = schema/'translations'/translation.relative_to(Path('mod/translations').resolve())
+    dest.parent.mkdir(parents=True,exist_ok=True)
+    shutil.copy2(translation,dest)
 subprocess.run([sys.executable,str(Path('tests/check_native_package.py').resolve())],check=True)
 helper=stage/'Mods/UpdraftElevator'
 (helper/'Scripts').mkdir(parents=True,exist_ok=True)

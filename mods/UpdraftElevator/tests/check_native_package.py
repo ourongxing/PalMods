@@ -31,7 +31,7 @@ variants=json.loads(Path('data/variants.json').read_text(encoding='utf-8'))
 assert set(rows)=={'CodexWindNative'+v['Suffix'] for v in variants}|{'CodexWindTechnology'}
 tech=rows['CodexWindTechnology']
 assert 'BuildingData' not in tech
-assert tech['Technology']['Name']=='上升气流' and tech['Technology']['Cost']==1
+assert 'Name' not in tech['Technology'] and tech['Technology']['Cost']==1
 assert tech['Technology']['LevelCap']==9 and tech['Technology']['IsBossTechnology']==True
 assert tech['Technology']['UnlockBuildObjects']==['CodexWindNative'+v['Suffix'] for v in variants]
 assert sum('Technology' in row for row in rows.values())==1

@@ -1,6 +1,7 @@
 local Runtime = require("BetterWorkbench.DisassemblyRuntime")
 local Service = require("BetterWorkbench.CraftService")
 local Util = require("BetterWorkbench.Util")
+local I18n = require("BetterWorkbench.I18n")
 local M = {}
 local WORK = "/Game/Pal/Blueprint/UI/UserInterface/IngameMenu/WBP_IngameMenu_WorkSpace.WBP_IngameMenu_WorkSpace_C"
 local BUTTON = "/Game/Pal/Blueprint/UI/UserInterface/Common/WBP_CommonButton.WBP_CommonButton_C"
@@ -132,9 +133,12 @@ local function close(session, selectionChanged)
         if refreshEntry then refreshEntry(session) end
     end
 end
-local reasons = { backpack_full = "背包空间不足，请先腾出空间。", insufficient_products = "已有成品不足。",
-    disassembly_in_progress = "正在分解，请稍候。",
-    disassembly_disabled_after_inventory_error = "分解已停止，请重新进入游戏后检查背包。" }
+local reasonKeys = { backpack_full = true, insufficient_products = true,
+    disassembly_in_progress = true, disassembly_disabled_after_inventory_error = true }
+local function reasonMessage(reason)
+    return I18n.text(reasonKeys[reason] and reason or
+        (service.backend.disabled and "disassembly_disabled_after_inventory_error" or "retry"))
+end
 local function feedback(session, message)
     -- Reuse the game's notification path used by the working reference mod.
     -- A notification failure never changes the completed inventory operation.
@@ -149,8 +153,8 @@ local function successMessage(session, plan)
     for _, id in ipairs(Util.keys(plan.Returns)) do
         returns[#returns + 1] = itemName(session, id) .. " × " .. plan.Returns[id]
     end
-    return "已分解 " .. itemName(session, plan.ProductItem) .. " × " .. plan.Consumed[plan.ProductItem]
-        .. "\n返还：" .. table.concat(returns, "、")
+    return I18n.text("consumed", itemName(session, plan.ProductItem), plan.Consumed[plan.ProductItem])
+        .. "\n" .. I18n.text("returned", table.concat(returns, I18n.text("separator")))
 end
 local function preview(session, batches, snapshot)
     local ok, plan, reason, state = pcall(service.previewDisassembly, service, session, session.recipeId, batches, snapshot)
@@ -172,7 +176,7 @@ local function startButtonLabel(session)
         local ok, label = pcall(function() return widget:GetText():ToString() end)
         if ok and label ~= "" then
             session.saved[#session.saved + 1] = { widget = widget, label = label }
-            text(widget, "开始分解")
+            text(widget, I18n.text("start"))
             return true
         end
         local children, n = pcall(function() return widget:GetChildrenCount() end)
@@ -223,7 +227,7 @@ local function update(session, status)
     end
     session.workspace.WBP_InventoryEquipment_ItemInfo_Tecnology:SetDetails(materials, false)
     -- Keep the existing production stock counter and its native refresh path.
-    text(session.workspace.BP_PalTextBlock_Name, "分解 · " .. itemName(session, plan.ProductItem))
+    text(session.workspace.BP_PalTextBlock_Name, I18n.text("title", itemName(session, plan.ProductItem)))
     text(session.workspace.BP_PalTextBlock_Num, tostring(session.group))
     text(session.workspace.Text_ManMonth_Value, "0")
     session.workspace.WBP_IngameMenu_StartButton:SetEnable(plan.CanDisassemble and not service.backend.disabled)
@@ -349,6 +353,7 @@ local function guarded(callback)
     end
 end
 function M.start(config)
+    I18n.configure(config and config.Language)
     if not config or not config.Enabled or type(StaticConstructObject) ~= "function"
         or type(NotifyOnNewObject) ~= "function" or type(ExecuteInGameThread) ~= "function" then return end
     service = Service.new(Runtime.new())
@@ -410,12 +415,11 @@ function M.start(config)
         -- The native guard makes the original StartProduce skip its craft path.
         -- This post hook is shared by the vanilla button and controller binding.
         local batches = Util.integer(session.workspace.WBP_IngameCommonSelectNum.nowNum, 0, 256, "disassembly batches")
-        if batches == 0 then feedback(session, "分解失败：" .. reasons.insufficient_products); return end
+        if batches == 0 then feedback(session, I18n.text("failed", I18n.text("insufficient_products"))); return end
         local ok, result, failed = pcall(service.disassemble, service, session, session.recipeId, batches)
         if not ok or not result then
             log(ok and failed or result)
-            feedback(session, "分解失败：" .. (reasons[failed] or
-                (service.backend.disabled and reasons.disassembly_disabled_after_inventory_error) or "请检查背包并重新打开工作台。"))
+            feedback(session, I18n.text("failed", reasonMessage(failed)))
             update(session)
             return
         end
@@ -433,7 +437,7 @@ function M.start(config)
         session.workspace.WBP_IngameCommonSelectNum["Set Min Max Num"](
             session.workspace.WBP_IngameCommonSelectNum, current.MaxBatches, minimum)
         session.workspace.WBP_IngameCommonSelectNum:SetNum(math.max(minimum, math.min(current.MaxBatches, batches)), session.group, false)
-        update(session, "分解完成，原始材料已全额返还到背包。")
+        update(session, I18n.text("complete"))
     end)
     hook("/Script/UMG.UserWidget:Destruct", function(context)
         local object = context:get()

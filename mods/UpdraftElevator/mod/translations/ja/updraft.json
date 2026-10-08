@@ -1,0 +1,19 @@
+{
+  "DT_MapObjectNameText": {
+    "MAPOBJECT_NAME_CodexWindNativeSmall": "上昇気流（小型）",
+    "MAPOBJECT_NAME_CodexWindNativeMedium": "上昇気流（中型）",
+    "MAPOBJECT_NAME_CodexWindNativeLarge": "上昇気流（大型）",
+    "MAPOBJECT_NAME_CodexWindTechnology": "上昇気流"
+  },
+  "DT_BuildObjectDescText": {
+    "BUILDOBJECT_DESC_CodexWindNativeSmall": "気流の中でジャンプすると、上空へ飛び上がれます。効果範囲は直径2mです。",
+    "BUILDOBJECT_DESC_CodexWindNativeMedium": "気流の中でジャンプすると、上空へ飛び上がれます。効果範囲は直径4mです。",
+    "BUILDOBJECT_DESC_CodexWindNativeLarge": "気流の中でジャンプすると、上空へ飛び上がれます。効果範囲は直径6mです。"
+  },
+  "DT_TechnologyNameText": {
+    "NAME_RECIPE_CodexWindTechnology": "上昇気流"
+  },
+  "DT_TechnologyDescText": {
+    "DESC_RECIPE_CodexWindTechnology": "小型・中型・大型の上昇気流を解放します。"
+  }
+}

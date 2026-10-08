@@ -12,6 +12,10 @@
 单位米，范围 0.1～1000，允许小数，重启生效。安装器保留已有配置。
 旧版迁移步骤见包内 [README](mod/README.txt)。
 
+建筑与科技名称、说明支持简体中文、繁体中文、日语和英语，由 PalSchema 跟随游戏语言加载；
+切换语言后重启游戏。语言表位于 `mod/translations/`，其他语言回退英文。
+工坊四语使用说明和介绍位于 `workshop/README.*.md` 与 `workshop/listing.json`。
+
 ## 开发
 
 在仓库根目录执行：

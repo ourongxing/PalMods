@@ -1,0 +1,27 @@
+{
+  "ModName": "Better Workbench / 更好的工作台",
+  "PackageName": "BetterWorkbench",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW"
+  ],
+  "Tags": [
+    "UE4SS",
+    "Gameplay",
+    "User Interface"
+  ],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": [
+        "./Scripts",
+        "./dlls",
+        "./enabled.txt"
+      ]
+    }
+  ]
+}

@@ -227,7 +227,7 @@ return function(test, equal)
             return 1, 2
         end
         local ok, reason = pcall(function()
-            require("BetterWorkbench.DisassemblyUI").start({ Enabled = true })
+            require("BetterWorkbench.DisassemblyUI").start({ Enabled = true, Language = "zh-Hans" })
             for _, callback in ipairs(notifications) do callback(); callback() end
             local total = 0
             for _, calls in pairs(registered) do equal(calls, 1); total = total + 1 end
@@ -362,7 +362,7 @@ return function(test, equal)
         FText = function(s) return s end
         FName = function(s) return s end
         local ok, reason = pcall(function()
-            require("BetterWorkbench.DisassemblyUI").start({ Enabled = true })
+            require("BetterWorkbench.DisassemblyUI").start({ Enabled = true, Language = "zh-Hans" })
             local selected
             for path, callback in pairs(registered) do
                 if path:match(":OnClickedRecipeSlot$") then selected = callback end

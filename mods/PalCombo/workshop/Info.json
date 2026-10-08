@@ -1,0 +1,27 @@
+{
+  "ModName": "Pal Combo / 帕鲁连招",
+  "PackageName": "PalCombo",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW"
+  ],
+  "Tags": [
+    "UE4SS",
+    "Gameplay"
+  ],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": [
+        "./Scripts",
+        "./dlls",
+        "./config.ini",
+        "./enabled.txt"
+      ]
+    }
+  ]
+}

@@ -1,0 +1,33 @@
+{
+  "ModName": "Updraft Elevator / 上升气流",
+  "PackageName": "UpdraftElevator",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW",
+    "PalSchema"
+  ],
+  "Tags": [
+    "UE4SS",
+    "PalSchema",
+    "Gameplay"
+  ],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": [
+        "./Scripts",
+        "./enabled.txt"
+      ]
+    },
+    {
+      "Type": "PalSchema",
+      "Targets": [
+        "./PalSchema"
+      ]
+    }
+  ]
+}

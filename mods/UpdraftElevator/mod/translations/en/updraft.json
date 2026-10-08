@@ -1,0 +1,19 @@
+{
+  "DT_MapObjectNameText": {
+    "MAPOBJECT_NAME_CodexWindNativeSmall": "Updraft Elevator — Small",
+    "MAPOBJECT_NAME_CodexWindNativeMedium": "Updraft Elevator — Medium",
+    "MAPOBJECT_NAME_CodexWindNativeLarge": "Updraft Elevator — Large",
+    "MAPOBJECT_NAME_CodexWindTechnology": "Updraft Elevator"
+  },
+  "DT_BuildObjectDescText": {
+    "BUILDOBJECT_DESC_CodexWindNativeSmall": "Jump inside the updraft to launch into the air. Area diameter: 2 m.",
+    "BUILDOBJECT_DESC_CodexWindNativeMedium": "Jump inside the updraft to launch into the air. Area diameter: 4 m.",
+    "BUILDOBJECT_DESC_CodexWindNativeLarge": "Jump inside the updraft to launch into the air. Area diameter: 6 m."
+  },
+  "DT_TechnologyNameText": {
+    "NAME_RECIPE_CodexWindTechnology": "Updraft Elevator"
+  },
+  "DT_TechnologyDescText": {
+    "DESC_RECIPE_CodexWindTechnology": "Unlocks small, medium, and large updraft elevators."
+  }
+}

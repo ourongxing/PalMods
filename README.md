@@ -47,6 +47,15 @@ python -m unittest discover -s tools/tests
 2026-10-08：本机全部构建通过；共享 SDK 在新目录中从现有源码副本重建，并由两个原生 mod 链接通过。
 新机器的依赖获取和游戏内验收需另行验证。
 
+## 创意工坊打包
+
+四个 mod 的工坊模板与基础封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
+首次发布版本统一为 `1.0.0`，发布包包含简体中文、繁体中文、日语、英语的玩家说明和工坊介绍；
+BetterWorkbench 的新增界面文字和上升气流的建筑／科技文字支持四语。
+构建完成后运行 `python tools/package_workshop.py all`，生成
+`dist/workshop/<Mod>/` 和对应 ZIP，不安装或上传。
+安装规则、版本字段、导入上传工具的步骤见 [工坊打包说明](docs/WORKSHOP.md)。
+
 ## 环境
 
 | 依赖 | 版本／安装要求 | 用途 |
