@@ -83,7 +83,7 @@ class BuildTests(unittest.TestCase):
     def test_schema_staging_removes_obsolete_files_and_rejects_bad_json(self):
         with tempfile.TemporaryDirectory() as temporary:
             root = Path(temporary)
-            source = root / 'mods/CloseRangeBurstSkills/mod/raw'
+            source = root / 'mods/PointBlankBurstSkills/mod/raw'
             source.mkdir(parents=True)
             data = source / 'skills.json'
             data.write_text('{"skills": []}', encoding='utf-8')

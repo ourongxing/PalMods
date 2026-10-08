@@ -10,7 +10,7 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'CloseRangeBurstSkills')
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills')
 SDK_MODS = {'PalCombo', 'BetterWorkbench'}
 
 
@@ -69,10 +69,10 @@ def commands_for(mod, args):
 
 
 def stage_schema():
-    source = MODS_ROOT / 'CloseRangeBurstSkills/mod'
+    source = MODS_ROOT / 'PointBlankBurstSkills/mod'
     for path in source.rglob('*.json'):
         json.loads(path.read_text(encoding='utf-8-sig'))
-    destination = BUILD_ROOT / 'CloseRangeBurstSkills/stage/Mods/PalSchema/mods/CloseRangeBurstSkills'
+    destination = BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills'
     # Replace only this generated mod directory so removed source files cannot linger.
     if not destination.resolve().is_relative_to(BUILD_ROOT.resolve()):
         raise ValueError(f'Stage path escapes build root: {destination}')
@@ -89,7 +89,7 @@ def main(argv=None):
         'PalCombo': PALCOMBO_BUILD / 'Game__Shipping__Win64/bin/PalComboFillerNative.dll',
         'BetterWorkbench': BUILD_ROOT / 'BetterWorkbench/native/Release/BetterWorkbenchNative.dll',
         'UpdraftElevator': ROOT / 'dist/UpdraftElevator/UpdraftElevator-v9.zip',
-        'CloseRangeBurstSkills': BUILD_ROOT / 'CloseRangeBurstSkills/stage/Mods/PalSchema/mods/CloseRangeBurstSkills',
+        'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:
@@ -107,7 +107,7 @@ def main(argv=None):
                 if not args.dry_run:
                     env = toolset_environment(args.toolset) if mod in SDK_MODS else None
                     subprocess.run(command, cwd=ROOT, env=env, check=True)
-            if mod == 'CloseRangeBurstSkills':
+            if mod == 'PointBlankBurstSkills':
                 print('Validate JSON and stage PalSchema files', flush=True)
                 if not args.dry_run:
                     stage_schema()

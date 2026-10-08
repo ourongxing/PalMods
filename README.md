@@ -7,7 +7,7 @@ Palworld mod 源码仓库。
 | [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
 | [PalCombo](mods/PalCombo/README.md) | 技能槽 1 → 2 连招，槽 3 填空 |
 | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
-| [CloseRangeBurstSkills](mods/CloseRangeBurstSkills/README.md) | 调整三种近身范围技能的 AI 最大施放距离 |
+| [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
 
 ## 构建与测试
 
@@ -42,7 +42,7 @@ python -m unittest discover -s tools/tests
 | PalCombo | 编译 DLL | `.build/PalCombo/Game__Shipping__Win64/bin/PalComboFillerNative.dll` |
 | BetterWorkbench | 头文件审核、编译、C++ 测试、导入审核 | `.build/BetterWorkbench/native/Release/BetterWorkbenchNative.dll`、`import-audit.json` |
 | UpdraftElevator | 编辑器构建、生成资源、Cook、打包 | `dist/UpdraftElevator/UpdraftElevator-v9.zip` |
-| CloseRangeBurstSkills | JSON 校验、暂存 | `.build/CloseRangeBurstSkills/stage/Mods/PalSchema/mods/CloseRangeBurstSkills/` |
+| PointBlankBurstSkills | JSON 校验、暂存 | `.build/PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills/` |
 
 2026-10-08：本机全部构建通过；共享 SDK 在新目录中从现有源码副本重建，并由两个原生 mod 链接通过。
 新机器的依赖获取和游戏内验收需另行验证。
