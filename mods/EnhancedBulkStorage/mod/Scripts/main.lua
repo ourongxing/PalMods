@@ -8,7 +8,7 @@ if not loader then
     print("[EnhancedBulkStorage] native bridge unavailable; original storage retained: " .. tostring(errorMessage) .. "\n")
     return
 end
-local ready, inStorageScope, inCandidateScope = loader()
+local ready, inStorageScope, inCandidateScope, acceptsItem = loader()
 local inventoryClass = "/Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C"
 local function unwrap(value)
     local ok, inner = pcall(function() return value:get() end)
@@ -23,6 +23,7 @@ local function valid(object)
     return object and object:IsValid()
 end
 local function beforeHook() end
+local queryingPhysicalBase = false
 local function guid(value)
     value = unwrap(value)
     return { A = unwrap(value.A), B = unwrap(value.B), C = unwrap(value.C), D = unwrap(value.D) }
@@ -90,12 +91,12 @@ if inStorageScope then
     end
     RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel", beforeHook,
         function(context, original)
-            if not ready() or not inStorageScope() or valid(unwrap(original)) then return end
+            if queryingPhysicalBase or not ready() or not inStorageScope() or valid(unwrap(original)) then return end
             return selectedBase(context, false)
         end)
     RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID", beforeHook,
         function(context, original)
-            if not ready() or not inStorageScope() or nonzero(original) then return end
+            if queryingPhysicalBase or not ready() or not inStorageScope() or nonzero(original) then return end
             return selectedBase(context, true)
         end)
     print("[EnhancedBulkStorage] outside-base selection: most buildings, nearest on ties\n")
@@ -124,6 +125,80 @@ else
     print("[EnhancedBulkStorage] egg candidate scope unavailable; update companion DLL\n")
 end
 
+-- Resolve only this operation's destination. No cross-base container cache.
+local function destinationSlots(world)
+    if not acceptsItem or not inStorageScope or not inStorageScope() then return end
+    local pal = StaticFindObject("/Script/Pal.Default__PalUtility")
+    if not valid(pal) then return end
+    local player = pal:GetPalmi(world)
+    if not valid(player) then return end
+    local component = player.InsideBaseCampCheckComponent
+    if not valid(component) then return end
+    -- Read actual location without our scoped outside-base getter fallback.
+    queryingPhysicalBase = true
+    local ok, base = pcall(function() return component:GetInsideBaseCampModel() end)
+    queryingPhysicalBase = false
+    if not ok then error(base) end
+    if not valid(base) then
+        -- Remote chests need not be loaded on this client. Keep the established
+        -- remote candidate behavior; the official server validates the transfer.
+        if valid(largestOwnedBase(component)) then return nil, nil, false, true end
+        return
+    end
+    if not valid(base) or not valid(base.MapObjectCollection) then return end
+    local manager = pal:GetMapObjectManager(world)
+    local controller = pal:GetLocalPalPlayerController(world)
+    local items = pal:GetItemIDManager(world)
+    if not valid(manager) or not valid(controller) or not valid(items) then return end
+    local uid, baseId = guid(controller:GetPlayerUId()), guid(base:GetId())
+    local slots, complete, seen = {}, true, {}
+    each(base.MapObjectCollection.MapObjectInstanceIdRepInfoArray.Items, function(info)
+        local model = manager:FindModel(guid(info.InstanceId))
+        if not valid(model) then complete = false; return end
+        local chest = model:GetConcreteModel(false)
+        if not valid(chest) then complete = false; return end
+        if not chest:IsA("/Script/Pal.PalMapObjectItemChestModel")
+            or not sameGuid(chest:GetBaseCampIdBelongTo(), baseId)
+            or chest:IsLockedPrivateByNot(uid) then return end
+        local security = chest:GetGuildSecurityModule()
+        if valid(security) and not security:CheckGuildSecurityAccess(uid) then return end
+        local lock = chest:GetPasswordLockModule()
+        if valid(lock) and unwrap(lock:GetLockState()) == 0 then
+            local unlocked = false
+            each(lock.PlayerInfos, function(entry)
+                if sameGuid(entry.PlayerUId, uid) and unwrap(entry.TrySuccessCache) == true then unlocked = true end
+            end)
+            if not unlocked then return end
+        end
+        local module = chest:GetItemContainerModule()
+        if not valid(module) then complete = false; return end
+        local container = module:GetContainer()
+        if not valid(container) then complete = false; return end
+        local address = container:GetAddress()
+        if seen[address] then return end
+        seen[address] = true
+        each(container.ItemSlotArray, function(slot)
+            if not valid(slot) then complete = false; return end
+            if slot:IsEmpty() then
+                slots[#slots + 1] = {container = container, slot = slot}
+            elseif not slot:IsMaxStack() and not nonzero(slot:GetItemId().DynamicId.LocalIdInCreatedWorld) then
+                slots[#slots + 1] = {container = container, slot = slot,
+                    id = slot:GetItemId().StaticId:ToString()}
+            end
+        end)
+    end)
+    return slots, items, complete
+end
+
+local function canStore(slots, data, id)
+    if not valid(data) then return false end
+    for _, entry in ipairs(slots) do
+        if (not entry.id or entry.id == id)
+            and acceptsItem(entry.container:GetAddress(), entry.slot:GetAddress(), data:GetAddress()) then return true end
+    end
+    return false
+end
+
 RegisterHook("/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemInfos", beforeHook,
     function(context, worldContext, staticItemIds, outItemInfos)
         if not ready() then return end
@@ -132,29 +207,33 @@ RegisterHook("/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemI
         local ok, err = pcall(function()
             local utility = unwrap(context)
             local existing = unwrap(outItemInfos)
+            local slots, items, complete, remote = destinationSlots(world)
             local result, seen = {}, {}
+            local changed = false
             each(existing, function(info)
                 local name = unwrap(info.StaticItemId)
                 local id = name:ToString()
-                if not seen[id] then
+                if not seen[id] and (not complete or canStore(slots, items:GetStaticItemData(name), id)) then
                     result[#result + 1] = { StaticItemId = FName(id), Num = unwrap(info.Num) }
                     seen[id] = true
+                else
+                    changed = true
                 end
             end)
-            local expanded = false
             -- The native caller supplies the names. Keep its exclusion handling,
-            -- slot selection and confirmation; never enumerate equipment or chests.
+            -- slot selection and confirmation; never enumerate equipment.
             each(unwrap(staticItemIds), function(name)
                 local id = name:ToString()
-                if id ~= "None" and not seen[id] then
+                if id ~= "None" and not seen[id]
+                    and (remote or (slots and canStore(slots, items:GetStaticItemData(name), id))) then
                     local count = utility:CountLocalPlayerInventoryItemNum64(world, name)
                     if count > 0 then
                         result[#result + 1] = { StaticItemId = FName(id), Num = math.min(count, 2147483647) }
-                        seen[id], expanded = true, true
+                        seen[id], changed = true, true
                     end
                 end
             end)
-            if not expanded then return end
+            if not changed then return end
             -- Release the previous TArray before UE4SS table marshaling replaces it.
             existing:Empty()
             outItemInfos:set(result)
