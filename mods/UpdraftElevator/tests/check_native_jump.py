@@ -62,6 +62,27 @@ begin(small,small,player); assert(selected==small and math.abs(small.JumpZVeloci
 movement.GetGravityZ=function() return 0 end
 begin(small,small,player); assert(selected==nil)
 movement.GetGravityZ=function() return -980 end
+-- Entering under glider gravity must cache the ordinary falling launch speed,
+-- which stays correct after landing even without another overlap event.
+movement.CustomMovementMode=4; movement.GliderGravityScale=0.025
+movement.GetGravityZ=function() return -784*movement.GliderGravityScale end
+for _,spot in ipairs({small,medium,large}) do
+ overlapping={spot}; begin(spot,spot,player)
+ local target=({[small]=800,[medium]=1600,[large]=3200})[spot]
+ assert(math.abs(spot.JumpZVelocity^2/(2*784)-target)<0.0001)
+end
+movement.CustomMovementMode=0; movement.GetGravityZ=function() return -784 end
+assert(math.abs(large.JumpZVelocity^2/(2*784)-3200)<0.0001)
+-- A different glider factor and stronger world/character gravity also work.
+movement.CustomMovementMode=4; movement.GliderGravityScale=0.1
+movement.GetGravityZ=function() return -1960*0.1 end
+overlapping={small}; begin(small,small,player)
+assert(math.abs(small.JumpZVelocity^2/(2*1960)-800)<0.0001)
+-- An old glider factor must not affect walking or ordinary falling.
+movement.CustomMovementMode=0; movement.GetGravityZ=function() return -980 end
+begin(small,small,player)
+assert(math.abs(small.JumpZVelocity^2/(2*980)-800)<0.0001)
+selected=nil
 player.IsPlayerControlled=function() return false end
 begin(small,small,player); assert(selected==nil)
 player.IsPlayerControlled=valid; player.IsLocallyControlled=function() return false end
@@ -82,4 +103,4 @@ begin(small,small,{IsValid=valid}) -- non-character overlap ignored
 assert(#messages==0)
 """)
 assert 'LaunchCharacter(' not in source
-print('PASS: original jump modifier and prepare montage, strongest overlap, exit/dismantle reselection, actual gravity, local players only, native map priority, recursion guard, no direct launch')
+print('PASS: original jump modifier and prepare montage, strongest overlap, exit/dismantle reselection, actual gravity and gliding-entry/landing regression, local players only, native map priority, recursion guard, no direct launch')

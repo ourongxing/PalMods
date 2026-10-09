@@ -107,6 +107,18 @@ local function SelectJumpSpot(context, _, other)
         if selected and not original then
             local movement = player.CharacterMovement
             local gravity = Valid(movement) and math.abs(movement:GetGravityZ()) or 0
+            -- Pal's GetGravityZ includes GliderGravityScale in custom mode 4.
+            -- Entry can happen while gliding, but the cached launch is used
+            -- after landing too. Remove only this temporary movement-mode
+            -- factor, preserving world gravity and character multipliers.
+            if Valid(movement) and movement.CustomMovementMode == 4 then
+                local scale = movement.GliderGravityScale
+                if type(scale) == "number" and scale == scale and scale > 0 and scale < math.huge then
+                    gravity = gravity / scale
+                else
+                    error("Invalid glider gravity scale; cannot compute normal launch gravity")
+                end
+            end
             if gravity < 1 then
                 selected = nil
             else
@@ -144,4 +156,4 @@ RegisterHook("/Script/Pal.PalTechnologyData:IsUnlockBuildObject", function() end
             return tech:IsUnlockRecipeTechnology(FName(TECHNOLOGY))
         end
     end)
-print("[Updraft Elevator] Wind lift v10: original jump-spot action and prepare montage; configurable heights; level 9 ancient technology, cost 1.\n")
+print("[Updraft Elevator] Wind lift v10: original jump-spot action and prepare montage; gliding-entry gravity fix; configurable heights; level 9 ancient technology, cost 1.\n")

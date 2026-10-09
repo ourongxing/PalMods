@@ -42,6 +42,11 @@ player={CharacterMovement=movement,IsValid=function() return true end,IsPlayerCo
         lua.globals().parent.BuildObjectId='CodexWindNative'+size
         lua.execute('hooks["/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorBeginOverlap"](wind,wind,player)')
         assert abs(lua.globals().measured-meters)<0.00001
+        lua.execute('''movement.CustomMovementMode=4; movement.GliderGravityScale=0.025
+movement.GetGravityZ=function() return -980*movement.GliderGravityScale end
+hooks["/Script/Pal.PalLevelGimmickJumpSpot:EventOnActorBeginOverlap"](wind,wind,player)''')
+        assert abs(lua.globals().measured-meters)<0.00001
+        lua.execute('movement.CustomMovementMode=0; movement.GetGravityZ=function() return -980 end')
     assert lua.globals().configReads==1 # no per-jump file reads or polling
 
 verify(default,[8,16,32])
