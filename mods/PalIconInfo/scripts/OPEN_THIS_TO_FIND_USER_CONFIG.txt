@@ -1,0 +1,12 @@
+The user-editable configuration files are not stored in this folder.
+
+They are located here:
+
+`UE4SS\Mods\shared\PalIconInfo\`
+
+Configuration files:
+
+* `PalIconInfoConfig.lua`
+* `PalBoxPageSkipConfig.lua`
+
+Settings customized in these files will be preserved and automatically carried over when updating to future versions, so you should not need to reconfigure them after each update.

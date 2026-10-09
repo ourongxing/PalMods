@@ -4,6 +4,7 @@ Palworld mod 源码仓库。
 
 | Mod | 功能 |
 | --- | --- |
+| [PalIconInfo](mods/PalIconInfo/README.md) | 终端仅显示浓缩星级，按实际星数水平居中；含原始 Mod 地址 |
 | [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
 | [PalCombo](mods/PalCombo/README.md) | 技能槽 1 → 2 连招，槽 3 填空 |
 | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
