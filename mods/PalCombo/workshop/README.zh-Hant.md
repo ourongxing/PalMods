@@ -9,3 +9,6 @@
 設定：`config.ini` 中的 `EarlyStartSeconds`，預設3秒，範圍0～30秒。設為0時，會等到技能欄位2完全冷卻後再開始。變更後請重新啟動遊戲。本模組不新增遊戲內文字。
 
 請先訂閱並啟用必要模組：UE4SSExperimentalPW。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。
+
+本模組依 GPL-3.0 授權條款開放原始碼。
+原始碼：https://github.com/ourongxing/PalMods

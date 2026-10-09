@@ -11,3 +11,6 @@
 当前分解功能支持单人及房主本机。多人任务定义同步尚未实现；库存扣除、手柄操作、退款和保存恢复仍待游戏内验收。未完成任务的 `Jobs/*.bwj` 应与存档一起保留。
 
 先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的mod管理中启用本mod，并重新启动游戏。
+
+本 mod 基于 GPL-3.0 协议开源。
+源码地址：https://github.com/ourongxing/PalMods

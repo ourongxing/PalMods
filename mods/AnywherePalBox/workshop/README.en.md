@@ -13,3 +13,6 @@ The default shortcut is K. Edit `Mods/NativeMods/UE4SS/Mods/AnywherePalBox/Scrip
 Verified in local single-player, including dungeons. Multiplayer has not been verified.
 
 Subscribe to and enable the required mod: UE4SSExperimentalPW. Then enable this mod in the game's Mod Management menu and restart the game.
+
+This mod is open source under the GPL-3.0 license.
+Source code: https://github.com/ourongxing/PalMods

@@ -9,7 +9,9 @@
 
 包内 `README.md` 提供简体中文、繁體中文、日本語、English 入口；四份玩家说明分别为
 `README.zh-Hans.md`、`README.zh-Hant.md`、`README.ja.md`、`README.en.md`。
-各模板的 `listing.json` 保存四种语言的工坊标题与介绍，可在发布时填写对应语言的页面。
+四份玩家说明是工坊标题与介绍的唯一维护入口；打包时自动生成 `listing.json`，可在发布时填写对应语言的页面。
+README 第一段为 `# 标题`，第二段为 `版本 · 作者`，后续正文作为简介；生成时省略版本/作者行，并去掉行内代码的反引号，保留段落与换行。
+GPL-3.0 开源说明及源码地址放在各语言 README 正文末尾。
 `listing.json` 是本仓库的发布素材，不是官方加载器的语言字段；`Info.json.ModName` 只保留英文与简体中文标题（英文 / 简体中文）。
 
 BetterWorkbench 分解界面的新增文字通过 Unreal 的 `GetCurrentLanguage()` 跟随游戏语言，
@@ -53,6 +55,8 @@ python tools/package_workshop.py all --author ourongxing --min-revision 82182 --
 
 无参数等同于 `all`。脚本使用已有构建产物，不编译、不安装、不创建 Steam 条目、不上传。
 默认输出 `dist/workshop/<Mod>/` 及 `dist/workshop/<Mod>.zip`，ZIP 根目录直接包含 `Info.json`。
+只生成工坊简介、不读取构建产物时，运行 `python tools/package_workshop.py all --listings-only`，
+输出为 `dist/workshop-listings/<Mod>/listing.json`；也可指定 mod 与 `--output-root`。
 已有输出会拒绝覆盖；更新时使用新的 `--output-root`，以便保留上次发布包。
 各 mod 的版本在各自模板中维护；`--version` 可临时统一覆盖本次所选包的版本。
 发布新版本时必须改变 `Version`，否则官方加载器可能不会重新安装。

@@ -11,3 +11,6 @@ Open your inventory and use the standard Easy Bulk Storage button or shortcut (R
 Currently tested in local single-player. Multiplayer requires this mod's DLL on the server and Lua on the client. Installing only on the client cannot change the server's storage rules. Multiplayer has not been verified.
 
 Subscribe to and enable the required mods: UE4SSExperimentalPW. Then enable this mod in the game’s Mod Management menu and restart the game.
+
+This mod is open source under the GPL-3.0 license.
+Source code: https://github.com/ourongxing/PalMods

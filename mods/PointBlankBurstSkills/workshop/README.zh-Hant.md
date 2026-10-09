@@ -9,3 +9,6 @@
 設定檔位於PalSchema安裝目錄中本模組的 `raw/point_blank_burst_skills.json`。變更後請完全重新啟動遊戲。若與其他修改相同技能施放距離的模組一起使用，結果會取決於載入順序。技能名稱沿用遊戲內的譯名。
 
 請先訂閱並啟用必要模組：UE4SSExperimentalPW, PalSchema。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。
+
+本模組依 GPL-3.0 授權條款開放原始碼。
+原始碼：https://github.com/ourongxing/PalMods

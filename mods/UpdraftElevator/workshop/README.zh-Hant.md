@@ -9,3 +9,6 @@
 設定：`Scripts/config.lua` 中的 `Small`、`Medium`、`Large`，單位為公尺，範圍0.1～1000，可使用小數。變更後請重新啟動遊戲。建築與科技文字由PalSchema依遊戲語言載入。
 
 請先訂閱並啟用必要模組：UE4SSExperimentalPW, PalSchema。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。
+
+本模組依 GPL-3.0 授權條款開放原始碼。
+原始碼：https://github.com/ourongxing/PalMods

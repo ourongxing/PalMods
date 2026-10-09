@@ -19,6 +19,27 @@ def read_json(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+def generate_listings(folder):
+    """Use localized README titles and bodies as the only listing sources."""
+    listings = {}
+    for language in LANGUAGES:
+        path = folder / f'README.{language}.md'
+        sections = re.split(r'\n\s*\n', path.read_text(encoding='utf-8-sig').strip(), maxsplit=2)
+        if (len(sections) != 3 or not re.fullmatch(r'# [^\n]+', sections[0])
+                or not re.fullmatch(r'\d+\.\d+\.\d+\S* · [^\n]+', sections[1])
+                or not sections[2].strip()):
+            raise ValueError(f'Expected title, version/author and body in {path}')
+        # The Workshop listings are plain text; preserve paragraphs and code contents.
+        description = re.sub(r'`([^`\n]+)`', r'\1', sections[2]).strip()
+        listings[language] = {'Title': sections[0][2:].strip(), 'Description': description}
+    return listings
+
+
+def write_listings(folder, listings):
+    (folder / 'listing.json').write_text(
+        json.dumps(listings, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+
+
 def digest(path):
     return hashlib.sha256(path.read_bytes()).hexdigest()
 
@@ -97,6 +118,8 @@ def validate(package):
     if not info['InstallRule']:
         raise ValueError('At least one InstallRule is required')
     listings = read_json(package / 'listing.json')
+    if listings != generate_listings(package):
+        raise ValueError('Workshop listing text differs from localized READMEs')
     for language in LANGUAGES:
         target_path(f'README.{language}.md')
         if not all(isinstance(listings[language].get(key), str) and listings[language][key].strip()
@@ -117,14 +140,14 @@ def validate(package):
 
 def prepare(mod, author=None, min_revision=None, version=None):
     template = MODS_ROOT / mod / 'workshop'
+    generate_listings(template)
     info = read_json(template / 'Info.json')
     for key, value in [('Author', author), ('MinRevision', min_revision), ('Version', version)]:
         if value is not None:
             info[key] = value
     files = payload(mod)
     files += [(template / 'thumbnail.png', 'thumbnail.png'),
-              (template / 'README.md', 'README.md'),
-              (template / 'listing.json', 'listing.json')]
+              (template / 'README.md', 'README.md')]
     files += [(template / f'README.{language}.md', f'README.{language}.md')
               for language in LANGUAGES]
     if mod == 'PalCombo':
@@ -153,6 +176,7 @@ def package_mod(mod, plan, output):
             else:
                 shutil.copy2(src, target)
         (stage / 'Info.json').write_text(json.dumps(info, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        write_listings(stage, generate_listings(stage))
         validate(stage)
         manifest = {
             'PackageName': mod, 'Version': info['Version'],
@@ -177,20 +201,31 @@ def main(argv=None):
     parser.add_argument('--author', help='Override template author for all selected mods')
     parser.add_argument('--min-revision', type=int, help='Minimum game title revision; confirm before publishing')
     parser.add_argument('--version', help='Override package version for all selected mods')
-    parser.add_argument('--output-root', type=Path, default=DIST_ROOT / 'workshop')
+    parser.add_argument('--listings-only', action='store_true', help='Generate listing.json files without builds or packages')
+    parser.add_argument('--output-root', type=Path, help='Output directory (default: dist/workshop or dist/workshop-listings)')
     args = parser.parse_args(argv)
     for mod in args.mods:
         if mod not in (*MODS, 'all'):
             parser.error(f'Unknown mod: {mod}')
     selected = MODS if not args.mods or 'all' in args.mods else tuple(dict.fromkeys(args.mods))
+    output = args.output_root or DIST_ROOT / ('workshop-listings' if args.listings_only else 'workshop')
     try:
         # Preflight all source inputs and destinations before creating any package.
-        plans = {mod: prepare(mod, args.author, args.min_revision, args.version) for mod in selected}
+        if args.listings_only:
+            plans = {mod: generate_listings(MODS_ROOT / mod / 'workshop') for mod in selected}
+        else:
+            plans = {mod: prepare(mod, args.author, args.min_revision, args.version) for mod in selected}
         for mod in selected:
-            if (args.output_root / mod).exists() or (args.output_root / (mod + '.zip')).exists():
+            if (output / mod).exists() or (output / (mod + '.zip')).exists():
                 raise FileExistsError(f'Output already exists for {mod}; use a fresh --output-root')
         for mod in selected:
-            print(f'Packaged: {package_mod(mod, plans[mod], args.output_root)}')
+            if args.listings_only:
+                folder = output / mod
+                folder.mkdir(parents=True, exist_ok=True)
+                write_listings(folder, plans[mod])
+                print(f'Generated: {folder / "listing.json"}')
+            else:
+                print(f'Packaged: {package_mod(mod, plans[mod], output)}')
     except (OSError, ValueError, KeyError) as error:
         print(f'Workshop packaging failed: {error}', file=sys.stderr)
         return 1

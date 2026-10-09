@@ -11,3 +11,6 @@
 目前已在本机单人游戏测试。多人游戏需要服务器加载本 mod 的 DLL、客户端加载 Lua；仅客户端安装无法改变服务器的收纳规则，多人游戏尚未验证。
 
 先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的mod管理中启用本mod，并重新启动游戏。
+
+本 mod 基于 GPL-3.0 协议开源。
+源码地址：https://github.com/ourongxing/PalMods

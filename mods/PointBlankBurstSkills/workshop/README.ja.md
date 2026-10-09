@@ -9,3 +9,6 @@
 設定：PalSchemaのインストール先にある、このmodの `raw/point_blank_burst_skills.json`。変更後はゲームを完全に再起動してください。同じスキルの発動距離を変更するmodと併用した場合、読み込み順によって結果が変わります。スキル名はゲーム内の表記をそのまま使用します。
 
 必要なmod（UE4SSExperimentalPW, PalSchema）をサブスクライブして有効にしてください。その後、ゲームのmod管理でこのmodを有効にし、ゲームを再起動してください。
+
+このmodは GPL-3.0 ライセンスでソースコードを公開しています。
+ソースコード：https://github.com/ourongxing/PalMods

@@ -15,3 +15,15 @@
 
 - All commit messages must follow Conventional Commits: `<type>(<scope>): <summary>`.
 - Example: `chore(init): initial import`.
+
+### Workshop Listings
+
+- Localized `mods/<Mod>/workshop/README.<language>.md` files are the only
+  source of Workshop listing titles and descriptions.
+- Do not directly edit `listing.json`. Change the corresponding localized
+  README files, then regenerate the listings with `tools/package_workshop.py`.
+- Run `python tools/package_workshop.py all --listings-only` to generate
+  `dist/workshop-listings/<Mod>/listing.json` without building mods. If output
+  already exists, use a fresh `--output-root` directory.
+- Full Workshop packaging also generates `listing.json` automatically from
+  the localized READMEs. Keep generated listings out of the source templates.

@@ -13,3 +13,6 @@
 已在本機單人遊戲驗證，包括地下城。多人遊戲尚未驗證。
 
 請先訂閱並啟用必要模組：UE4SSExperimentalPW。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。
+
+本模組依 GPL-3.0 授權條款開放原始碼。
+原始碼：https://github.com/ourongxing/PalMods

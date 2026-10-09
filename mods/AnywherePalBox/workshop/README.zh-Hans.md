@@ -13,3 +13,6 @@
 已在本机单人游戏验证，包括地下城。多人游戏尚未验证。
 
 先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的 mod 管理中启用本 mod，并重新启动游戏。
+
+本 mod 基于 GPL-3.0 协议开源。
+源码地址：https://github.com/ourongxing/PalMods

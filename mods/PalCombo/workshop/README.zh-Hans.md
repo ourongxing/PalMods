@@ -9,3 +9,6 @@
 配置：`config.ini` 中的 `EarlyStartSeconds`，默认3秒，范围0～30秒。设为0时等待槽2完全就绪。修改后重启游戏。此 mod 不添加新的游戏内文字。
 
 先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的mod管理中启用本mod，并重新启动游戏。
+
+本 mod 基于 GPL-3.0 协议开源。
+源码地址：https://github.com/ourongxing/PalMods

@@ -11,3 +11,6 @@ Configuration: `Scripts/config.lua`. `Disassembly.Language` defaults to `auto` a
 Disassembly currently supports single-player and the multiplayer host. Multiplayer task-definition synchronization is not implemented. Inventory deductions, controller input, material returns, and save restoration still require in-game verification. Keep `Jobs/*.bwj` for unfinished tasks alongside your save files.
 
 Subscribe to and enable the required mods: UE4SSExperimentalPW. Then enable this mod in the game’s Mod Management menu and restart the game.
+
+This mod is open source under the GPL-3.0 license.
+Source code: https://github.com/ourongxing/PalMods

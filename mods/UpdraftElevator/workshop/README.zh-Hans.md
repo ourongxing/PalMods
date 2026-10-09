@@ -9,3 +9,6 @@
 配置：`Scripts/config.lua` 中的 `Small`、`Medium`、`Large`，单位为米，范围0.1～1000，支持小数。修改后重启游戏。建筑和科技文字由PalSchema跟随游戏语言加载。
 
 先订阅并启用依赖：UE4SSExperimentalPW, PalSchema。然后在游戏的mod管理中启用本mod，并重新启动游戏。
+
+本 mod 基于 GPL-3.0 协议开源。
+源码地址：https://github.com/ourongxing/PalMods

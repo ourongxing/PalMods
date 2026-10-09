@@ -9,3 +9,6 @@
 設定：`Scripts/config.lua` の `Small`、`Medium`、`Large`。単位はm、範囲は0.1～1000で、小数も指定できます。変更後はゲームを再起動してください。建築とテクノロジーの表示は、PalSchemaがゲームの言語に合わせて読み込みます。
 
 必要なmod（UE4SSExperimentalPW, PalSchema）をサブスクライブして有効にしてください。その後、ゲームのmod管理でこのmodを有効にし、ゲームを再起動してください。
+
+このmodは GPL-3.0 ライセンスでソースコードを公開しています。
+ソースコード：https://github.com/ourongxing/PalMods

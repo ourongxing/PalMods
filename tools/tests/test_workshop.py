@@ -14,6 +14,40 @@ import package_workshop as workshop
 
 
 class WorkshopTests(unittest.TestCase):
+    def test_readme_listing_conversion_and_missing_body(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            for language in workshop.LANGUAGES:
+                (folder / f'README.{language}.md').write_text(
+                    '# Sample mod\n\n1.0.0 · author\n\nUse `Hotkey = "K"`.\n\n'
+                    'GPL-3.0\nSource: https://github.com/ourongxing/PalMods\n', encoding='utf-8')
+            listings = workshop.generate_listings(folder)
+            self.assertEqual(listings['en'], {
+                'Title': 'Sample mod',
+                'Description': 'Use Hotkey = "K".\n\nGPL-3.0\nSource: https://github.com/ourongxing/PalMods',
+            })
+            (folder / 'README.en.md').write_text('# Sample mod\n\n1.0.0 · author\n', encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'README.en.md'):
+                workshop.generate_listings(folder)
+
+    def test_listings_only_needs_no_build_and_preflights_all_languages(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            output = Path(temporary) / 'output'
+            with patch.object(workshop, 'payload', side_effect=AssertionError('Build inputs requested')):
+                with contextlib.redirect_stdout(io.StringIO()):
+                    self.assertEqual(workshop.main(['--listings-only', '--output-root', str(output)]), 0)
+            for mod in workshop.MODS:
+                self.assertEqual(workshop.read_json(output / mod / 'listing.json'),
+                                 workshop.generate_listings(workshop.MODS_ROOT / mod / 'workshop'))
+            self.assertEqual(len(list(output.rglob('*.*'))), len(workshop.MODS))
+            with contextlib.redirect_stderr(io.StringIO()):
+                self.assertEqual(workshop.main(['--listings-only', '--output-root', str(output)]), 1)
+            missing_output = Path(temporary) / 'missing-output'
+            with patch.object(workshop, 'generate_listings', side_effect=[{}, ValueError('Missing body')]):
+                with contextlib.redirect_stderr(io.StringIO()):
+                    self.assertEqual(workshop.main(['--listings-only', '--output-root', str(missing_output)]), 1)
+            self.assertFalse(missing_output.exists())
+
     def test_no_mod_arguments_selects_all(self):
         with patch.object(workshop, 'prepare', return_value=({}, [])) as prepare:
             with patch.object(workshop, 'package_mod') as package:
@@ -76,11 +110,21 @@ class WorkshopTests(unittest.TestCase):
         info = workshop.read_json(template / 'Info.json')
         (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
         (folder / 'thumbnail.png').write_bytes((template / 'thumbnail.png').read_bytes())
-        (folder / 'listing.json').write_bytes((template / 'listing.json').read_bytes())
         for language in workshop.LANGUAGES:
             (folder / f'README.{language}.md').write_bytes((template / f'README.{language}.md').read_bytes())
+        workshop.write_listings(folder, workshop.generate_listings(folder))
         (folder / 'PalSchema/raw').mkdir(parents=True)
         return info
+
+    def test_reject_stale_listing(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            self.make_schema_package(folder)
+            listings = workshop.read_json(folder / 'listing.json')
+            listings['en']['Description'] = 'Stale description'
+            workshop.write_listings(folder, listings)
+            with self.assertRaisesRegex(ValueError, 'differs from localized READMEs'):
+                workshop.validate(folder)
 
     def test_reject_missing_targets_traversal_and_wrong_schema_nesting(self):
         with tempfile.TemporaryDirectory() as temporary:
