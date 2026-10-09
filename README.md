@@ -170,3 +170,8 @@ Expand-Archive .tools/sdk-2281fa31/source.zip -DestinationPath .tools/sdk-2281fa
 迁移时保留完整 SDK 源码、共享包引用的库、参考头文件、repak、游戏运行库、存档和 `BetterWorkbench/Jobs/`。
 UE 缓存、生成的 `native/Content/`、Python 环境及发布包可重建。
 归档 `.build/` 中的部署备份和验证记录，再清理编译缓存；跨电脑重新生成 CMake 工程。
+
+## 开源协议
+
+本项目基于 [GNU GPL-3.0](LICENSE) 协议开源。
+第三方代码与资源保留其原有许可证和版权声明，包括 PalCombo 与 PalSchema 的 MIT 许可证。

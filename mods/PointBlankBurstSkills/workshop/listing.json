@@ -1,18 +1,18 @@
 {
   "zh-Hans": {
     "Title": "爆发技能贴脸释放",
-    "Description": "让帕鲁靠近目标后再使用熔岩爆发、岩爆和毒雨。\n\n将这三个技能的AI最大施放距离设置为50游戏单位，约0.5米。技能威力、冷却、攻击范围及伤害判定保持原版设置。\n\n配置：PalSchema安装目录中本mod的 raw/point_blank_burst_skills.json。修改后完全重启游戏。其他mod若修改同一技能的最大施放距离，最终结果取决于加载顺序。技能名称继续使用游戏官方译名。\n\n先订阅并启用依赖：UE4SSExperimentalPW, PalSchema。然后在游戏的mod管理中启用本mod，并重新启动游戏。"
+    "Description": "让帕鲁靠近目标后再使用熔岩爆发、岩爆和毒雨。\n\n将这三个技能的AI最大施放距离设置为50游戏单位，约0.5米。技能威力、冷却、攻击范围及伤害判定保持原版设置。\n\n配置：PalSchema安装目录中本mod的 raw/point_blank_burst_skills.json。修改后完全重启游戏。其他mod若修改同一技能的最大施放距离，最终结果取决于加载顺序。技能名称继续使用游戏官方译名。\n\n先订阅并启用依赖：UE4SSExperimentalPW, PalSchema。然后在游戏的mod管理中启用本mod，并重新启动游戏。\n\n本 mod 基于 GPL-3.0 协议开源。\n源码地址：https://github.com/ourongxing/PalMods"
   },
   "ja": {
     "Title": "範囲スキルを至近距離で使用",
-    "Description": "パルが敵に近づいてから、ボルカニックレイン、ロックバースト、ポイズンシャワーを使うようになります。\n\nこの3つのスキルについて、AIが発動できる最大距離をゲーム内の50単位（約0.5m）に変更します。威力、クールタイム、攻撃範囲、ダメージ判定は元のままです。\n\n設定：PalSchemaのインストール先にある、このmodの raw/point_blank_burst_skills.json。変更後はゲームを完全に再起動してください。同じスキルの発動距離を変更するmodと併用した場合、読み込み順によって結果が変わります。スキル名はゲーム内の表記をそのまま使用します。\n\n必要なmod（UE4SSExperimentalPW, PalSchema）をサブスクライブして有効にしてください。その後、ゲームのmod管理でこのmodを有効にし、ゲームを再起動してください。"
+    "Description": "パルが敵に近づいてから、ボルカニックレイン、ロックバースト、ポイズンシャワーを使うようになります。\n\nこの3つのスキルについて、AIが発動できる最大距離をゲーム内の50単位（約0.5m）に変更します。威力、クールタイム、攻撃範囲、ダメージ判定は元のままです。\n\n設定：PalSchemaのインストール先にある、このmodの raw/point_blank_burst_skills.json。変更後はゲームを完全に再起動してください。同じスキルの発動距離を変更するmodと併用した場合、読み込み順によって結果が変わります。スキル名はゲーム内の表記をそのまま使用します。\n\n必要なmod（UE4SSExperimentalPW, PalSchema）をサブスクライブして有効にしてください。その後、ゲームのmod管理でこのmodを有効にし、ゲームを再起動してください。\n\nこのmodは GPL-3.0 ライセンスでソースコードを公開しています。\nソースコード：https://github.com/ourongxing/PalMods"
   },
   "en": {
     "Title": "Point-Blank Burst Skills",
-    "Description": "Makes Pals move close to their target before using Volcanic Rain, Rockburst, or Poison Shower.\n\nSets the AI's maximum activation range for these three skills to 50 game units, approximately 0.5 m. Power, cooldowns, attack areas, and damage detection retain their original values.\n\nConfiguration: this mod's raw/point_blank_burst_skills.json in the PalSchema installation directory. Fully restart the game after changes. If another mod changes the same skills' activation range, the result depends on load order. Skill names retain the game's translations.\n\nSubscribe to and enable the required mods: UE4SSExperimentalPW, PalSchema. Then enable this mod in the game’s Mod Management menu and restart the game."
+    "Description": "Makes Pals move close to their target before using Volcanic Rain, Rockburst, or Poison Shower.\n\nSets the AI's maximum activation range for these three skills to 50 game units, approximately 0.5 m. Power, cooldowns, attack areas, and damage detection retain their original values.\n\nConfiguration: this mod's raw/point_blank_burst_skills.json in the PalSchema installation directory. Fully restart the game after changes. If another mod changes the same skills' activation range, the result depends on load order. Skill names retain the game's translations.\n\nSubscribe to and enable the required mods: UE4SSExperimentalPW, PalSchema. Then enable this mod in the game’s Mod Management menu and restart the game.\n\nThis mod is open source under the GPL-3.0 license.\nSource code: https://github.com/ourongxing/PalMods"
   },
   "zh-Hant": {
     "Title": "爆發技能近身施放",
-    "Description": "讓帕魯靠近目標後，再使用熔岩爆發、岩爆與毒雨。\n\n將這三個技能的AI最大施放距離設為50個遊戲單位，約0.5公尺。技能威力、冷卻時間、攻擊範圍與傷害判定維持原版設定。\n\n設定檔位於PalSchema安裝目錄中本模組的 raw/point_blank_burst_skills.json。變更後請完全重新啟動遊戲。若與其他修改相同技能施放距離的模組一起使用，結果會取決於載入順序。技能名稱沿用遊戲內的譯名。\n\n請先訂閱並啟用必要模組：UE4SSExperimentalPW, PalSchema。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。"
+    "Description": "讓帕魯靠近目標後，再使用熔岩爆發、岩爆與毒雨。\n\n將這三個技能的AI最大施放距離設為50個遊戲單位，約0.5公尺。技能威力、冷卻時間、攻擊範圍與傷害判定維持原版設定。\n\n設定檔位於PalSchema安裝目錄中本模組的 raw/point_blank_burst_skills.json。變更後請完全重新啟動遊戲。若與其他修改相同技能施放距離的模組一起使用，結果會取決於載入順序。技能名稱沿用遊戲內的譯名。\n\n請先訂閱並啟用必要模組：UE4SSExperimentalPW, PalSchema。接著在遊戲的模組管理中啟用本模組，並重新啟動遊戲。\n\n本模組依 GPL-3.0 授權條款開放原始碼。\n原始碼：https://github.com/ourongxing/PalMods"
   }
 }
