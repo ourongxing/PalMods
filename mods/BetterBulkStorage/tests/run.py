@@ -11,145 +11,107 @@ from build import generate_guard
 source = ROOT / 'mods/BetterBulkStorage/mod/Scripts/main.lua'
 audit(source.read_text(encoding='utf-8'), UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
 try:
-    audit(source.read_text(encoding='utf-8').replace('GetConcreteModel(false)', 'GetConcreteModel()'),
+    audit(source.read_text(encoding='utf-8').replace('GetPalmi(world)', 'GetPalmi()'),
           UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
 except AssertionError as error:
-    assert 'GetConcreteModel: expected 1 arguments, found 0' in str(error)
+    assert 'GetPalmi: expected 1 arguments, found 0' in str(error)
 else:
-    raise AssertionError('Interface audit failed to catch the reported missing-argument regression')
+    raise AssertionError('Interface audit failed to catch a missing argument')
 
 if GAME_EXE.exists():
     generate_guard()
 else:
     print('SKIP: native instruction audit requires the supported installed game')
 lua = load_lua_runtime()(unpack_returned_tuples=True)
-lua.execute(r'''
+mock_setup = r'''
 READY, IN_BASE, IS_INVENTORY, IN_SCOPE = true, true, true, true
 IN_CANDIDATE_SCOPE=false
 HOOKS={}
 COUNTS = {stone=7, wood=4, absent=0, large=3000000000, PalEgg=3}
+COUNT_CALLS={}
 function name(id) return {ToString=function() return id end} end
 FName=name
 function array(values)
-    values.ForEach=function(self, cb) for i,v in ipairs(self) do cb(i,{get=function() return v end}) end end
-    values.Empty=function(self) for i=#self,1,-1 do self[i]=nil end; self.emptied=true end
-    return values
+ values.ForEach=function(self, cb) for i,v in ipairs(self) do cb(i,{get=function() return v end}) end end
+ values.Empty=function(self) for i=#self,1,-1 do self[i]=nil end; self.emptied=true end
+ return values
 end
 function param(value) return {get=function() return value end, set=function(self,v) self.written=v end} end
 WORLD={IsValid=function() return true end, IsA=function() return IS_INVENTORY end}
-UTILITY={CountLocalPlayerInventoryItemNum64=function(self,world,n) return COUNTS[n:ToString()] or 0 end}
+UTILITY={CountLocalPlayerInventoryItemNum64=function(self,world,n)
+ local id=n:ToString(); COUNT_CALLS[id]=(COUNT_CALLS[id] or 0)+1; return COUNTS[id] or 0 end}
 package.loadlib=function(path,symbol)
-    assert(path:match('/dlls/main.dll$'))
-    assert(symbol=='luaopen_BetterBulkStorage')
-    return function() return function() return READY end, function() return IN_SCOPE end,
-        function() return IN_CANDIDATE_SCOPE end,
-        function(container,slot,data) return not DENIED[data] end end
+ assert(path:match('/dlls/main.dll$') and symbol=='luaopen_BetterBulkStorage')
+ return function() return function() return READY end, function() return IN_SCOPE end,
+  function() return IN_CANDIDATE_SCOPE end end
 end
-DENIED={}
-DATA={IsValid=function() return true end,GetAddress=function() return DATA_ID end}
-IDS={IsValid=function() return true end,GetStaticItemData=function(self,n) DATA_ID=n:ToString(); return DATA end}
-local function oid(n) return {A=n,B=0,C=0,D=0} end
-SLOT={IsValid=function() return true end,IsEmpty=function() return true end,GetAddress=function() return 2 end}
-CONTAINER={IsValid=function() return true end,GetAddress=function() return 1 end,ItemSlotArray=array({SLOT})}
-MODULE={IsValid=function() return true end,GetContainer=function() return CONTAINER end}
-CHEST={IsValid=function() return true end,IsA=function() return true end,
- GetBaseCampIdBelongTo=function() return oid(10) end,IsLockedPrivateByNot=function() return PRIVATE_LOCK end,
- GetGuildSecurityModule=function() return nil end,GetPasswordLockModule=function() return nil end,
- GetItemContainerModule=function() return MODULE end}
-MAPMODEL={IsValid=function() return true end,GetConcreteModel=function(self,...)
- assert(select('#',...)==1 and (...)==false, 'GetConcreteModel requires bIsForce=false')
- return CHEST end}
-MAPS={IsValid=function() return true end,FindModel=function() return MAPMODEL end}
-COLLECTION={IsValid=function() return true end,MapObjectInstanceIdRepInfoArray={Items=array({{InstanceId=oid(100)}})}}
-TARGET={IsValid=function() return true end,GetId=function() return oid(10) end,MapObjectCollection=COLLECTION}
-CHECK={IsValid=function() return true end,GetInsideBaseCampModel=function() return TARGET end}
+-- Any destination content/permission inspection fails the test. This applies
+-- equally to full, forbidden, locked and unloaded chests, on every refresh.
+local function forbidden() error('candidate UI must not inspect chest contents or permissions') end
+TARGET=setmetatable({IsValid=function() return true end}, {__index=forbidden})
+PHYSICAL_BASE=TARGET
+CHECK={IsValid=function() return true end,GetOwner=function() return OWNER end}
+CHECK.GetInsideBaseCampModel=function(self)
+ local hook=HOOKS['/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel']
+ return hook(param(self),param(PHYSICAL_BASE)) or PHYSICAL_BASE
+end
 MOCKPLAYER={IsValid=function() return true end,InsideBaseCampCheckComponent=CHECK}
-CONTROLLER={IsValid=function() return true end,GetPlayerUId=function() return oid(1) end}
 PAL={IsValid=function() return true end,GetPalmi=function() return MOCKPLAYER end,
- GetMapObjectManager=function() return MAPS end,GetLocalPalPlayerController=function() return CONTROLLER end,
- GetItemIDManager=function() return IDS end}
+ GetMapObjectManager=forbidden,GetItemIDManager=forbidden,GetLocalPalPlayerController=forbidden}
 function StaticFindObject() return PAL end
 function RegisterHook(path, pre, post) HOOKS[path]=post end
 HOOK_PATH='/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemInfos'
 function run(ids, current)
-    WORLD.CurrentInBaseCamp=IN_BASE
-    local names={} for _,id in ipairs(ids) do names[#names+1]=name(id) end
-    local old=array(current or {})
-    local output=param(old)
-    HOOKS[HOOK_PATH](param(UTILITY),param(WORLD),param(array(names)),output)
-    return output, old
+ WORLD.CurrentInBaseCamp=IN_BASE
+ local names={} for _,id in ipairs(ids) do names[#names+1]=name(id) end
+ local old=array(current or {})
+ local output=param(old)
+ HOOKS[HOOK_PATH](param(UTILITY),param(WORLD),param(array(names)),output)
+ return output, old
 end
-''')
+'''
+lua.execute(mock_setup)
 lua.execute('assert(load(..., "@/mock/BetterBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
 lua.execute(r'''
 local existing={StaticItemId=name('wood'),Num=100}
-local output,old=run({'stone','stone','wood','absent','None'},{existing})
+local output,old=run({'stone','stone','wood','absent','absent','None'},{existing})
 assert(old.emptied and #output.written==2)
 assert(output.written[1].StaticItemId:ToString()=='wood' and output.written[1].Num==100)
 assert(output.written[2].StaticItemId:ToString()=='stone' and output.written[2].Num==7)
-local unchanged=run({'wood'},{existing}); assert(not unchanged.written)
-local clamped=run({'large'}); assert(clamped.written[1].Num==2147483647)
-READY=false; local disabled=run({'stone'}); assert(not disabled.written); READY=true
-IN_BASE=false; local outside=run({'stone'}); assert(not outside.written); IN_BASE=true
-IS_INVENTORY=false; local other=run({'stone'}); assert(not other.written); IS_INVENTORY=true
-local none=run({'absent','None'}); assert(not none.written)
-
--- Destination restrictions remove both original and added candidates. Other
--- bases have no influence; switching bases/filters/space is read each call.
-DENIED.stone=true
-local blocked=run({'stone','wood'},{{StaticItemId=name('stone'),Num=7}})
-assert(#blocked.written==1 and blocked.written[1].StaticItemId:ToString()=='wood')
-local onlyBlocked=run({'stone'},{{StaticItemId=name('stone'),Num=7}}); assert(#onlyBlocked.written==0)
-DENIED.stone=nil
-CONTAINER.ItemSlotArray=array({})
-local full=run({'stone'},{{StaticItemId=name('stone'),Num=7}}); assert(#full.written==0)
-CONTAINER.ItemSlotArray=array({SLOT})
-SLOT.IsEmpty=function() return false end
-SLOT.IsMaxStack=function() return false end
-SLOT.GetItemId=function() return {StaticId=name('wood'),DynamicId={LocalIdInCreatedWorld={A=0,B=0,C=0,D=0}}} end
-local matching=run({'stone','wood'}); assert(#matching.written==1 and matching.written[1].StaticItemId:ToString()=='wood')
-SLOT.IsMaxStack=function() return true end
-assert(not run({'wood'}).written)
-SLOT.IsEmpty=function() return true end
-PRIVATE_LOCK=true; assert(not run({'stone'}).written); PRIVATE_LOCK=false
+assert(COUNT_CALLS.stone==1 and COUNT_CALLS.absent==1 and not COUNT_CALLS.wood)
+assert(not run({'wood'},{existing}).written)
+assert(run({'large'}).written[1].Num==2147483647)
+assert(not run({'absent','None'}).written)
+READY=false; assert(not run({'stone'}).written); READY=true
+IN_BASE=false; assert(not run({'stone'}).written); IN_BASE=true
+IS_INVENTORY=false; assert(not run({'stone'}).written); IS_INVENTORY=true
+IN_SCOPE=false; assert(not run({'stone'}).written); IN_SCOPE=true
+-- Every original candidate is retained even if the destination cannot fit it.
+local original={StaticItemId=name('absent'),Num=50}
+local retained=run({'stone'},{original})
+assert(#retained.written==2 and retained.written[1].Num==50)
+-- Repeated transfer-driven refreshes remain independent of base/chest size.
+for _=1,100 do assert(run({'stone','PalEgg','stone'}).written[2].Num==3) end
+local count=UTILITY.CountLocalPlayerInventoryItemNum64
+UTILITY.CountLocalPlayerInventoryItemNum64=function() error('count unavailable') end
+local failed, previous=run({'stone'},{existing})
+assert(not failed.written and not previous.emptied)
+UTILITY.CountLocalPlayerInventoryItemNum64=count
 assert(run({'stone'}).written[1].Num==7)
-TARGET.GetId=function() return {A=20,B=0,C=0,D=0} end
-local otherBase=run({'stone'},{{StaticItemId=name('stone'),Num=7}}); assert(#otherBase.written==0)
-TARGET.GetId=function() return {A=10,B=0,C=0,D=0} end
-local security={IsValid=function() return true end,CheckGuildSecurityAccess=function() return false end}
-CHEST.GetGuildSecurityModule=function() return security end
-assert(not run({'stone'}).written)
-CHEST.GetGuildSecurityModule=function() return nil end
-local lock={IsValid=function() return true end,GetLockState=function() return 0 end,PlayerInfos=array({})}
-CHEST.GetPasswordLockModule=function() return lock end
-assert(not run({'stone'}).written)
-lock.PlayerInfos=array({{PlayerUId={A=1,B=0,C=0,D=0},TrySuccessCache=true}})
-assert(run({'stone'}).written[1].Num==7)
-CHEST.GetPasswordLockModule=function() return nil end
-MAPMODEL.IsValid=function() return false end
-local unknown=run({'stone','wood'},{{StaticItemId=name('wood'),Num=4}}); assert(not unknown.written)
-MAPMODEL.IsValid=function() return true end
-IN_SCOPE=false
-assert(not run({'stone'}).written)
-IN_SCOPE=true
 
--- Pal eggs must reach the static-name candidate collector without changing
--- dynamic classification in unrelated UI/gameplay, or for equipment.
 local dynamicHook=HOOKS['/Script/Pal.PalStaticItemDataBase:HasDynamicItemClass']
 local egg={TypeB=30, IsValid=function() return true end}
 local weapon={TypeB=4, IsValid=function() return true end}
-assert(dynamicHook(param(egg),param(true))==nil)
-IN_SCOPE=true -- inventory execution alone is not enough
 assert(dynamicHook(param(egg),param(true))==nil)
 IN_CANDIDATE_SCOPE=true
 assert(dynamicHook(param(egg),param(true))==false)
 assert(dynamicHook(param(weapon),param(true))==nil)
 assert(dynamicHook(param(egg),param(false))==nil)
 assert(dynamicHook(param(nil),param(true))==nil)
-local eggs=run({'PalEgg','PalEgg'}); assert(#eggs.written==1 and eggs.written[1].Num==3)
+assert(#run({'PalEgg','PalEgg'}).written==1)
 READY=false; assert(dynamicHook(param(egg),param(true))==nil); READY=true
 IN_CANDIDATE_SCOPE=false; IN_SCOPE=false
-assert(dynamicHook(param(egg),param(true))==nil) -- cancel/return restores classification
+assert(dynamicHook(param(egg),param(true))==nil)
 
 -- Exercise the actual native getter companions and guild/model selection.
 local function object(value) value.IsValid=function() return true end; return value end
@@ -205,50 +167,35 @@ READY=false; assert(modelHook(param(COMPONENT),param(nil))==nil); READY=true
 IN_SCOPE=false; assert(idHook(param(COMPONENT),param(id(0)))==nil) -- scope ends at cancel/return
 IN_SCOPE=true; IN_BASE=true; local remote=run({'stone'}); assert(remote.written[1].Num==7)
 
--- Leaving a secondary base must restore remote candidates even when no chest
--- model is loaded. The location read must bypass our own scoped getter fallback.
+
+-- Both physical and remote bases admit candidates without chest inspection.
 GUILD.BaseCampIds=array({id(10),id(20)})
 BASES[10].GetBuildingNum=function() return 100 end
 BASES[20].GetBuildingNum=function() return 10 end
-CHECK.GetOwner=function() return OWNER end
-CHECK.GetInsideBaseCampModel=function()
- assert(idHook(param(COMPONENT),param(id(0)))==nil) -- neither getter may fake the physical location
- return modelHook(param(COMPONENT),param(nil))
-end
-MAPS.FindModel=function() error('remote operation must not inspect local chest models') end
-DENIED.stone=true -- secondary-base filter must not leak into the remote UI
-local outside=run({'stone','PalEgg'})
-assert(#outside.written==2 and outside.written[1].Num==7 and outside.written[2].Num==3)
-assert(idHook(param(COMPONENT),param(id(0))).A==10)
-GUILD.BaseCampIds=array({})
-assert(not run({'stone'}).written) -- no target guild base
-GUILD.BaseCampIds=array({id(10),id(20)})
-CHECK.GetInsideBaseCampModel=function() error('location unavailable') end
-assert(not run({'stone'}).written)
-assert(modelHook(param(COMPONENT),param(nil))==BASES[10]) -- failure must restore getter fallback
-CHECK.GetInsideBaseCampModel=function() return TARGET end
-MAPS.FindModel=function() return MAPMODEL end
-local backInside=run({'stone'},{{StaticItemId=name('stone'),Num=7}})
-assert(#backInside.written==0) -- actual current base still filters
-DENIED.stone=nil
-
--- Repeat the full transition to catch retained base/slot/filter state.
 for _=1,3 do
- CHECK.GetInsideBaseCampModel=function() return TARGET end
- DENIED.stone=true
- assert(#run({'stone'},{{StaticItemId=name('stone'),Num=7}}).written==0)
- CHECK.GetInsideBaseCampModel=function()
-  assert(idHook(param(COMPONENT),param(id(0)))==nil)
-  return modelHook(param(COMPONENT),param(nil))
- end
- assert(run({'stone'}).written[1].Num==7)
+ PHYSICAL_BASE=TARGET
+ assert(run({'stone','PalEgg'}).written[2].Num==3)
+ PHYSICAL_BASE=nil
+ assert(run({'stone','PalEgg'}).written[2].Num==3)
+ assert(idHook(param(COMPONENT),param(id(0))).A==10)
  IN_SCOPE=false
- assert(idHook(param(COMPONENT),param(id(0)))==nil)
  assert(not run({'stone'}).written)
+ assert(idHook(param(COMPONENT),param(id(0)))==nil)
  IN_SCOPE=true
 end
+GUILD.BaseCampIds=array({})
+assert(not run({'stone'}).written) -- no physical or eligible guild base
+PHYSICAL_BASE=TARGET
+assert(run({'stone'}).written[1].Num==7) -- current base still wins
+PHYSICAL_BASE=nil
+GUILD.BaseCampIds=array({id(10)})
+local getter=CHECK.GetInsideBaseCampModel
+CHECK.GetInsideBaseCampModel=function() error('location unavailable') end
+assert(not run({'stone'}).written)
+CHECK.GetInsideBaseCampModel=getter
+assert(run({'stone'}).written[1].Num==7)
 ''')
 lua2 = load_lua_runtime()(unpack_returned_tuples=True)
 lua2.execute('package.loadlib=function() return nil,"disabled" end; RegisterHook=function() error("must not register") end')
 lua2.execute('assert(load(..., "@/mock/BetterBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
-print('PASS: native audit, destination restrictions/space, leave-base remote candidates, scoped eggs and guild base selection')
+print('PASS: native audit, scan-free candidates, deduplication, original candidates retained, base transitions, scoped eggs and guild base selection')

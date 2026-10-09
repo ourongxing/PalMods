@@ -20,7 +20,6 @@ namespace {
 std::atomic_bool installed{false};
 std::atomic_bool scope_ready{false};
 std::uint8_t* target{};
-std::uint8_t* game_base{};
 thread_local unsigned storage_depth{};
 thread_local unsigned candidate_depth{};
 std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
@@ -60,26 +59,6 @@ int native_ready(lua_State* state) {
     return 1;
 }
 
-// Same read-only permission/filter predicates as native transfer validation.
-int accepts_item(lua_State* state) {
-    bool accepted = false;
-    if (installed.load() && storage_depth > 0 && game_base) {
-        auto* container = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 1));
-        auto* slot = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 2));
-        auto* data = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 3));
-        using Permission = bool (*)(void*, void*);
-        using Filter = bool (*)(void*, void*, void*);
-        auto permission = reinterpret_cast<Permission>(game_base + guard::permission_rva);
-        auto filter = reinterpret_cast<Filter>(game_base + guard::filter_rva);
-        accepted = container && slot && data
-            && permission(data, container + 0x80)
-            && permission(data, slot + 0x160)
-            && filter(container, data, container + 0xc8);
-    }
-    lua_pushboolean(state, accepted);
-    return 1;
-}
-
 class BetterBulkStorage final : public RC::CppUserModBase {
 public:
     BetterBulkStorage() {
@@ -112,7 +91,6 @@ public:
             return;
         }
         installed.store(true);
-        game_base = base;
         // Track synchronous Blueprint execution, including nested delegate calls.
         // Never pretend that the player is inside a base for unrelated gameplay.
         auto enter = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame& frame, void*) {
@@ -164,6 +142,5 @@ extern "C" __declspec(dllexport) int luaopen_BetterBulkStorage(lua_State* state)
     lua_pushcfunction(state, native_ready);
     lua_pushcfunction(state, storage_scope);
     lua_pushcfunction(state, candidate_scope);
-    lua_pushcfunction(state, accepts_item);
-    return 4;
+    return 3;
 }

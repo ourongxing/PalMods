@@ -5,11 +5,7 @@ import re
 INTERFACES = {
     'GetPalmi': ('Pal.PalUtility', ['WorldContextObject']),
     'GetBaseCampManager': ('Pal.PalUtility', ['WorldContextObject']),
-    'GetMapObjectManager': ('Pal.PalUtility', ['WorldContextObject']),
-    'GetLocalPalPlayerController': ('Pal.PalUtility', ['WorldContextObject']),
-    'GetItemIDManager': ('Pal.PalUtility', ['WorldContextObject']),
     'GetLocalPlayerGuild': ('Pal.PalGroupUtility', ['WorldContextObject']),
-    'GetPlayerUId': ('Pal.PalPlayerController', []),
     'GetOwner': ('Engine.ActorComponent', []),
     'K2_GetActorLocation': ('Engine.Actor', []),
     'TryGetModel': ('Pal.PalBaseCampManager', ['BaseCampId', 'OutModel']),
@@ -18,20 +14,6 @@ INTERFACES = {
     'GetBuildingNum': ('Pal.PalBaseCampModel', []),
     'GetTransform': ('Pal.PalBaseCampModel', []),
     'GetInsideBaseCampModel': ('Pal.PalInsideBaseCampCheckComponent', []),
-    'FindModel': ('Pal.PalMapObjectManager', ['InstanceId']),
-    'GetConcreteModel': ('Pal.PalMapObjectModel', ['bIsForce']),
-    'GetBaseCampIdBelongTo': ('Pal.PalMapObjectConcreteModelBase', []),
-    'IsLockedPrivateByNot': ('Pal.PalMapObjectItemChestModel', ['PlayerUId']),
-    'GetGuildSecurityModule': ('Pal.PalMapObjectConcreteModelBase', []),
-    'GetPasswordLockModule': ('Pal.PalMapObjectConcreteModelBase', []),
-    'CheckGuildSecurityAccess': ('Pal.PalMapObjectGuildSecurityModule', ['PlayerUId']),
-    'GetLockState': ('Pal.PalMapObjectPasswordLockModule', []),
-    'GetItemContainerModule': ('Pal.PalMapObjectConcreteModelBase', []),
-    'GetContainer': ('Pal.PalMapObjectItemContainerModule', []),
-    'IsEmpty': ('Pal.PalItemSlot', []),
-    'IsMaxStack': ('Pal.PalItemSlot', []),
-    'GetItemId': ('Pal.PalItemSlot', []),
-    'GetStaticItemData': ('Pal.PalItemIDManager', ['StaticItemId']),
     'CountLocalPlayerInventoryItemNum64': ('Pal.PalItemUtility', ['WorldContextObject', 'StaticItemId']),
 }
 NON_GAME_METHODS = {'get', 'set', 'IsValid', 'IsA', 'GetAddress', 'ForEach', 'ToString', 'Empty', 'gsub', 'match'}
@@ -95,10 +77,6 @@ def audit(source, dump_path):
         assert key in functions, f'Missing UFunction: {key}'
         assert parameters.get(key, []) == expected, f'Changed parameters: {key}'
     for key, expected in {
-        'Pal.PalItemContainer:Permission': 0x80,
-        'Pal.PalItemContainer:FilterPreference': 0xc8,
-        'Pal.PalItemSlot:Permission': 0x160,
-        'Pal.PalStaticItemDataBase:TypeA': 0x68,
         'Pal.PalStaticItemDataBase:TypeB': 0x69,
     }.items():
         assert offsets.get(key) == expected, f'Changed native member offset: {key}'
