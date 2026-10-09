@@ -14,8 +14,9 @@ else:
 lua = load_lua_runtime()(unpack_returned_tuples=True)
 lua.execute(r'''
 READY, IN_BASE, IS_INVENTORY, IN_SCOPE = true, true, true, false
+IN_CANDIDATE_SCOPE=false
 HOOKS={}
-COUNTS = {stone=7, wood=4, absent=0, large=3000000000}
+COUNTS = {stone=7, wood=4, absent=0, large=3000000000, PalEgg=3}
 function name(id) return {ToString=function() return id end} end
 FName=name
 function array(values)
@@ -29,7 +30,8 @@ UTILITY={CountLocalPlayerInventoryItemNum64=function(self,world,n) return COUNTS
 package.loadlib=function(path,symbol)
     assert(path:match('/dlls/main.dll$'))
     assert(symbol=='luaopen_EnhancedBulkStorage')
-    return function() return function() return READY end, function() return IN_SCOPE end end
+    return function() return function() return READY end, function() return IN_SCOPE end,
+        function() return IN_CANDIDATE_SCOPE end end
 end
 function RegisterHook(path, pre, post) HOOKS[path]=post end
 HOOK_PATH='/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemInfos'
@@ -57,6 +59,24 @@ IN_BASE=false; local outside=run({'stone'}); assert(not outside.written); IN_BAS
 IS_INVENTORY=false; local other=run({'stone'}); assert(not other.written); IS_INVENTORY=true
 local none=run({'absent','None'}); assert(not none.written)
 
+-- Pal eggs must reach the static-name candidate collector without changing
+-- dynamic classification in unrelated UI/gameplay, or for equipment.
+local dynamicHook=HOOKS['/Script/Pal.PalStaticItemDataBase:HasDynamicItemClass']
+local egg={TypeB=30, IsValid=function() return true end}
+local weapon={TypeB=4, IsValid=function() return true end}
+assert(dynamicHook(param(egg),param(true))==nil)
+IN_SCOPE=true -- inventory execution alone is not enough
+assert(dynamicHook(param(egg),param(true))==nil)
+IN_CANDIDATE_SCOPE=true
+assert(dynamicHook(param(egg),param(true))==false)
+assert(dynamicHook(param(weapon),param(true))==nil)
+assert(dynamicHook(param(egg),param(false))==nil)
+assert(dynamicHook(param(nil),param(true))==nil)
+local eggs=run({'PalEgg','PalEgg'}); assert(#eggs.written==1 and eggs.written[1].Num==3)
+READY=false; assert(dynamicHook(param(egg),param(true))==nil); READY=true
+IN_CANDIDATE_SCOPE=false; IN_SCOPE=false
+assert(dynamicHook(param(egg),param(true))==nil) -- cancel/return restores classification
+
 -- Exercise the actual native getter companions and guild/model selection.
 local function object(value) value.IsValid=function() return true end; return value end
 local function id(n) return {A=n,B=0,C=0,D=0} end
@@ -66,11 +86,13 @@ OWNER=object({GetAddress=function() return 1000 end})
 assert(OWNER~=PLAYER)
 COMPONENT=object({GetOwner=function() return OWNER end})
 GUILD=object({GetId=function() return id(1) end,BaseCampIds=array({id(10),id(20),id(30),id(40),id(50)})})
-local function base(n,group,x,z)
+local function base(n,group,x,z,buildings)
     return object({GetId=function() return id(n) end,GetGroupIdBelongTo=function() return id(group) end,
+        GetBuildingNum=function() return buildings or 0 end,
         GetTransform=function() return {Translation={X=x,Y=0,Z=z or 0}} end})
 end
-BASES={[10]=base(10,1,100),[20]=base(20,1,20),[30]=base(30,2,1),[50]=base(50,1,2,200)}
+BASES={[10]=base(10,1,100,0,100),[20]=base(20,1,20,0,10),
+    [30]=base(30,2,1,0,1000),[50]=base(50,1,2,200,100)}
 MANAGER=object({TryGetModel=function(self,key,output) output.OutModel=BASES[key.A]; return output.OutModel~=nil end})
 PAL=object({GetPalmi=function() return PLAYER end,GetBaseCampManager=function() return MANAGER end})
 GROUPS=object({GetLocalPlayerGuild=function() return GUILD end})
@@ -79,12 +101,24 @@ local modelHook=HOOKS['/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBase
 local idHook=HOOKS['/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID']
 assert(modelHook(param(COMPONENT),param(nil))==nil) -- unrelated gameplay
 IN_SCOPE=true
-assert(modelHook(param(COMPONENT),param(nil))==BASES[20]) -- nearer foreign and missing models ignored
-assert(idHook(param(COMPONENT),param(id(0))).A==20)
+assert(modelHook(param(COMPONENT),param(nil))==BASES[10]) -- more buildings wins; foreign/missing ignored
+assert(idHook(param(COMPONENT),param(id(0))).A==10) -- model and ID agree
 assert(modelHook(param(COMPONENT),param(BASES[10]))==nil) -- keep current in-base result
 assert(idHook(param(COMPONENT),param(id(10)))==nil)
 PLAYER.K2_GetActorLocation=function() return {X=90,Y=0,Z=0} end
-assert(idHook(param(COMPONENT),param(id(0))).A==10) -- recompute after moving
+assert(idHook(param(COMPONENT),param(id(0))).A==10) -- fewer buildings still loses
+PLAYER.K2_GetActorLocation=function() return {X=2,Y=0,Z=190} end
+assert(idHook(param(COMPONENT),param(id(0))).A==50) -- equal counts use 3D distance
+BASES[20].GetBuildingNum=function() return 200 end
+assert(idHook(param(COMPONENT),param(id(0))).A==20) -- building changes picked up immediately
+BASES[20].GetBuildingNum=function() return -1 end
+assert(idHook(param(COMPONENT),param(id(0))).A==50) -- invalid counts ignored
+BASES[20].GetBuildingNum=function() return 0/0 end
+assert(idHook(param(COMPONENT),param(id(0))).A==50)
+BASES[20].GetBuildingNum=function() return 0 end
+BASES[10].GetBuildingNum=function() return 0 end
+BASES[50].GetBuildingNum=function() return 0 end
+assert(idHook(param(COMPONENT),param(id(0))).A==50) -- zero counts remain valid
 GUILD.BaseCampIds=array({id(30),id(40)})
 assert(modelHook(param(COMPONENT),param(nil))==nil) -- no eligible base
 assert(idHook(param(COMPONENT),param(id(0)))==nil)
@@ -99,4 +133,4 @@ IN_BASE=true; local remote=run({'stone'}); assert(remote.written[1].Num==7) -- U
 lua2 = load_lua_runtime()(unpack_returned_tuples=True)
 lua2.execute('package.loadlib=function() return nil,"disabled" end; RegisterHook=function() error("must not register") end')
 lua2.execute('assert(load(..., "@/mock/EnhancedBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
-print('PASS: native binary/instruction audit, Lua candidates, scoped nearest guild base selection')
+print('PASS: native binary/instruction audit, scoped Pal egg candidates, largest guild base selection and distance ties')

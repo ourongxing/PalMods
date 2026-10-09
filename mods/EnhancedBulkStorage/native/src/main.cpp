@@ -7,6 +7,7 @@
 #include <Unreal/Hooks/Hooks.hpp>
 #include <Unreal/CoreUObject/UObject/Class.hpp>
 #include <Unreal/UObject.hpp>
+#include <Unreal/FFrame.hpp>
 extern "C" {
 #include <lua.h>
 }
@@ -19,8 +20,10 @@ std::atomic_bool installed{false};
 std::atomic_bool scope_ready{false};
 std::uint8_t* target{};
 thread_local unsigned storage_depth{};
+thread_local unsigned candidate_depth{};
 std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
 RC::Unreal::FName inventory_name;
+RC::Unreal::FName candidate_function_name;
 bool inventory_context(RC::Unreal::UObject* context) {
     return scope_ready.load() && context && context->GetClassPrivate()
         && context->GetClassPrivate()->GetFName() == inventory_name
@@ -28,6 +31,14 @@ bool inventory_context(RC::Unreal::UObject* context) {
 }
 int storage_scope(lua_State* state) {
     lua_pushboolean(state, installed.load() && scope_ready.load() && storage_depth > 0);
+    return 1;
+}
+bool candidate_function(RC::Unreal::FFrame& frame) {
+    return frame.Node()
+        && frame.Node()->GetFName() == candidate_function_name;
+}
+int candidate_scope(lua_State* state) {
+    lua_pushboolean(state, installed.load() && scope_ready.load() && candidate_depth > 0);
     return 1;
 }
 constexpr std::array<std::uint8_t, 6> replacement{0x90,0x90,0x90,0x90,0x90,0x90};
@@ -79,14 +90,19 @@ public:
         installed.store(true);
         // Track synchronous Blueprint execution, including nested delegate calls.
         // Never pretend that the player is inside a base for unrelated gameplay.
-        auto enter = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame&, void*) {
-            if (inventory_context(context)) ++storage_depth;
+        auto enter = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame& frame, void*) {
+            if (!inventory_context(context)) return;
+            ++storage_depth;
+            if (candidate_function(frame)) ++candidate_depth;
         };
-        auto leave = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame&, void*) {
-            if (inventory_context(context) && storage_depth) --storage_depth;
+        auto leave = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame& frame, void*) {
+            if (!inventory_context(context)) return;
+            if (candidate_function(frame) && candidate_depth) --candidate_depth;
+            if (storage_depth) --storage_depth;
         };
         using namespace RC::Unreal::Hook;
         inventory_name = RC::Unreal::FName(STR("WBP_InventoryEquipment_C"));
+        candidate_function_name = RC::Unreal::FName(STR("Update Inventory Greyout"));
         FCallbackOptions options{false, false, STR("EnhancedBulkStorage"), STR("StorageScope")};
         scope_hooks = {RegisterProcessInternalPreCallback(enter, options),
             RegisterProcessInternalPostCallback(leave, options),
@@ -102,7 +118,7 @@ public:
             }
         }
         RC::Output::send(complete
-            ? STR("[EnhancedBulkStorage] scoped nearest-base storage ready\n")
+            ? STR("[EnhancedBulkStorage] scoped outside-base storage and egg candidates ready\n")
             : STR("[EnhancedBulkStorage] script scope unavailable; outside-base storage disabled\n"));
         RC::Output::send(STR("[EnhancedBulkStorage] native empty-slot enhancement ready (0.1.0 experimental)\n"));
     }
@@ -122,5 +138,6 @@ extern "C" __declspec(dllexport) void uninstall_mod(RC::CppUserModBase* mod) { d
 extern "C" __declspec(dllexport) int luaopen_EnhancedBulkStorage(lua_State* state) {
     lua_pushcfunction(state, native_ready);
     lua_pushcfunction(state, storage_scope);
-    return 2;
+    lua_pushcfunction(state, candidate_scope);
+    return 3;
 }
