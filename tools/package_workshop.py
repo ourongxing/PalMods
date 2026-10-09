@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 
 
@@ -54,7 +54,7 @@ def payload(mod):
         # Use the generated helper so the Lua defaults match the packaged variants.
         helper = BUILD_ROOT / mod / 'stage/Mods/UpdraftElevator'
         files = [(helper / dest if dest.startswith('Scripts/') else src, dest) for src, dest in files]
-    else:
+    elif mod == 'PointBlankBurstSkills':
         files += [(source / 'raw/point_blank_burst_skills.json',
                    'PalSchema/raw/point_blank_burst_skills.json')]
     for src, dest in files:

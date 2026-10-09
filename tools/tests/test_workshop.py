@@ -52,6 +52,10 @@ class WorkshopTests(unittest.TestCase):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
                 if mod == 'PalCombo':
                     self.assertIn(lua_root + '/config.ini', installed)
+                if mod == 'AnywherePalBox':
+                    self.assertIn(lua_root + '/Scripts/config.lua', installed)
+                    self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
+                    self.assertFalse(any('/dlls/' in path or '/PalSchema/' in path for path in installed))
                 if mod == 'UpdraftElevator':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/paks/UpdraftElevator_P.pak', installed)
                 if mod == 'PointBlankBurstSkills':

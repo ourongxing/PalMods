@@ -1,0 +1,17 @@
+{
+  "ModName": "Anywhere Palbox / 随处打开终端",
+  "PackageName": "AnywherePalBox",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": ["UE4SSExperimentalPW"],
+  "Tags": ["UE4SS", "Gameplay"],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": ["./Scripts", "./enabled.txt"]
+    }
+  ]
+}

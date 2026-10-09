@@ -10,6 +10,7 @@ Palworld mod 源码仓库。
 | <img src="mods/UpdraftElevator/workshop/thumbnail.png" width="160" alt="上升气流封面"> | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
 | <img src="mods/PointBlankBurstSkills/workshop/thumbnail.png" width="160" alt="贴脸爆发封面"> | [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
 | — | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
+| <img src="mods/AnywherePalBox/workshop/thumbnail.png" width="160" alt="随处打开终端封面"> | [AnywherePalBox](mods/AnywherePalBox/README.md) | 按 K 随处打开终端，支持地下城及自定义快捷键 |
 | <img src="mods/BetterBulkStorage/workshop/thumbnail.png" width="160" alt="更好的快速收纳封面"> | [BetterBulkStorage](mods/BetterBulkStorage/README.md) | 更好的快速收纳：沿用官方操作，将新物品存入空槽（本机实测可用） |
 
 ## 构建与测试
@@ -52,7 +53,7 @@ python -m unittest discover -s tools/tests
 
 ## 创意工坊打包
 
-五个 mod 的工坊模板与封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
+六个 mod 的工坊模板与封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
 首次发布版本统一为 `1.0.0`，发布包包含简体中文、繁体中文、日语、英语的玩家说明和工坊介绍；
 BetterWorkbench 的新增界面文字和上升气流的建筑／科技文字支持四语。
 构建完成后运行 `python tools/package_workshop.py all`，生成
