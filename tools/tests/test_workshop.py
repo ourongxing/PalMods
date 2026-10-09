@@ -20,9 +20,9 @@ class WorkshopTests(unittest.TestCase):
                 with tempfile.TemporaryDirectory() as temporary, contextlib.redirect_stdout(io.StringIO()):
                     self.assertEqual(workshop.main(['--output-root', temporary]), 0)
         self.assertEqual([call.args[0] for call in prepare.call_args_list], list(workshop.MODS))
-        self.assertEqual(package.call_count, 4)
+        self.assertEqual(package.call_count, len(workshop.MODS))
 
-    def test_four_packages_deploy_to_expected_runtime_layout(self):
+    def test_packages_deploy_to_expected_runtime_layout(self):
         with tempfile.TemporaryDirectory() as temporary:
             output = Path(temporary)
             for mod in workshop.MODS:
@@ -48,7 +48,7 @@ class WorkshopTests(unittest.TestCase):
                 if mod != 'PointBlankBurstSkills':
                     self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
-                if mod in ('BetterWorkbench', 'PalCombo'):
+                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage'):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
                 if mod == 'PalCombo':
                     self.assertIn(lua_root + '/config.ini', installed)

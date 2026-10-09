@@ -2,15 +2,15 @@
 
 Palworld mod 源码仓库。
 
-| Mod | 功能 |
-| --- | --- |
-| [PalIconInfo](mods/PalIconInfo/README.md) | 终端仅显示浓缩星级，按实际星数水平居中；含原始 Mod 地址 |
-| [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
-| [PalCombo](mods/PalCombo/README.md) | 技能槽 1 → 2 连招，槽 3 填空 |
-| [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
-| [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
-| [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
-| [EnhancedBulkStorage](mods/EnhancedBulkStorage/README.md) | 批量存储增强：沿用官方操作，将新物品存入空槽（本机实测可用） |
+| 封面 | Mod | 功能 |
+| --- | --- | --- |
+| — | [PalIconInfo](mods/PalIconInfo/README.md) | 终端仅显示浓缩星级，按实际星数水平居中；含原始 Mod 地址 |
+| <img src="mods/BetterWorkbench/workshop/thumbnail.png" width="160" alt="更好的工作台封面"> | [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
+| <img src="mods/PalCombo/workshop/thumbnail.png" width="160" alt="帕鲁连招封面"> | [PalCombo](mods/PalCombo/README.md) | 技能槽 1 → 2 连招，槽 3 填空 |
+| <img src="mods/UpdraftElevator/workshop/thumbnail.png" width="160" alt="上升气流封面"> | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
+| <img src="mods/PointBlankBurstSkills/workshop/thumbnail.png" width="160" alt="贴脸爆发封面"> | [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
+| — | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
+| <img src="mods/BetterBulkStorage/workshop/thumbnail.png" width="160" alt="更好的快速收纳封面"> | [BetterBulkStorage](mods/BetterBulkStorage/README.md) | 更好的快速收纳：沿用官方操作，将新物品存入空槽（本机实测可用） |
 
 ## 构建与测试
 
@@ -52,7 +52,7 @@ python -m unittest discover -s tools/tests
 
 ## 创意工坊打包
 
-四个 mod 的工坊模板与基础封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
+五个 mod 的工坊模板与封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
 首次发布版本统一为 `1.0.0`，发布包包含简体中文、繁体中文、日语、英语的玩家说明和工坊介绍；
 BetterWorkbench 的新增界面文字和上升气流的建筑／科技文字支持四语。
 构建完成后运行 `python tools/package_workshop.py all`，生成

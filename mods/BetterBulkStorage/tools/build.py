@@ -14,8 +14,8 @@ from build_sdk import toolset_environment
 import pefile
 from capstone import Cs, CS_ARCH_X86, CS_MODE_64
 
-MOD = ROOT / 'mods/EnhancedBulkStorage'
-BUILD = ROOT / '.build/EnhancedBulkStorage/native'
+MOD = ROOT / 'mods/BetterBulkStorage'
+BUILD = ROOT / '.build/BetterBulkStorage/native'
 EXPECTED_HASH = 'e590b5e7bfaa3fea40fab1a02cc72c8fc5fd6f8631ef2308e95ac56c25195837'
 FUNCTION_RVA, FUNCTION_END = 0x2da9a60, 0x2da9cb9
 PATCH_RVA, CALL_RVA = 0x2da9bcd, 0x2dbd9d6
@@ -73,18 +73,18 @@ def main():
     if args.toolset.startswith('version='):
         command += ['--', '/p:VCToolsVersion=' + args.toolset.split('=', 1)[1]]
     subprocess.run(command, env=env, check=True)
-    output = ROOT / 'dist/EnhancedBulkStorage'
-    stage = output / 'EnhancedBulkStorage'
+    output = ROOT / 'dist/BetterBulkStorage'
+    stage = output / 'BetterBulkStorage'
     shutil.copytree(MOD / 'mod', stage, dirs_exist_ok=True)
     (stage / 'dlls').mkdir(exist_ok=True)
-    shutil.copy2(BUILD / 'Game__Shipping__Win64/bin/EnhancedBulkStorageNative.dll', stage / 'dlls/main.dll')
+    shutil.copy2(BUILD / 'Game__Shipping__Win64/bin/BetterBulkStorageNative.dll', stage / 'dlls/main.dll')
     dll = pefile.PE(str(stage / 'dlls/main.dll'))
     exports = {entry.name for entry in dll.DIRECTORY_ENTRY_EXPORT.symbols}
-    assert {b'start_mod', b'uninstall_mod', b'luaopen_EnhancedBulkStorage'} <= exports
+    assert {b'start_mod', b'uninstall_mod', b'luaopen_BetterBulkStorage'} <= exports
     shutil.copy2(MOD / 'README.md', stage / 'README.md')
-    with zipfile.ZipFile(output / 'EnhancedBulkStorage-0.1.0-experimental.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
+    with zipfile.ZipFile(output / 'BetterBulkStorage-0.1.0-experimental.zip', 'w', zipfile.ZIP_DEFLATED) as archive:
         for path in sorted(stage.rglob('*')):
             if path.is_file(): archive.write(path, path.relative_to(output))
-    print(output / 'EnhancedBulkStorage-0.1.0-experimental.zip')
+    print(output / 'BetterBulkStorage-0.1.0-experimental.zip')
 
 if __name__ == '__main__': main()

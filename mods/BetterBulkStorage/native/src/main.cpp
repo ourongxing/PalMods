@@ -80,10 +80,10 @@ int accepts_item(lua_State* state) {
     return 1;
 }
 
-class EnhancedBulkStorage final : public RC::CppUserModBase {
+class BetterBulkStorage final : public RC::CppUserModBase {
 public:
-    EnhancedBulkStorage() {
-        ModName = STR("EnhancedBulkStorage");
+    BetterBulkStorage() {
+        ModName = STR("BetterBulkStorage");
         ModVersion = STR("0.1.0-experimental");
         ModAuthors = STR("ourongxing");
         ModDescription = STR("Extend native Easy Bulk Storage to empty slots");
@@ -100,14 +100,14 @@ public:
             || std::memcmp(base + guard::call_rva, guard::call.data(), guard::call.size()) != 0
             || std::memcmp(base + guard::permission_rva, guard::permission.data(), guard::permission.size()) != 0
             || std::memcmp(base + guard::filter_rva, guard::filter.data(), guard::filter.size()) != 0) {
-            RC::Output::send(STR("[EnhancedBulkStorage] unsupported or modified binary; enhancement disabled\n"));
+            RC::Output::send(STR("[BetterBulkStorage] unsupported or modified binary; enhancement disabled\n"));
             return;
         }
         target = base + guard::patch_rva;
         // Only remove the 'this chest has no matching item' gate. Native slot
         // validation, capacity, transfer transaction and server authority remain.
         if (!write_code(replacement.data())) {
-            RC::Output::send(STR("[EnhancedBulkStorage] patch installation failed\n"));
+            RC::Output::send(STR("[BetterBulkStorage] patch installation failed\n"));
             target = nullptr;
             return;
         }
@@ -128,7 +128,7 @@ public:
         using namespace RC::Unreal::Hook;
         inventory_name = RC::Unreal::FName(STR("WBP_InventoryEquipment_C"));
         candidate_function_name = RC::Unreal::FName(STR("Update Inventory Greyout"));
-        FCallbackOptions options{false, false, STR("EnhancedBulkStorage"), STR("StorageScope")};
+        FCallbackOptions options{false, false, STR("BetterBulkStorage"), STR("StorageScope")};
         scope_hooks = {RegisterProcessInternalPreCallback(enter, options),
             RegisterProcessInternalPostCallback(leave, options),
             RegisterProcessLocalScriptFunctionPreCallback(enter, options),
@@ -143,11 +143,11 @@ public:
             }
         }
         RC::Output::send(complete
-            ? STR("[EnhancedBulkStorage] scoped outside-base storage and egg candidates ready\n")
-            : STR("[EnhancedBulkStorage] script scope unavailable; outside-base storage disabled\n"));
-        RC::Output::send(STR("[EnhancedBulkStorage] native empty-slot enhancement ready (0.1.0 experimental)\n"));
+            ? STR("[BetterBulkStorage] scoped outside-base storage and egg candidates ready\n")
+            : STR("[BetterBulkStorage] script scope unavailable; outside-base storage disabled\n"));
+        RC::Output::send(STR("[BetterBulkStorage] native empty-slot enhancement ready (0.1.0 experimental)\n"));
     }
-    ~EnhancedBulkStorage() override {
+    ~BetterBulkStorage() override {
         installed.store(false);
         scope_ready.store(false);
         for (auto id : scope_hooks) if (id) RC::Unreal::Hook::UnregisterCallback(id);
@@ -157,10 +157,10 @@ public:
 };
 }
 
-extern "C" __declspec(dllexport) RC::CppUserModBase* start_mod() { return new EnhancedBulkStorage(); }
+extern "C" __declspec(dllexport) RC::CppUserModBase* start_mod() { return new BetterBulkStorage(); }
 extern "C" __declspec(dllexport) void uninstall_mod(RC::CppUserModBase* mod) { delete mod; }
 // Loaded by the Lua companion from this same DLL. No stale readiness files.
-extern "C" __declspec(dllexport) int luaopen_EnhancedBulkStorage(lua_State* state) {
+extern "C" __declspec(dllexport) int luaopen_BetterBulkStorage(lua_State* state) {
     lua_pushcfunction(state, native_ready);
     lua_pushcfunction(state, storage_scope);
     lua_pushcfunction(state, candidate_scope);

@@ -1,13 +1,15 @@
-# 批量存储增强 / Enhanced Bulk Storage
+# 更好的快速收纳 / Better Bulk Storage
 
 `0.1.0-experimental`。2026-10-09：用户安装后确认，本机沿用官方操作的增强收纳可用。
 
 沿用官方 **Easy Bulk Storage** 的背包入口、原有按键、确认窗口、排除列表和基地转移请求。
 允许基地箱子尚未持有的物品进入空槽，无需新快捷键或额外收纳界面。
 
+工坊四语使用说明和介绍位于 `workshop/README.*.md` 与 `workshop/listing.json`。
+
 ## 使用与限制
 
-在基地内或基地外打开背包，照常使用官方批量存储。基地内仍收纳到当前基地；
+在基地内或基地外打开背包，照常使用官方批量快速收纳。基地内仍收纳到当前基地；
 基地外收纳到玩家所属公会中建筑数量最多的基地；数量相同时，以玩家和基地中心的三维直线距离选择最近的。
 建筑数量直接读取游戏基地模型的 `GetBuildingNum()`，不扫描场景建筑、不按箱子数量选择。
 没有可用的公会基地时不执行收纳。排除物品仍通过官方界面管理。
@@ -32,23 +34,25 @@ UE4SS 使用仓库现有 SDK 对应的 `2281fa31`。其他版本自动拒绝启�
 ## 构建与安装
 
 ```powershell
-python mods/EnhancedBulkStorage/tests/run.py
-python mods/EnhancedBulkStorage/tools/build.py
+python mods/BetterBulkStorage/tests/run.py
+python mods/BetterBulkStorage/tools/build.py
 ```
 
-构建产物：`dist/EnhancedBulkStorage/EnhancedBulkStorage-0.1.0-experimental.zip`。
-完全退出游戏后，将 ZIP 内的 `EnhancedBulkStorage` 文件夹放到：
+构建产物：`dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip`。
+完全退出游戏后，将 ZIP 内的 `BetterBulkStorage` 文件夹放到：
 `<Palworld>/Mods/NativeMods/UE4SS/Mods/`。
 
+从旧版 `EnhancedBulkStorage` 升级时，先移除旧 Mod 文件夹，再安装 `BetterBulkStorage`，避免两个版本同时加载。
+
 ```text
-EnhancedBulkStorage/
+BetterBulkStorage/
   enabled.txt
   dlls/main.dll
   Scripts/main.lua
 ```
 
 不覆盖游戏 EXE 或原版资源。卸载时退出游戏并移除整个 Mod 文件夹。
-不建议同时启用其他修改批量存储候选查询或原生转移函数的 Mod。
+不建议同时启用其他修改批量快速收纳候选查询或原生转移函数的 Mod。
 
 ## 验证
 
@@ -81,7 +85,7 @@ DLL 编译、Lua 候选查询、公会基地选择回归和 UE4SS 导入兼容�
 
 ## 实现证据
 
-构建脚本在 `.build/EnhancedBulkStorage/native/analysis.json` 保存二进制审核记录。官方服务器基地存储函数
+构建脚本在 `.build/BetterBulkStorage/native/analysis.json` 保存二进制审核记录。官方服务器基地存储函数
 `0x2dbd5b0` 是 `0x2da9a60` 的唯一直接调用方；后者先合并，再进入空槽循环。
 `0x2da9bcd` 的六字节条件跳转在该箱子没有匹配物品时跳过空槽循环。
 DLL 将这一处跳转改为 NOP，保留两处原生事务 `0x2fbc1f0`，未更改 RPC 参数或存档数据。

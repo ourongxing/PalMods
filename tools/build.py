@@ -10,8 +10,8 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'EnhancedBulkStorage')
-SDK_MODS = {'PalCombo', 'BetterWorkbench', 'EnhancedBulkStorage'}
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage')
+SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage'}
 
 
 def positive_int(value):
@@ -62,7 +62,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build_native.py', *options), python_script('audit_native_imports.py')]
-    if mod == 'EnhancedBulkStorage':
+    if mod == 'BetterBulkStorage':
         options = ['--parallel', str(args.parallel)]
         if toolset:
             options.extend(['--toolset', toolset])
@@ -95,7 +95,7 @@ def main(argv=None):
         'BetterWorkbench': BUILD_ROOT / 'BetterWorkbench/native/Release/BetterWorkbenchNative.dll',
         'UpdraftElevator': ROOT / 'dist/UpdraftElevator/UpdraftElevator-v10.zip',
         'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
-        'EnhancedBulkStorage': ROOT / 'dist/EnhancedBulkStorage/EnhancedBulkStorage-0.1.0-experimental.zip',
+        'BetterBulkStorage': ROOT / 'dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

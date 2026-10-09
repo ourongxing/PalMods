@@ -1,0 +1,17 @@
+{
+  "ModName": "Better Bulk Storage / 更好的快速收纳",
+  "PackageName": "BetterBulkStorage",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 82182,
+  "Author": "ourongxing",
+  "Dependencies": ["UE4SSExperimentalPW"],
+  "Tags": ["UE4SS", "Gameplay"],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": ["./Scripts", "./dlls", "./enabled.txt"]
+    }
+  ]
+}

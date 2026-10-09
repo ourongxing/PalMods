@@ -2,10 +2,10 @@ local source = debug.getinfo(1, "S").source:gsub("^@", ""):gsub("\\", "/")
 local directory = source:match("^(.*)/Scripts/[^/]+$")
 local loader, errorMessage
 if directory then
-    loader, errorMessage = package.loadlib(directory .. "/dlls/main.dll", "luaopen_EnhancedBulkStorage")
+    loader, errorMessage = package.loadlib(directory .. "/dlls/main.dll", "luaopen_BetterBulkStorage")
 end
 if not loader then
-    print("[EnhancedBulkStorage] native bridge unavailable; original storage retained: " .. tostring(errorMessage) .. "\n")
+    print("[BetterBulkStorage] native bridge unavailable; original storage retained: " .. tostring(errorMessage) .. "\n")
     return
 end
 local ready, inStorageScope, inCandidateScope, acceptsItem = loader()
@@ -87,7 +87,7 @@ if inStorageScope then
             return model
         end)
         if ok then return result end
-        print("[EnhancedBulkStorage] largest base lookup failed: " .. tostring(result) .. "\n")
+        print("[BetterBulkStorage] largest base lookup failed: " .. tostring(result) .. "\n")
     end
     RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel", beforeHook,
         function(context, original)
@@ -99,7 +99,7 @@ if inStorageScope then
             if queryingPhysicalBase or not ready() or not inStorageScope() or nonzero(original) then return end
             return selectedBase(context, true)
         end)
-    print("[EnhancedBulkStorage] outside-base selection: most buildings, nearest on ties\n")
+    print("[BetterBulkStorage] outside-base selection: most buildings, nearest on ties\n")
 end
 
 -- The inventory's candidate-building function skips dynamic items before
@@ -115,14 +115,14 @@ if inCandidateScope then
                 return valid(data) and unwrap(data.TypeB) == 30
             end)
             if not ok then
-                print("[EnhancedBulkStorage] egg candidate lookup failed: " .. tostring(isEgg) .. "\n")
+                print("[BetterBulkStorage] egg candidate lookup failed: " .. tostring(isEgg) .. "\n")
                 return
             end
             if isEgg then return false end
         end)
-    print("[EnhancedBulkStorage] scoped Pal egg candidate hook registered\n")
+    print("[BetterBulkStorage] scoped Pal egg candidate hook registered\n")
 else
-    print("[EnhancedBulkStorage] egg candidate scope unavailable; update companion DLL\n")
+    print("[BetterBulkStorage] egg candidate scope unavailable; update companion DLL\n")
 end
 
 -- Resolve only this operation's destination. No cross-base container cache.
@@ -238,6 +238,6 @@ RegisterHook("/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemI
             existing:Empty()
             outItemInfos:set(result)
         end)
-        if not ok then print("[EnhancedBulkStorage] candidate update failed: " .. tostring(err) .. "\n") end
+        if not ok then print("[BetterBulkStorage] candidate update failed: " .. tostring(err) .. "\n") end
     end)
-print("[EnhancedBulkStorage] official inventory candidate hook registered\n")
+print("[BetterBulkStorage] official inventory candidate hook registered\n")

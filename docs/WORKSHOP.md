@@ -1,8 +1,8 @@
 # 创意工坊打包
 
-四个 mod 各有独立的 `mods/<Mod>/workshop/Info.json` 和 512×512 PNG 基础封面。
+五个 mod 各有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
 作者为 `ourongxing`；包名固定为源码目录名，首次发布后不要随意修改。
-四个工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
+五个工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
 ## 简繁中文、日英四语
@@ -20,7 +20,7 @@ BetterWorkbench 分解界面的新增文字通过 Unreal 的 `GetCurrentLanguage
 
 上升气流使用 PalSchema 的 `translations/zh-Hans`、`translations/zh-Hant`、`translations/ja`、`translations/en`，
 `translations/global` 提供英文后备。建筑元数据不再写全语言覆盖的 Name/Description。
-PalCombo 与 PointBlankBurstSkills 不新增游戏内 UI 文字，原有技能名称由游戏负责本地化。
+PalCombo、PointBlankBurstSkills 与 BetterBulkStorage 不新增游戏内 UI 文字，原有名称由游戏负责本地化。
 修改语言后重新启动游戏，让 PalSchema 重新加载对应语言表。
 
 技能和物品术语沿用已有游戏译名；新增功能和上升气流名称为本 mod 自行撰写的自然表达。
@@ -31,6 +31,15 @@ PalCombo 与 PointBlankBurstSkills 不新增游戏内 UI 文字，原有技能�
 及 [建筑加载器源码](https://github.com/Okaetsu/PalSchema/blob/main/src/Loader/PalBuildingModLoader.cpp)。
 繁体技能术语参考：[熔岩爆發](https://paldb.cc/tw/Volcanic_Rain)、
 [岩爆](https://paldb.cc/tw/Rockburst)、[毒雨](https://paldb.cc/tw/Poison_Shower)。
+
+BetterBulkStorage 的原版功能名称已按官方 v0.6.0 公告的四语正文核对：
+简体中文「批量快速收纳」、繁体中文「批量快速收納」、日语「一括便利収納」、英语「Easy Bulk Storage」。
+官方 Steam 公告数据：[简体中文](https://store.steampowered.com/events/ajaxgetpartnerevent?appid=1623730&announcement_gid=518590951147438123&lang_list=6)、
+[繁体中文](https://store.steampowered.com/events/ajaxgetpartnerevent?appid=1623730&announcement_gid=518590951147438123&lang_list=7)、
+[日语](https://store.steampowered.com/events/ajaxgetpartnerevent?appid=1623730&announcement_gid=518590951147438123&lang_list=10)、
+[英语](https://store.steampowered.com/events/ajaxgetpartnerevent?appid=1623730&announcement_gid=518590951147438123&lang_list=0)。
+mod 标题和「主据点」为本 mod 的表达；「主据点」指所属公会中建筑物最多的据点，同数时选择最近的。
+工坊介绍保留手动触发的原版入口，不宣称后台自动收纳或额外的箱子命名识别规则。
 
 ## 生成包
 
@@ -48,9 +57,9 @@ python tools/package_workshop.py all --author ourongxing --min-revision 82182 --
 各 mod 的版本在各自模板中维护；`--version` 可临时统一覆盖本次所选包的版本。
 发布新版本时必须改变 `Version`，否则官方加载器可能不会重新安装。
 
-`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表四个 mod 已在该游戏版本测试通过。
+`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表五个 mod 已在该游戏版本测试通过。
 正式发布前应根据实机验证填写最低支持修订号（游戏标题版本号的最后五位）。
-两个原生 mod 还要求匹配的 UE4SS ABI；该字段只检查游戏最低修订号，不能保证 DLL 兼容性。
+三个原生 mod 还要求匹配的 UE4SS ABI；该字段只检查游戏最低修订号，不能保证 DLL 兼容性。
 BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导入审核数量；
 此脚本生成的是待验收工坊包，不替代原有候选发布脚本的 `validation.json` 验收要求。
 
@@ -60,6 +69,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | --- | --- | --- | --- |
 | BetterWorkbench | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | PalCombo | `Scripts/`、`dlls/main.dll`、`config.ini`、`enabled.txt` | Lua | UE4SSExperimentalPW |
+| BetterBulkStorage | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | PointBlankBurstSkills | `PalSchema/raw/point_blank_burst_skills.json` | PalSchema | UE4SSExperimentalPW、PalSchema |
 

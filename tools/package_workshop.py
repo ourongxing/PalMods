@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 
 
@@ -42,6 +42,9 @@ def payload(mod):
     elif mod == 'PalCombo':
         files += [(source / 'config.ini', 'config.ini'),
                   (PALCOMBO_BUILD / 'Game__Shipping__Win64/bin/PalComboFillerNative.dll', 'dlls/main.dll')]
+    elif mod == 'BetterBulkStorage':
+        files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterBulkStorageNative.dll',
+                   'dlls/main.dll')]
     elif mod == 'UpdraftElevator':
         schema = BUILD_ROOT / mod / 'stage/Mods/PalSchema/mods/UpdraftElevator'
         files += [(schema / 'buildings/wind_small.json', 'PalSchema/buildings/wind_small.json'),

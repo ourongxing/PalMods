@@ -5,10 +5,10 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tools'))
 from palmods import GAME_EXE, UE4SS_ROOT, load_lua_runtime
 from audit_interfaces import audit
-sys.path.insert(0, str(ROOT / 'mods/EnhancedBulkStorage/tools'))
+sys.path.insert(0, str(ROOT / 'mods/BetterBulkStorage/tools'))
 from build import generate_guard
 
-source = ROOT / 'mods/EnhancedBulkStorage/mod/Scripts/main.lua'
+source = ROOT / 'mods/BetterBulkStorage/mod/Scripts/main.lua'
 audit(source.read_text(encoding='utf-8'), UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
 try:
     audit(source.read_text(encoding='utf-8').replace('GetConcreteModel(false)', 'GetConcreteModel()'),
@@ -40,7 +40,7 @@ WORLD={IsValid=function() return true end, IsA=function() return IS_INVENTORY en
 UTILITY={CountLocalPlayerInventoryItemNum64=function(self,world,n) return COUNTS[n:ToString()] or 0 end}
 package.loadlib=function(path,symbol)
     assert(path:match('/dlls/main.dll$'))
-    assert(symbol=='luaopen_EnhancedBulkStorage')
+    assert(symbol=='luaopen_BetterBulkStorage')
     return function() return function() return READY end, function() return IN_SCOPE end,
         function() return IN_CANDIDATE_SCOPE end,
         function(container,slot,data) return not DENIED[data] end end
@@ -80,7 +80,7 @@ function run(ids, current)
     return output, old
 end
 ''')
-lua.execute('assert(load(..., "@/mock/EnhancedBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
+lua.execute('assert(load(..., "@/mock/BetterBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
 lua.execute(r'''
 local existing={StaticItemId=name('wood'),Num=100}
 local output,old=run({'stone','stone','wood','absent','None'},{existing})
@@ -250,5 +250,5 @@ end
 ''')
 lua2 = load_lua_runtime()(unpack_returned_tuples=True)
 lua2.execute('package.loadlib=function() return nil,"disabled" end; RegisterHook=function() error("must not register") end')
-lua2.execute('assert(load(..., "@/mock/EnhancedBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
+lua2.execute('assert(load(..., "@/mock/BetterBulkStorage/Scripts/main.lua"))()', source.read_text(encoding='utf-8'))
 print('PASS: native audit, destination restrictions/space, leave-base remote candidates, scoped eggs and guild base selection')
