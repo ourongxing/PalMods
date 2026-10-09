@@ -12,6 +12,7 @@ Palworld mod 源码仓库。
 | — | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
 | <img src="mods/AnywherePalBox/workshop/thumbnail.png" width="160" alt="随处打开终端封面"> | [AnywherePalBox](mods/AnywherePalBox/README.md) | 按 K 随处打开终端，支持地下城及自定义快捷键 |
 | <img src="mods/BetterBulkStorage/workshop/thumbnail.png" width="160" alt="更好的快速收纳封面"> | [BetterBulkStorage](mods/BetterBulkStorage/README.md) | 更好的快速收纳：沿用官方操作，将新物品存入空槽（本机实测可用） |
+| — | [BetterPalSouls](mods/BetterPalSouls/README.md) | 自动转换帕鲁魂、原版强化界面快速选择最低／最高等级（实验版） |
 
 ## 构建与测试
 

@@ -10,7 +10,7 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox')
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls')
 SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage'}
 
 
@@ -67,7 +67,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build.py', *options)]
-    if mod == 'AnywherePalBox':
+    if mod in ('AnywherePalBox', 'BetterPalSouls'):
         return [python_script('build.py')]
     if mod == 'UpdraftElevator':
         return [python_script('build_native.py'), python_script('run_native_build.py'),
@@ -99,6 +99,7 @@ def main(argv=None):
         'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
         'BetterBulkStorage': ROOT / 'dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip',
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
+        'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-0.2.6-experimental.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

@@ -1,4 +1,4 @@
-"""Run existing offline regressions across all three mods; never install to game."""
+"""Run offline mod regressions; never install to game."""
 from pathlib import Path
 import argparse
 import subprocess
@@ -13,6 +13,7 @@ def main():
     scripts = [ROOT / 'mods/BetterWorkbench/tests/run.py']
     scripts.append(ROOT / 'mods/BetterBulkStorage/tests/run.py')
     scripts.append(ROOT / 'mods/AnywherePalBox/tests/run.py')
+    scripts.append(ROOT / 'mods/BetterPalSouls/tests/run.py')
     scripts.extend(ROOT / 'mods/UpdraftElevator/tests' / name for name in (
         'check_native_cost.py', 'check_native_jump.py', 'check_native_config.py',
         'check_native_package.py', 'check_native_category.py'))
