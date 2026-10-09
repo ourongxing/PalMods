@@ -9,6 +9,7 @@ Palworld mod 源码仓库。
 | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
 | [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
 | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
+| [EnhancedBulkStorage](mods/EnhancedBulkStorage/README.md) | 批量存储增强：沿用官方操作，将新物品存入空槽（本机实测可用） |
 
 ## 构建与测试
 
