@@ -4,6 +4,9 @@
 #include <cstring>
 #include <DynamicOutput/Output.hpp>
 #include <Mod/CppUserModBase.hpp>
+#include <Unreal/Hooks/Hooks.hpp>
+#include <Unreal/CoreUObject/UObject/Class.hpp>
+#include <Unreal/UObject.hpp>
 extern "C" {
 #include <lua.h>
 }
@@ -13,7 +16,20 @@ extern "C" {
 
 namespace {
 std::atomic_bool installed{false};
+std::atomic_bool scope_ready{false};
 std::uint8_t* target{};
+thread_local unsigned storage_depth{};
+std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
+RC::Unreal::FName inventory_name;
+bool inventory_context(RC::Unreal::UObject* context) {
+    return scope_ready.load() && context && context->GetClassPrivate()
+        && context->GetClassPrivate()->GetFName() == inventory_name
+        && context->GetClassPrivate()->GetFullName() == STR("WidgetBlueprintGeneratedClass /Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C");
+}
+int storage_scope(lua_State* state) {
+    lua_pushboolean(state, installed.load() && scope_ready.load() && storage_depth > 0);
+    return 1;
+}
 constexpr std::array<std::uint8_t, 6> replacement{0x90,0x90,0x90,0x90,0x90,0x90};
 
 bool write_code(const std::uint8_t* bytes) {
@@ -61,10 +77,39 @@ public:
             return;
         }
         installed.store(true);
+        // Track synchronous Blueprint execution, including nested delegate calls.
+        // Never pretend that the player is inside a base for unrelated gameplay.
+        auto enter = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame&, void*) {
+            if (inventory_context(context)) ++storage_depth;
+        };
+        auto leave = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame&, void*) {
+            if (inventory_context(context) && storage_depth) --storage_depth;
+        };
+        using namespace RC::Unreal::Hook;
+        inventory_name = RC::Unreal::FName(STR("WBP_InventoryEquipment_C"));
+        FCallbackOptions options{false, false, STR("EnhancedBulkStorage"), STR("StorageScope")};
+        scope_hooks = {RegisterProcessInternalPreCallback(enter, options),
+            RegisterProcessInternalPostCallback(leave, options),
+            RegisterProcessLocalScriptFunctionPreCallback(enter, options),
+            RegisterProcessLocalScriptFunctionPostCallback(leave, options)};
+        bool complete = true;
+        for (auto id : scope_hooks) complete = complete && id != ERROR_ID;
+        scope_ready.store(complete);
+        if (!complete) {
+            for (auto& id : scope_hooks) {
+                if (id) UnregisterCallback(id);
+                id = ERROR_ID;
+            }
+        }
+        RC::Output::send(complete
+            ? STR("[EnhancedBulkStorage] scoped nearest-base storage ready\n")
+            : STR("[EnhancedBulkStorage] script scope unavailable; outside-base storage disabled\n"));
         RC::Output::send(STR("[EnhancedBulkStorage] native empty-slot enhancement ready (0.1.0 experimental)\n"));
     }
     ~EnhancedBulkStorage() override {
         installed.store(false);
+        scope_ready.store(false);
+        for (auto id : scope_hooks) if (id) RC::Unreal::Hook::UnregisterCallback(id);
         if (target && std::memcmp(target, replacement.data(), replacement.size()) == 0)
             write_code(guard::original.data());
     }
@@ -76,5 +121,6 @@ extern "C" __declspec(dllexport) void uninstall_mod(RC::CppUserModBase* mod) { d
 // Loaded by the Lua companion from this same DLL. No stale readiness files.
 extern "C" __declspec(dllexport) int luaopen_EnhancedBulkStorage(lua_State* state) {
     lua_pushcfunction(state, native_ready);
-    return 1;
+    lua_pushcfunction(state, storage_scope);
+    return 2;
 }
