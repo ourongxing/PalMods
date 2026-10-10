@@ -5,11 +5,14 @@ local I18n = require('BetterPalSouls.I18n')
 local M = {}
 local valid, unwrap = Runtime.valid, Runtime.unwrap
 local ROOT = '/Game/Pal/Blueprint/UI/UserInterface/IngameMenu/Buildup/'
+local MENU = ROOT .. 'WBP_Buildup_Pal.WBP_Buildup_Pal_C'
 local BUTTON = '/Game/Pal/Blueprint/UI/UserInterface/Common/WBP_CommonButton'
 local CLICK = 'BndEvt__WBP_CommonButton_WBP_PalInvisibleButton_K2Node_ComponentBoundEvent_3_CommonButtonBaseClicked__DelegateSignature'
 local sessions, rows, buttons, hooks, diagnostics = {}, {}, {}, {}, {}
 local backend, service, update, installHooks
 local stopped = false
+local watched, refreshLoopCallback = {}, nil
+local refreshGeneration, refreshQueued = 0, false
 local function key(o) return o:GetFullName() end
 local function text(o, value) o:SetText(FText(value)) end
 local function once(message)
@@ -250,7 +253,72 @@ function M.start(config)
         if not registered or registered.Session.Updating then return end
         registered.Entry.PendingNative = true
     end
+    local function forgetMenu(id)
+        watched[id] = nil
+        local session = sessions[id]
+        if not session then return end
+        restore(session)
+        for _, entry in ipairs(session.Rows) do
+            rows[entry.Key], buttons[entry.MinKey], buttons[entry.MaxKey] = nil, nil, nil
+        end
+        buttons[session.ConfirmKey], sessions[id] = nil, nil
+    end
+    local function stopRefreshLoop()
+        refreshGeneration = refreshGeneration + 1
+        refreshLoopCallback, refreshQueued = nil, false
+    end
+    local function refreshMenus()
+        for id, menu in pairs(watched) do
+            if not valid(menu) or not menu:IsVisible() then
+                forgetMenu(id)
+            else
+                local session = attach(menu)
+                if session then update(session) end
+            end
+        end
+        if next(watched) == nil then stopRefreshLoop() end
+    end
+    local function queueRefresh()
+        if stopped or refreshQueued or next(watched) == nil then return end
+        refreshQueued = true
+        local generation = refreshGeneration
+        ExecuteInGameThread(function()
+            if stopped or generation ~= refreshGeneration then return end
+            refreshQueued = false
+            local ok, reason = pcall(refreshMenus)
+            if not ok then once(reason) end
+        end)
+    end
+    local function menuChanged(context)
+        local menu = unwrap(context)
+        if not valid(menu) then return end
+        local id = key(menu)
+        if id:find('Default__', 1, true) then return end
+        watched[id] = menu
+        if not refreshLoopCallback then
+            local generation = refreshGeneration
+            refreshLoopCallback = function()
+                if stopped or generation ~= refreshGeneration then return true end
+                queueRefresh()
+                return generation ~= refreshGeneration
+            end
+            LoopAsync(config.RefreshIntervalMs or 750, refreshLoopCallback)
+        end
+        -- Setup and selection can run before the Blueprint finishes writing
+        -- CurrentHandle. Reconcile once on the next game-thread tick.
+        queueRefresh()
+    end
+    local function menuClosed(context)
+        local menu = unwrap(context)
+        if not valid(menu) then return end
+        forgetMenu(key(menu))
+        if next(watched) == nil then stopRefreshLoop() end
+    end
     installHooks = function()
+        hooks.setup = hooks.setup or hook(MENU .. ':OnSetup', menuChanged)
+        hooks.refresh = hooks.refresh or hook(MENU .. ':Refresh Info', menuChanged)
+        hooks.close = hooks.close or hook(MENU .. ':CloseAction', menuClosed)
+        hooks.destruct = hooks.destruct or hook(MENU .. ':Destruct', menuClosed)
         hooks.plus = hooks.plus or hook(ROOT .. 'WBP_Buildup_Pal_StatusContent.WBP_Buildup_Pal_StatusContent_C:StatusPlus', nativeSelection)
         hooks.minus = hooks.minus or hook(ROOT .. 'WBP_Buildup_Pal_StatusContent.WBP_Buildup_Pal_StatusContent_C:StatusMinus', nativeSelection)
         hooks.click = hooks.click or hook(BUTTON .. '.WBP_CommonButton_C:' .. CLICK, function(context)
@@ -280,34 +348,23 @@ function M.start(config)
             update(session)
         end)
     end
-    local queued = false
-    LoopAsync(config.RefreshIntervalMs or 750, function()
-        if stopped then return true end
-        if queued then return false end
-        queued = true
+    installHooks()
+    -- Lazy Blueprint classes need their hooks installed when first created.
+    -- Track that exact instance; never enumerate the world's UObject array.
+    NotifyOnNewObject(MENU, function(menu)
+        if stopped then return end
         ExecuteInGameThread(function()
-            if stopped then queued = false; return end
-            local ok, reason = pcall(function()
-                for id, session in pairs(sessions) do
-                    if not valid(session.Menu) then
-                        for _, entry in ipairs(session.Rows) do rows[entry.Key], buttons[entry.MinKey], buttons[entry.MaxKey] = nil, nil, nil end
-                        buttons[session.ConfirmKey] = nil; sessions[id] = nil
-                    end
-                end
-                for i, menu in ipairs(FindAllOf('WBP_Buildup_Pal_C') or {}) do
-                    if i > 8 then break end
-                    if valid(menu) and menu:IsVisible() then local session = attach(menu); if session then update(session) end end
-                end
-            end)
-            queued = false
-            if not ok then once(reason) end
+            if stopped then return end
+            installHooks()
+            if valid(menu) and menu:IsVisible() then menuChanged(menu) end
         end)
-        return false
     end)
-    once('1.0.0 loaded; all soul tiers pooled as small souls')
+    once('1.0.0 loaded; event-driven reinforcement UI, no background object scans')
 end
 function M.stop()
     stopped = true
+    refreshGeneration = refreshGeneration + 1
+    watched, refreshLoopCallback, refreshQueued = {}, nil, false
     for _, registration in pairs(hooks) do
         local ok, reason = pcall(UnregisterHook, registration.Path, registration[1], registration[2])
         if not ok then once('hook cleanup failed: ' .. tostring(reason)) end
