@@ -1,8 +1,8 @@
 # BetterPalSouls — 更好的帕鲁魂强化
 
-版本 **0.2.7 experimental**，强化提交及保存同步仍需游戏内验收。
+版本 **1.0.0**，强化提交及保存同步仍需游戏内验收。
 
-0.2.7 将全部可用魂统一折成小型魂池，界面预览与强化提交共用换算和分槽逻辑。
+将全部可用魂统一折成小型魂池，界面预览与强化提交共用换算和分槽逻辑。
 更新后请完整退出并重新启动游戏。
 
 保留力量石像的原版强化界面：属性名称、百分比、格子条、单次加减和四种魂的费用显示。
@@ -40,15 +40,21 @@ python mods/BetterPalSouls/tests/run.py
 python tools/build.py BetterPalSouls
 ```
 
-生成 `dist/BetterPalSouls/BetterPalSouls-0.2.7-experimental.zip`，构建不会安装到游戏。
+生成 `dist/BetterPalSouls/BetterPalSouls-1.0.0.zip`，构建不会安装到游戏。
 这是 Lua Mod，不需要自定义界面 PAK、UAssetGUI 或游戏映射。
 
 游戏退出后，将 ZIP 中的 `Mods/` 合并到 Palworld 安装目录。
-需要已启用 UE4SS Lua Mod，操作实验包前备份存档。
+需要已启用 UE4SS Lua Mod，首次使用前备份存档。
 安装位置：`Mods/NativeMods/UE4SS/Mods/BetterPalSouls/`。
 
 `Scripts/config.lua` 支持 `Enabled`、`Language`、`RefreshIntervalMs`。
 语言可用 `auto`、`zh-Hans`、`zh-Hant`、`en`、`ja`。
+
+## 创意工坊
+
+四语介绍、元数据和封面位于 [workshop/](workshop/README.md)，依赖 `UE4SSExperimentalPW`。
+运行 `python tools/package_workshop.py BetterPalSouls` 生成工坊目录和 ZIP；
+工坊介绍由四份本地化 README 自动生成，打包不会安装或上传。
 
 待实机验收：最小／最大箭头、原版单次加减、四行共享预算、小型魂池兑换与余量、
 基地库存、背包满时拒绝、提交失败恢复、切换帕鲁与重置页、手柄焦点、保存后重载。

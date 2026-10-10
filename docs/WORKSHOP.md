@@ -1,8 +1,8 @@
 # 创意工坊打包
 
-五个 mod 各有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
+七个 mod 各有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
 作者为 `ourongxing`；包名固定为源码目录名，首次发布后不要随意修改。
-五个工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
+七个工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
 ## 简繁中文、日英四语
@@ -61,7 +61,7 @@ python tools/package_workshop.py all --author ourongxing --min-revision 82182 --
 各 mod 的版本在各自模板中维护；`--version` 可临时统一覆盖本次所选包的版本。
 发布新版本时必须改变 `Version`，否则官方加载器可能不会重新安装。
 
-`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表五个 mod 已在该游戏版本测试通过。
+`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表七个 mod 已在该游戏版本测试通过。
 正式发布前应根据实机验证填写最低支持修订号（游戏标题版本号的最后五位）。
 三个原生 mod 还要求匹配的 UE4SS ABI；该字段只检查游戏最低修订号，不能保证 DLL 兼容性。
 BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导入审核数量；
@@ -74,6 +74,8 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | BetterWorkbench | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | PalCombo | `Scripts/`、`dlls/main.dll`、`config.ini`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | BetterBulkStorage | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
+| AnywherePalBox | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
+| BetterPalSouls | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | PointBlankBurstSkills | `PalSchema/raw/point_blank_burst_skills.json` | PalSchema | UE4SSExperimentalPW、PalSchema |
 

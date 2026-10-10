@@ -304,7 +304,7 @@ function M.start(config)
         end)
         return false
     end)
-    once('0.2.7 loaded; all soul tiers pooled as small souls')
+    once('1.0.0 loaded; all soul tiers pooled as small souls')
 end
 function M.stop()
     stopped = true
