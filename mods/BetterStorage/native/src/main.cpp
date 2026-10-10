@@ -239,7 +239,7 @@ public:
         game_base = base;
         installed.store(true);
         RC::Output::send(install_stack_limits()
-            ? STR("[BetterStorage] shared stack limit ready: 99999 (inventory, chests and production storage)\n")
+            ? STR("[BetterStorage] shared stack limit ready: minimum 99999, higher original limits preserved (inventory, chests and production storage)\n")
             : STR("[BetterStorage] stack limit patch unavailable; original limits retained\n"));
         const bool transport_supported =
             !std::memcmp(base + guard::transport_rva, guard::transport.data(), guard::transport.size())
