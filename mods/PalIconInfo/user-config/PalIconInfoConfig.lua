@@ -129,12 +129,12 @@ local Config = {
     -- Keys that do nothing do not need to be configured.
     ------------------------------------------------
 
-    -- Only condensation stars are added by this mod.
+    -- Show condensation stars and high Talent dots.
     -- A single state keeps F1 / R3 from enabling other information.
     DisplayMode = {
         [Key.F1] = {
             GamepadButton = "Right Stick Press",
-            { Rank = true },
+            { Rank = true, Talent = true },
         },
     },
     DisplayOption = {
@@ -164,10 +164,10 @@ local Config = {
         Talent = {
 
             -- Require the Ability Glasses to display Talent values.
-            RequireAbilityGlasses = true, -- @darn
+            RequireAbilityGlasses = false, -- @darn
 
             -- Value at which the Talent color changes from Blue to Green.
-            GreenThreshold = 70, -- @darn min=0; max=100; step=1
+            GreenThreshold = 90, -- @darn min=0; max=100; step=1
 
             -- Value at which the Talent color changes from Green to Yellow
             -- and MaxValueSymbol can be used.
@@ -176,17 +176,20 @@ local Config = {
             -- Do not display the Talent value when it is
             -- below this value.
             -- 0 = Display all Talent values.
-            HideValueBelow = 0, -- @darn min=0; max=100; step=1
+            HideValueBelow = 90, -- @darn min=0; max=100; step=1
 
             -- Replace Talent values below HideValueBelow with this symbol.
             -- Leave empty to display nothing.
             -- Example: "・"
-            HideValueSymbol = "・", -- @darn maxlen=8
+            HideValueSymbol = "", -- @darn maxlen=8
+
+            -- Replace visible values below MaxThreshold with a green dot.
+            ValueSymbol = "●", -- @darn maxlen=8
 
             -- Replace the Talent value 100 with this symbol.
             -- Leave empty to display 100 as usual.
             -- Example: "★"
-            MaxValueSymbol = "", -- @darn maxlen=8
+            MaxValueSymbol = "●", -- @darn maxlen=8
         },
 
         ------------------------------------------------
@@ -684,14 +687,15 @@ local Config = {
                 Height = 16,
 
                 HAlign = "Right",
-                FontSize = 10,
+                FontSize = 8,
                 Bold = true,
                 Outline = true,
 
-                -- Comment this out if you do not want to use AutoScale.
-                TextFit = "AutoScale",
+                -- Keep dots at a fixed size when pooled slots switch from
+                -- blank Talent text to a visible dot.
+                TextFit = "Clip",
 
-                PitchY = 12,
+                PitchY = 9,
 
             },
 

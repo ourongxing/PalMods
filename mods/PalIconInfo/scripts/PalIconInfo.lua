@@ -11526,6 +11526,8 @@ end
 --
 -- Values at or above MaxThreshold can be replaced with MaxValueSymbol.
 -- If MaxValueSymbol is empty, the numeric value is displayed instead.
+-- Other visible values can be replaced with ValueSymbol when configured.
+-- With ValueSymbol absent, existing numeric display behavior is preserved.
 --
 -- Colors are selected according to GreenThreshold and MaxThreshold:
 --
@@ -11633,7 +11635,7 @@ local function UpdateTalent(
 
         else
 
-            text = tostring(currentValue)
+            text = talentConfig.ValueSymbol or tostring(currentValue)
 
         end
 
