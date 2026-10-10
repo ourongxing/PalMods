@@ -10,15 +10,7 @@ if not loader then
 end
 local bridge = loader()
 if type(bridge) == "table" and bridge.growGuildStorage and directory then
-    local file = io.open(directory .. "/../PalSchema/mods/BetterStorage/blueprints/storage.json", "r")
-    local data = file and file.read(file, "*a")
-    if file then file.close(file) end
-    local slots = data and tonumber(data:match('"GuildChestSlotNum"%s*:%s*([%d%.eE%+%-]+)'))
-    if slots and slots % 1 == 0 and slots >= 54 and slots <= 4096 then
-        assert(loadfile(directory .. "/Scripts/GuildStorage.lua"))().start(bridge, slots)
-    else
-        print("[BetterStorage] guild migration disabled: missing or invalid PalSchema GuildChestSlotNum\n")
-    end
+    assert(loadfile(directory .. "/Scripts/GuildStorage.lua"))().start(bridge)
 end
 if type(bridge) ~= "table" or not bridge.ready or not bridge.inStorageScope then
     print("[BetterStorage] simple bridge unavailable; original storage retained\n")

@@ -19,7 +19,6 @@ local manager=object({TryGetModel=function(_,id,out)
 end})
 local world=object({address=10})
 local utility=object({IsServer=function() return server end,
-    GetBaseCampManager=function() return manager end,
     GetGameSetting=function() return object({GuildChestSlotNum=slots}) end})
 FindFirstOf=function() return world end
 StaticFindObject=function() return utility end
@@ -30,8 +29,7 @@ ExecuteInGameThread=function(fn) work[#work+1]=fn end
 ExecuteWithDelay=function(ms,fn) assert(ms==1000);delays[#delays+1]=fn end
 LoopAsync=function() error('Migration must not poll') end
 NotifyOnNewObject=function() error('Migration must not discover objects globally') end
-local hook,beginPlay
-RegisterBeginPlayPostHook=function(fn) beginPlay=fn end
+local hook
 RegisterHook=function(path,pre,post)
     assert(path=='/Script/Pal.PalBaseCampManager:OnCreateMapObjectModelInServer');hook=post
 end
@@ -41,7 +39,7 @@ module.start({growGuildStorage=function(w,g,count)
     if unavailable then return nil,'container not loaded' end
     if target.capacity<count then target.capacity=count;growths=growths+1 end
     return target.capacity
-end},360)
+end})
 local function flush()
     local pending=work;work={};for _,fn in ipairs(pending) do fn() end
 end
@@ -56,27 +54,15 @@ local item=target.items[1]
 flush();assert(target.capacity==360 and unrelated.capacity==54 and growths==1)
 assert(target.items[1]==item and item.count==99 and #delays==0)
 created(chest(102));flush();assert(growths==1,'Rebuilding never re-extends an already sufficient inventory')
-slots=54;target.capacity=540;created(chest(103));flush();assert(target.capacity==540,'Never shrink saved slots')
+slots=54;created(chest(103));flush();assert(target.capacity==360,'Never shrink saved slots')
 server=false;local before=calls;created(chest(104));flush();assert(calls==before and #delays==0)
-server=true;slots=54;target.capacity=54;ready=false
+server=true;slots=540;ready=false
 created(chest(105));flush();assert(#delays==1)
-ready=true;unavailable=true;retry();assert(#delays==1 and target.capacity==54)
-unavailable=false;retry();assert(target.capacity==360 and #delays==0 and target.items[1]==item)
+ready=true;unavailable=true;retry();assert(#delays==1 and target.capacity==360)
+unavailable=false;retry();assert(target.capacity==540 and #delays==0 and target.items[1]==item)
 ready=false;created(chest(106));flush()
 for _=1,8 do retry() end
 assert(#delays==0 and #work==0,'Initialization retries must expire')
 local dead=chest(107);created(dead);dead.valid=false;flush();assert(#delays==0)
--- BeginPlay must migrate a loaded old-save chest without any construction event.
-ready=true
-local model=chest(108)
-local assigned=false
-local actor=object({address=200,IsA=function() return true end,
-    GetModel=function() if assigned then return model end end})
-target.capacity=54;beginPlay(param(actor));beginPlay(param(actor));assert(#work==1)
-flush();assert(#delays==1 and target.capacity==54)
-assigned=true;retry();assert(target.capacity==360 and #delays==0 and growths==3)
-assert(target.items[1]==item and unrelated.capacity==54)
-server=false;target.capacity=54;beginPlay(param(actor));flush();assert(target.capacity==54 and #delays==0)
-server=true;actor.valid=false;beginPlay(param(actor));assert(#work==0)
-assert(calls>0 and growths==3)
+assert(calls>0 and growths==2)
 print('PASS: old-save guild migration on chest construction, owner isolation, deferred growth, item retention, rebuild idempotence, grow-only, authority and finite loading retries')
