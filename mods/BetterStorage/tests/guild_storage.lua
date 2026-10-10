@@ -36,19 +36,19 @@ local function flush()
     local pending=work; work={}
     for _, callback in ipairs(pending) do callback() end
 end
-start(180, true)
+start(360, true)
 assert(calls == 0) -- Mutation is deferred to the game thread.
-flush(); assert(capacity == 180 and setting.GuildChestSlotNum == 180 and calls == 1)
+flush(); assert(capacity == 360 and setting.GuildChestSlotNum == 360 and calls == 1)
 loops[1](); loops[1](); assert(#work == 1) -- No growing task backlog.
-flush(); assert(calls == 2 and capacity == 180)
+flush(); assert(calls == 2 and capacity == 360)
 start(540, true); flush(); assert(capacity == 540)
 start(54, true, 180); flush(); assert(capacity == 180 and setting.GuildChestSlotNum == 54)
 start(360, false); flush(); assert(calls == 0 and setting.GuildChestSlotNum == nil)
 for _, value in ipairs({0, 53, 4097, 180.5, '360', math.huge, 0/0}) do
-    start(value, true); flush(); assert(capacity == 180)
+    start(value, true); flush(); assert(capacity == 360)
 end
 -- Missing or malformed files also retain the documented default.
 loadfile = function() error('missing config') end
-module.start(bridge, SCRIPTS); flush(); assert(setting.GuildChestSlotNum == 180)
+module.start(bridge, SCRIPTS); flush(); assert(setting.GuildChestSlotNum == 360)
 loadfile = realLoadfile
 print('PASS: guild capacity default/config validation, authority, scheduling and grow-only policy')

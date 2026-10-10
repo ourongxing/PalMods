@@ -43,62 +43,97 @@ thread_local unsigned storage_depth{};
 std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
 RC::Unreal::FName inventory_name;
 RC::Unreal::FWeakObjectPtr inventory_class;
-bool guild_growth_supported{};
+bool container_growth_supported{};
+int storage_error(lua_State* state, const char* reason) {
+    lua_pushnil(state);
+    lua_pushstring(state, reason);
+    return 2;
+}
+const char* server_authority(RC::Unreal::UObject* world) {
+    auto* world_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
+        nullptr, nullptr, STR("/Script/Pal.PalGameState"));
+    if (!storage::valid(world) || !world_class || !world->IsA(world_class)) return "invalid world";
+    auto* utility = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UObject*>(
+        nullptr, nullptr, STR("/Script/Pal.Default__PalUtility"));
+    auto* is_server = utility ? utility->GetFunctionByNameInChain(STR("IsServer")) : nullptr;
+    if (!is_server) return "server authority check unavailable";
+    struct { RC::Unreal::UObject* context; bool result; std::uint8_t padding[7]; } authority{world, false, {}};
+    utility->ProcessEvent(is_server, &authority);
+    return authority.result ? nullptr : "storage capacity requires server authority";
+}
+int grow_container(lua_State* state, RC::Unreal::UObject* container, std::int32_t slots) {
+    auto* container_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
+        nullptr, nullptr, STR("/Script/Pal.PalItemContainer"));
+    if (!storage::valid(container) || !container_class || !container->IsA(container_class))
+        return storage_error(state, "item container not loaded");
+    auto* vtable = storage::read<std::uint8_t*>(container, 0);
+    if (storage::read<void*>(vtable, 0x2b0) != game_base + guard::slot_count_rva
+        || storage::read<void*>(vtable, 0x2d8) != game_base + guard::guild_extend_rva)
+        return storage_error(state, "unsupported container methods");
+    const auto before = storage::read<std::int32_t>(container, 0x78);
+    if (before < 0 || before > 4096) return storage_error(state, "unsupported inventory size");
+    if (before < slots) {
+        auto** old_data = storage::read<void**>(container, 0x70);
+        if (before && !old_data) return storage_error(state, "container slots not loaded");
+        std::vector<void*> saved;
+        try { for (int i = 0; i < before; ++i) saved.push_back(old_data[i]); }
+        catch (const std::bad_alloc&) { return storage_error(state, "cannot retain container slot identities"); }
+        // The native method takes the final size, creates real slots, marks
+        // replication and broadcasts updates. Never shrink a saved inventory.
+        using Extend = void (*)(void*, std::int32_t);
+        reinterpret_cast<Extend>(game_base + guard::guild_extend_rva)(container, slots);
+        auto** new_data = storage::read<void**>(container, 0x70);
+        if (!new_data || storage::read<std::int32_t>(container, 0x78) != slots)
+            return storage_error(state, "container slot expansion verification failed");
+        for (int i = 0; i < before; ++i)
+            if (new_data[i] != saved[i]) return storage_error(state, "container slot identity changed");
+    }
+    lua_pushinteger(state, storage::read<std::int32_t>(container, 0x78));
+    return 1;
+}
 int grow_guild_storage(lua_State* state) {
-    const auto reject = [&](const char* reason) {
-        lua_pushnil(state); lua_pushstring(state, reason); return 2;
-    };
     const auto slots = luaL_checkinteger(state, 3);
-    if (slots < 54 || slots > 4096) return reject("GuildChestSlots must be an integer from 54 to 4096");
-    if (!installed.load() || !guild_growth_supported) return reject("unsupported guild container binary");
+    if (slots < 54 || slots > 4096) return storage_error(state, "GuildChestSlots must be an integer from 54 to 4096");
+    if (!installed.load() || !container_growth_supported) return storage_error(state, "unsupported guild container binary");
     auto* world = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 1));
     auto* guild = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 2));
     auto* guild_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
         nullptr, nullptr, STR("/Script/Pal.PalGroupGuild"));
-    auto* world_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
-        nullptr, nullptr, STR("/Script/Pal.PalGameState"));
-    if (!storage::valid(world) || !storage::valid(guild) || !guild_class || !world_class
-        || !world->IsA(world_class) || !guild->IsA(guild_class)) return reject("invalid world or guild");
-    auto* utility = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UObject*>(
-        nullptr, nullptr, STR("/Script/Pal.Default__PalUtility"));
-    auto* is_server = utility ? utility->GetFunctionByNameInChain(STR("IsServer")) : nullptr;
-    if (!is_server) return reject("server authority check unavailable");
-    struct { RC::Unreal::UObject* context; bool result; std::uint8_t padding[7]; } authority{world, false, {}};
-    utility->ProcessEvent(is_server, &authority);
-    if (!authority.result) return reject("guild capacity requires server authority");
+    if (!storage::valid(guild) || !guild_class || !guild->IsA(guild_class))
+        return storage_error(state, "invalid guild");
+    if (const auto* error = server_authority(world)) return storage_error(state, error);
     auto** storage_field = guild->GetValuePtrByPropertyNameInChain<RC::Unreal::UObject*>(STR("ItemStorage"));
     auto* guild_storage = storage_field ? *storage_field : nullptr;
-    if (!storage::valid(guild_storage)) return reject("guild inventory not loaded");
+    if (!storage::valid(guild_storage)) return storage_error(state, "guild inventory not loaded");
     auto** container_field = guild_storage->GetValuePtrByPropertyNameInChain<RC::Unreal::UObject*>(STR("ItemContainer"));
     auto* container = container_field ? *container_field : nullptr;
-    auto* container_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
-        nullptr, nullptr, STR("/Script/Pal.PalItemContainer"));
-    if (!storage::valid(container) || !container_class || !container->IsA(container_class))
-        return reject("guild item container not loaded");
-    auto* vtable = storage::read<std::uint8_t*>(container, 0);
-    if (storage::read<void*>(vtable, 0x2b0) != game_base + guard::slot_count_rva
-        || storage::read<void*>(vtable, 0x2d8) != game_base + guard::guild_extend_rva)
-        return reject("unsupported guild container methods");
-    const auto before = storage::read<std::int32_t>(container, 0x78);
-    if (before < 0 || before > 4096) return reject("unsupported guild inventory size");
-    if (before < slots) {
-        auto** old_data = storage::read<void**>(container, 0x70);
-        if (before && !old_data) return reject("guild slots not loaded");
-        std::vector<void*> saved;
-        try { for (int i = 0; i < before; ++i) saved.push_back(old_data[i]); }
-        catch (const std::bad_alloc&) { return reject("cannot retain guild slot identities"); }
-        // The native method takes the final size, creates real slots, marks
-        // replication and broadcasts updates. Never shrink a saved inventory.
-        using Extend = void (*)(void*, std::int32_t);
-        reinterpret_cast<Extend>(game_base + guard::guild_extend_rva)(container, static_cast<std::int32_t>(slots));
-        auto** new_data = storage::read<void**>(container, 0x70);
-        if (!new_data || storage::read<std::int32_t>(container, 0x78) != slots)
-            return reject("guild slot expansion verification failed");
-        for (int i = 0; i < before; ++i)
-            if (new_data[i] != saved[i]) return reject("guild slot identity changed");
-    }
-    lua_pushinteger(state, storage::read<std::int32_t>(container, 0x78));
-    return 1;
+    return grow_container(state, container, static_cast<std::int32_t>(slots));
+}
+int grow_blueprint_storage(lua_State* state) {
+    const auto slots = luaL_checkinteger(state, 3);
+    if (slots < 1 || slots > 4096) return storage_error(state, "BlueprintChestSlots must be an integer from 1 to 4096");
+    if (!installed.load() || !container_growth_supported) return storage_error(state, "unsupported container binary");
+    if (std::memcmp(game_base + guard::module_rva, guard::module.data(), guard::module.size())
+        || std::memcmp(game_base + guard::container_rva, guard::container.data(), guard::container.size()))
+        return storage_error(state, "unsupported chest accessors");
+    auto* world = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 1));
+    auto* model = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 2));
+    auto* model_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
+        nullptr, nullptr, STR("/Script/Pal.PalMapObjectItemChestModel"));
+    if (!storage::valid(model) || !model_class || !model->IsA(model_class))
+        return storage_error(state, "invalid chest model");
+    if (const auto* error = server_authority(world)) return storage_error(state, error);
+    auto* get_id = model->GetFunctionByNameInChain(STR("TryGetMapObjectId"));
+    if (!get_id) return storage_error(state, "chest identity unavailable");
+    RC::Unreal::FName id;
+    model->ProcessEvent(get_id, &id);
+    if (id != RC::Unreal::FName(STR("Shelf01_Stone")) && id != RC::Unreal::FName(STR("Shelf07_Stone")))
+        return storage_error(state, "not an antique blueprint cabinet");
+    using Getter = void* (*)(void*);
+    auto* module = reinterpret_cast<Getter>(game_base + guard::module_rva)(model);
+    if (!storage::valid(module)) return storage_error(state, "chest module not loaded");
+    auto* container = static_cast<RC::Unreal::UObject*>(reinterpret_cast<Getter>(game_base + guard::container_rva)(module));
+    return grow_container(state, container, static_cast<std::int32_t>(slots));
 }
 bool inventory_context(RC::Unreal::UObject* context) {
     if (!scope_ready.load() || !context) return false;
@@ -295,7 +330,7 @@ public:
             return;
         }
         game_base = base;
-        guild_growth_supported =
+        container_growth_supported =
             !std::memcmp(base + guard::guild_extend_rva, guard::guild_extend.data(), guard::guild_extend.size())
             && !std::memcmp(base + guard::slot_count_rva, guard::slot_count.data(), guard::slot_count.size());
         installed.store(true);
@@ -362,6 +397,7 @@ extern "C" __declspec(dllexport) int luaopen_BetterStorage(lua_State* state) {
         {"ready", native_ready},
         {"inStorageScope", storage_scope},
         {"growGuildStorage", grow_guild_storage},
+        {"growBlueprintStorage", grow_blueprint_storage},
         {nullptr, nullptr},
     };
     luaL_newlib(state, bridge);

@@ -6,19 +6,23 @@ ROOT = Path(__file__).resolve().parents[3]
 sys.path.insert(0, str(ROOT / 'tools'))
 from palmods import load_lua_runtime, UE4SS_ROOT, GAME_EXE
 sys.path.insert(0, str(ROOT / 'mods/BetterBulkStorage/tests'))
-from audit_interfaces import audit, INTERFACES
+from audit_interfaces import audit, INTERFACES, NON_GAME_METHODS
 INTERFACES['CollectQuickStackTargetItemInfos'] = ('Pal.PalBaseCampUtility', ['WorldContextObject', 'TargetBaseCampID', 'TargetPlayerUId', 'StaticItemIds', 'OutItemInfos'])
 INTERFACES['IsServer'] = ('Pal.PalUtility', ['WorldContextObject'])
 INTERFACES['GetGameSetting'] = ('Pal.PalUtility', ['WorldContextObject'])
+INTERFACES['TryGetMapObjectId'] = ('Pal.PalMapObjectConcreteModelBase', [])
 
 mod = ROOT / 'mods/BetterStorage'
 source = (mod / 'mod/Scripts/main.lua').read_text(encoding='utf-8')
 guild_source = (mod / 'mod/Scripts/GuildStorage.lua').read_text(encoding='utf-8')
-audit(source + '\n' + guild_source, UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
+blueprint_source = (mod / 'mod/Scripts/BlueprintStorage.lua').read_text(encoding='utf-8')
+NON_GAME_METHODS.add('GetFullName')
+audit(source + '\n' + guild_source + '\n' + blueprint_source, UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
 lua = load_lua_runtime()(unpack_returned_tuples=True)
 lua.globals().SCRIPTS = str(mod / 'mod/Scripts').replace('\\', '/')
 lua.execute((mod / 'tests/runtime.lua').read_text(encoding='utf-8'))
 lua.execute((mod / 'tests/guild_storage.lua').read_text(encoding='utf-8'))
+lua.execute((mod / 'tests/blueprint_storage.lua').read_text(encoding='utf-8'))
 native = (mod / 'native/src/main.cpp').read_text(encoding='utf-8')
 assert 'ordered_transfer' not in native
 assert 'PreventOriginalFunctionCall' not in native

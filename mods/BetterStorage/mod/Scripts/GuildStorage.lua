@@ -1,13 +1,13 @@
 local M = {}
 function M.start(bridge, scripts)
-    local slots = 180
+    local slots = 360
     -- Load this mod's file directly; another mod may also require "config".
     local ok, config = pcall(function() return assert(loadfile(scripts .. "/config.lua"))() end)
     local value = ok and type(config) == "table" and config.GuildChestSlots
     if type(value) == "number" and value == math.floor(value) and value >= 54 and value <= 4096 then
         slots = value
     else
-        print("[BetterStorage] invalid GuildChestSlots; using 180\n")
+        print("[BetterStorage] invalid GuildChestSlots; using 360\n")
     end
     local queued, lastError = false, nil
     local function reportError(err)
