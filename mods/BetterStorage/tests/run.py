@@ -11,6 +11,7 @@ from audit_interfaces import audit, INTERFACES
 INTERFACES['CollectQuickStackTargetItemInfos'] = ('Pal.PalBaseCampUtility', ['WorldContextObject', 'TargetBaseCampID', 'TargetPlayerUId', 'StaticItemIds', 'OutItemInfos'])
 INTERFACES['IsServer'] = ('Pal.PalUtility', ['WorldContextObject'])
 INTERFACES['GetGameSetting'] = ('Pal.PalUtility', ['WorldContextObject'])
+INTERFACES['GetModel'] = ('Pal.PalMapObject', [])
 
 mod = ROOT / 'mods/BetterStorage'
 source = (mod / 'mod/Scripts/main.lua').read_text(encoding='utf-8')
@@ -20,6 +21,24 @@ lua = load_lua_runtime()(unpack_returned_tuples=True)
 lua.globals().SCRIPTS = str(mod / 'mod/Scripts').replace('\\', '/')
 lua.execute((mod / 'tests/runtime.lua').read_text(encoding='utf-8'))
 lua.execute((mod / 'tests/guild_storage.lua').read_text(encoding='utf-8'))
+bootstrap = load_lua_runtime()()
+bootstrap.globals().MAIN_PATH = str(mod / 'mod/Scripts/main.lua').replace('\\', '/')
+bootstrap.globals().CONFIG_PATH = str(mod / 'schema/blueprints/storage.json').replace('\\', '/')
+bootstrap.execute('''
+local originalOpen, originalLoad = io.open, loadfile
+local started = false
+io.open = function(path, mode)
+    assert(path:match('/../PalSchema/mods/BetterStorage/blueprints/storage.json$'))
+    return originalOpen(CONFIG_PATH, mode)
+end
+package.loadlib = function() return function() return {growGuildStorage=function() end} end end
+loadfile = function(path)
+    assert(path:match('/Scripts/GuildStorage.lua$'))
+    return function() return {start=function(_, slots) assert(slots==360); started=true end} end
+end
+assert(originalLoad(MAIN_PATH))()
+assert(started, 'Read migration capacity from the shipped schema configuration')
+''')
 storage = json.loads((mod / 'schema/blueprints/storage.json').read_text(encoding='utf-8'))
 assert set(storage) == {'BP_BuildObject_Shelf01_Stone_C', 'BP_BuildObject_Shelf07_Stone_C', 'BP_PalGameSetting_C'}
 for name in ('BP_BuildObject_Shelf01_Stone_C', 'BP_BuildObject_Shelf07_Stone_C'):
