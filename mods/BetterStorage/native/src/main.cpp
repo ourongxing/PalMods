@@ -109,32 +109,6 @@ int grow_guild_storage(lua_State* state) {
     auto* container = container_field ? *container_field : nullptr;
     return grow_container(state, container, static_cast<std::int32_t>(slots));
 }
-int grow_blueprint_storage(lua_State* state) {
-    const auto slots = luaL_checkinteger(state, 3);
-    if (slots < 1 || slots > 4096) return storage_error(state, "BlueprintChestSlots must be an integer from 1 to 4096");
-    if (!installed.load() || !container_growth_supported) return storage_error(state, "unsupported container binary");
-    if (std::memcmp(game_base + guard::module_rva, guard::module.data(), guard::module.size())
-        || std::memcmp(game_base + guard::container_rva, guard::container.data(), guard::container.size()))
-        return storage_error(state, "unsupported chest accessors");
-    auto* world = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 1));
-    auto* model = reinterpret_cast<RC::Unreal::UObject*>(luaL_checkinteger(state, 2));
-    auto* model_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
-        nullptr, nullptr, STR("/Script/Pal.PalMapObjectItemChestModel"));
-    if (!storage::valid(model) || !model_class || !model->IsA(model_class))
-        return storage_error(state, "invalid chest model");
-    if (const auto* error = server_authority(world)) return storage_error(state, error);
-    auto* get_id = model->GetFunctionByNameInChain(STR("TryGetMapObjectId"));
-    if (!get_id) return storage_error(state, "chest identity unavailable");
-    RC::Unreal::FName id;
-    model->ProcessEvent(get_id, &id);
-    if (id != RC::Unreal::FName(STR("Shelf01_Stone")) && id != RC::Unreal::FName(STR("Shelf07_Stone")))
-        return storage_error(state, "not an antique blueprint cabinet");
-    using Getter = void* (*)(void*);
-    auto* module = reinterpret_cast<Getter>(game_base + guard::module_rva)(model);
-    if (!storage::valid(module)) return storage_error(state, "chest module not loaded");
-    auto* container = static_cast<RC::Unreal::UObject*>(reinterpret_cast<Getter>(game_base + guard::container_rva)(module));
-    return grow_container(state, container, static_cast<std::int32_t>(slots));
-}
 bool inventory_context(RC::Unreal::UObject* context) {
     if (!scope_ready.load() || !context) return false;
     const auto* cls = context->GetClassPrivate();
@@ -397,7 +371,6 @@ extern "C" __declspec(dllexport) int luaopen_BetterStorage(lua_State* state) {
         {"ready", native_ready},
         {"inStorageScope", storage_scope},
         {"growGuildStorage", grow_guild_storage},
-        {"growBlueprintStorage", grow_blueprint_storage},
         {nullptr, nullptr},
     };
     luaL_newlib(state, bridge);

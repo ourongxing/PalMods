@@ -114,7 +114,14 @@ def main():
     subprocess.run(command, env=env, check=True)
     output = ROOT / 'dist/BetterStorage'
     stage = output / 'BetterStorage'
+    # Remove obsolete capacity scripts from a previous staging run.
+    for name in ('BlueprintStorage.lua', 'StorageWatch.lua', 'config.lua'):
+        (stage / 'Scripts' / name).unlink(missing_ok=True)
     shutil.copytree(MOD / 'mod', stage, dirs_exist_ok=True)
+    schema_stage = output / 'PalSchema/mods/BetterStorage'
+    shutil.copytree(MOD / 'schema', schema_stage, dirs_exist_ok=True)
+    data = json.loads((schema_stage / 'blueprints/storage.json').read_text(encoding='utf-8'))
+    assert data['BP_PalGameSetting_C']['GuildChestSlotNum'] >= 54
     (stage / 'dlls').mkdir(exist_ok=True)
     shutil.copy2(BUILD / 'Game__Shipping__Win64/bin/BetterStorageNative.dll', stage / 'dlls/main.dll')
     dll = pefile.PE(str(stage / 'dlls/main.dll'))
@@ -123,8 +130,9 @@ def main():
     shutil.copy2(MOD / 'README.md', stage / 'README.md')
     archive_name = 'BetterStorage-0.1.0.zip'
     with zipfile.ZipFile(output / archive_name, 'w', zipfile.ZIP_DEFLATED) as archive:
-        for path in sorted(stage.rglob('*')):
-            if path.is_file(): archive.write(path, path.relative_to(output))
+        for root in (stage, schema_stage):
+            for path in sorted(root.rglob('*')):
+                if path.is_file(): archive.write(path, path.relative_to(output))
     print(output / archive_name)
 
 if __name__ == '__main__': main()

@@ -1,0 +1,19 @@
+{
+  "BP_BuildObject_Shelf01_Stone_C": {
+    "PalMapObjectItemChestParameter": {
+      "SlotNum": 360,
+      "TargetTypesA": ["Blueprint"],
+      "TargetTypesB": []
+    }
+  },
+  "BP_BuildObject_Shelf07_Stone_C": {
+    "PalMapObjectItemChestParameter": {
+      "SlotNum": 360,
+      "TargetTypesA": ["Blueprint"],
+      "TargetTypesB": []
+    }
+  },
+  "BP_PalGameSetting_C": {
+    "GuildChestSlotNum": 360
+  }
+}
