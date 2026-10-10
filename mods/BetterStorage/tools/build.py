@@ -29,8 +29,6 @@ MODULE_RVA, MODULE_END = 0x2fff160, 0x2fff212
 CONTAINER_RVA, CONTAINER_END = 0x3067b70, 0x3067b92
 STATIC_DATA_RVA = 0x2fadd10
 STACK_LOOKUP_RVA, STACK_LOOKUP_END = 0x32651f0, 0x32652b4
-GUILD_EXTEND_RVA, GUILD_EXTEND_END = 0x2fa6c00, 0x2fa6d49
-SLOT_COUNT_RVA = 0xdbe790
 
 def generate_guard():
     digest = hashlib.sha256(GAME_EXE.read_bytes()).hexdigest()
@@ -75,8 +73,7 @@ def generate_guard():
                         ('maximum_rva', MAXIMUM_RVA), ('none_rva', none_rva),
                         ('transport_rva', TRANSPORT_RVA), ('transport_patch_rva', TRANSPORT_PATCH_RVA),
                         ('module_rva', MODULE_RVA), ('container_rva', CONTAINER_RVA),
-                        ('static_data_rva', STATIC_DATA_RVA), ('stack_lookup_rva', STACK_LOOKUP_RVA),
-                        ('guild_extend_rva', GUILD_EXTEND_RVA), ('slot_count_rva', SLOT_COUNT_RVA)]:
+                        ('static_data_rva', STATIC_DATA_RVA), ('stack_lookup_rva', STACK_LOOKUP_RVA)]:
         header += f'inline constexpr std::uint32_t {name} = 0x{value:x};\n'
     header += array('permission', pe.get_data(PERMISSION_RVA, PERMISSION_END - PERMISSION_RVA))
     header += array('filter', pe.get_data(FILTER_RVA, FILTER_END - FILTER_RVA))
@@ -86,8 +83,7 @@ def generate_guard():
     header += array('module', pe.get_data(MODULE_RVA, MODULE_END - MODULE_RVA))
     header += array('container', pe.get_data(CONTAINER_RVA, CONTAINER_END - CONTAINER_RVA))
     header += array('static_data', pe.get_data(STATIC_DATA_RVA, 0x80))
-    header += array('guild_extend', pe.get_data(GUILD_EXTEND_RVA, GUILD_EXTEND_END - GUILD_EXTEND_RVA))
-    header += array('slot_count', pe.get_data(SLOT_COUNT_RVA, 4)) + '}\n'
+    header += '}\n'
     (generated / 'binary_guard.hpp').write_text(header, encoding='utf-8')
     (BUILD / 'analysis.json').write_text(json.dumps({'game_sha256': digest,
         'permission_rva': hex(PERMISSION_RVA), 'filter_rva': hex(FILTER_RVA),
@@ -115,7 +111,7 @@ def main():
     output = ROOT / 'dist/BetterStorage'
     stage = output / 'BetterStorage'
     # Remove obsolete capacity scripts from a previous staging run.
-    for name in ('BlueprintStorage.lua', 'StorageWatch.lua', 'config.lua'):
+    for name in ('BlueprintStorage.lua', 'StorageWatch.lua', 'config.lua', 'GuildStorage.lua'):
         (stage / 'Scripts' / name).unlink(missing_ok=True)
     shutil.copytree(MOD / 'mod', stage, dirs_exist_ok=True)
     schema_stage = output / 'PalSchema/mods/BetterStorage'

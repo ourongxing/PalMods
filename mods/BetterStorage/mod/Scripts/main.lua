@@ -9,9 +9,6 @@ if not loader then
     return
 end
 local bridge = loader()
-if type(bridge) == "table" and bridge.growGuildStorage and directory then
-    assert(loadfile(directory .. "/Scripts/GuildStorage.lua"))().start(bridge)
-end
 if type(bridge) ~= "table" or not bridge.ready or not bridge.inStorageScope then
     print("[BetterStorage] simple bridge unavailable; original storage retained\n")
     return
