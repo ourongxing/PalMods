@@ -1,4 +1,5 @@
 #include "../native/src/storage_transfer.hpp"
+#include "../native/src/transport_priority.hpp"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -58,6 +59,30 @@ struct Fixture {
     }
 };
 int main() {
+    { Fixture f;
+    auto rank = [&](std::uint8_t priority) {
+        return storage::transport_priority(priority, [&] {
+            return storage::has_transport_stack(f.containers[1].data(), 7, 0,
+                [&](void* slot) { return f.capacity[storage::read<int>(slot, 0x11c)]; },
+                [&](void* slot) { return !f.denied[storage::read<int>(slot, 0x11c)]; });
+        });
+    };
+    assert(storage::transport_priority(5, []() -> bool {
+        assert(false && "Food/production priorities must not scan chest slots"); return false;
+    }) == 5);
+    assert(rank(2) == 2.5f && rank(3) == 3.5f);
+    assert(rank(1) == 1.5f && rank(4) == 4 && rank(5) == 5 && rank(6) == 6 && rank(7) == 7);
+    assert(rank(2) < 3); // A stack never overrides the configured priority tier.
+    f.denied[2] = true; assert(rank(2) == 2); f.denied[2] = false;
+    put(f.slots[2], 0x154, 10); assert(rank(2) == 2); // Full stack.
+    put(f.slots[2], 0x154, 0); assert(rank(2) == 2); // Empty slot.
+    put(f.slots[2], 0x154, 8);
+    put(f.slots[2], 0x12c, std::uint64_t{8}); assert(rank(2) == 2); // Other item.
+    put(f.slots[2], 0x12c, std::uint64_t{7});
+    put(f.slots[2], 0x144, 1); assert(rank(2) == 2); // Dynamic instance.
+    put(f.slots[2], 0x144, 0);
+    put(f.slots[2], 8, std::uint32_t{0x60000000}); assert(rank(2) == 2);
+    }
     { Fixture f; f.run(1);
     assert(f.count(2) == 9 && f.count(0) == 0 && f.attempts == std::vector<int>{2});
     }
@@ -75,5 +100,5 @@ int main() {
     }
     { Fixture f; f.run(0); assert(f.attempts.empty());
     }
-    std::cout << "PASS: cross-container stack priority, overflow, native rejection, dynamic IDs and invalid objects\n";
+    std::cout << "PASS: transport stack preference with vanilla priority tiers, full/empty/denied/dynamic/invalid slots; cross-container transfer and overflow\n";
 }

@@ -22,6 +22,12 @@ CALL_RVA = 0x2dbd9d6
 PERMISSION_RVA, PERMISSION_END = 0x2fb1750, 0x2fb17ec
 FILTER_RVA, FILTER_END = 0x2faf900, 0x2fafb89
 MAXIMUM_RVA, TRANSFER_RVA = 0x2fad5a0, 0x2fbc1f0
+TRANSPORT_RVA, TRANSPORT_END = 0x2d7b690, 0x2d7c1e5
+TRANSPORT_PATCH_RVA = 0x2d7c0e0
+# Native implementations behind the two reflected container accessors.
+MODULE_RVA, MODULE_END = 0x2fff160, 0x2fff212
+CONTAINER_RVA, CONTAINER_END = 0x3067b70, 0x3067b92
+STATIC_DATA_RVA = 0x2fadd10
 
 def generate_guard():
     digest = hashlib.sha256(GAME_EXE.read_bytes()).hexdigest()
@@ -40,6 +46,12 @@ def generate_guard():
     call = pe.get_data(CALL_RVA, 5)
     decoded = next(Cs(CS_ARCH_X86, CS_MODE_64).disasm(call, CALL_RVA))
     assert decoded.mnemonic == 'call' and decoded.op_str == hex(FUNCTION_RVA)
+    transport = pe.get_data(TRANSPORT_RVA, TRANSPORT_END - TRANSPORT_RVA)
+    ranking = list(decoder.disasm(pe.get_data(TRANSPORT_PATCH_RVA, 14), TRANSPORT_PATCH_RVA))
+    assert [(i.mnemonic, i.op_str) for i in ranking] == [
+        ('mov', 'rax, qword ptr [rbx + 8]'), ('movzx', 'ecx, byte ptr [rax]'),
+        ('movd', 'xmm7, ecx'), ('cvtdq2ps', 'xmm7, xmm7')]
+    assert sum(i.size for i in ranking) == 14
     # Transfer validation uses these predicates with the same container offsets.
     validation = list(Cs(CS_ARCH_X86, CS_MODE_64).disasm(pe.get_data(0x2fc07a0, 0x2a2), 0x2fc07a0))
     for target in (PERMISSION_RVA, FILTER_RVA):
@@ -54,18 +66,27 @@ def generate_guard():
     for name, value in [('function_rva', FUNCTION_RVA), ('call_rva', CALL_RVA),
                         ('timestamp', pe.FILE_HEADER.TimeDateStamp), ('image_size', pe.OPTIONAL_HEADER.SizeOfImage),
                         ('permission_rva', PERMISSION_RVA), ('filter_rva', FILTER_RVA),
-                        ('maximum_rva', MAXIMUM_RVA), ('transfer_rva', TRANSFER_RVA), ('none_rva', none_rva)]:
+                        ('maximum_rva', MAXIMUM_RVA), ('transfer_rva', TRANSFER_RVA), ('none_rva', none_rva),
+                        ('transport_rva', TRANSPORT_RVA), ('transport_patch_rva', TRANSPORT_PATCH_RVA),
+                        ('module_rva', MODULE_RVA), ('container_rva', CONTAINER_RVA),
+                        ('static_data_rva', STATIC_DATA_RVA)]:
         header += f'inline constexpr std::uint32_t {name} = 0x{value:x};\n'
     header += array('function', code) + array('call', call)
     header += array('permission', pe.get_data(PERMISSION_RVA, PERMISSION_END - PERMISSION_RVA))
     header += array('filter', pe.get_data(FILTER_RVA, FILTER_END - FILTER_RVA))
     header += array('maximum', pe.get_data(MAXIMUM_RVA, 0x40))
-    header += array('transfer', pe.get_data(TRANSFER_RVA, 0x40)) + '}\n'
+    header += array('transfer', pe.get_data(TRANSFER_RVA, 0x40))
+    header += array('transport', transport)
+    header += array('module', pe.get_data(MODULE_RVA, MODULE_END - MODULE_RVA))
+    header += array('container', pe.get_data(CONTAINER_RVA, CONTAINER_END - CONTAINER_RVA))
+    header += array('static_data', pe.get_data(STATIC_DATA_RVA, 0x80)) + '}\n'
     (generated / 'binary_guard.hpp').write_text(header, encoding='utf-8')
     (BUILD / 'analysis.json').write_text(json.dumps({'game_sha256': digest, 'function_rva': hex(FUNCTION_RVA),
         'entry_size': 14, 'entry_original': code[:14].hex(), 'call_rva': hex(CALL_RVA),
         'permission_rva': hex(PERMISSION_RVA), 'filter_rva': hex(FILTER_RVA),
-        'maximum_rva': hex(MAXIMUM_RVA), 'transfer_rva': hex(TRANSFER_RVA), 'none_rva': hex(none_rva)}, indent=2))
+        'maximum_rva': hex(MAXIMUM_RVA), 'transfer_rva': hex(TRANSFER_RVA), 'none_rva': hex(none_rva),
+        'transport_rva': hex(TRANSPORT_RVA), 'transport_patch_rva': hex(TRANSPORT_PATCH_RVA),
+        'transport_original': pe.get_data(TRANSPORT_PATCH_RVA, 14).hex()}, indent=2))
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)

@@ -15,13 +15,16 @@ extern "C" {
 #define NOMINMAX
 #include <Windows.h>
 #include "binary_guard.hpp"
-#include "storage_transfer.hpp"
+#include "transport_priority.hpp"
 
 namespace {
 std::atomic_bool installed{false};
 std::atomic_bool scope_ready{false};
 std::uint8_t* target{};
 std::uint8_t* game_base{};
+std::uint8_t* transport_target{};
+void* transport_thunk{};
+std::array<std::uint8_t, 14> transport_original{}, transport_replacement{};
 RC::Unreal::UObject* preview_inventory{};
 thread_local unsigned storage_depth{};
 std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
@@ -43,6 +46,11 @@ bool candidate_function(RC::Unreal::FFrame& frame) {
         && frame.Node()->GetFName() == candidate_function_name;
 }
 std::array<std::uint8_t, 14> replacement{};
+std::array<std::uint8_t, 14> absolute_jump(const void* destination) {
+    std::array<std::uint8_t, 14> bytes{0xff, 0x25, 0, 0, 0, 0};
+    std::memcpy(bytes.data() + 6, &destination, sizeof(destination));
+    return bytes;
+}
 void ordered_transfer(void* context, const void* source, const void* item) {
     using Maximum = std::int32_t (*)(void*);
     using Transfer = void (*)(void*, std::int32_t, const void*, const void*, void*);
@@ -52,14 +60,87 @@ void ordered_transfer(void* context, const void* source, const void* item) {
         reinterpret_cast<Transfer>(game_base + guard::transfer_rva));
 }
 
-bool write_code(const std::uint8_t* bytes) {
+bool write_code(std::uint8_t* address, const std::uint8_t* bytes) {
     DWORD previous{};
-    if (!VirtualProtect(target, replacement.size(), PAGE_EXECUTE_READWRITE, &previous)) return false;
-    std::memcpy(target, bytes, replacement.size());
-    FlushInstructionCache(GetCurrentProcess(), target, replacement.size());
+    if (!VirtualProtect(address, replacement.size(), PAGE_EXECUTE_READWRITE, &previous)) return false;
+    std::memcpy(address, bytes, replacement.size());
+    FlushInstructionCache(GetCurrentProcess(), address, replacement.size());
     DWORD ignored{};
-    VirtualProtect(target, replacement.size(), previous, &ignored);
+    VirtualProtect(address, replacement.size(), previous, &ignored);
     return true;
+}
+
+bool item_permission(void* data, void* permission) {
+    using Permission = bool (*)(void*, void*);
+    return reinterpret_cast<Permission>(game_base + guard::permission_rva)(data, permission);
+}
+bool accepts_container(void* container, void* data) {
+    using Filter = bool (*)(void*, void*, void*);
+    auto* bytes = static_cast<std::byte*>(container);
+    return item_permission(data, bytes + 0x80)
+        && reinterpret_cast<Filter>(game_base + guard::filter_rva)(container, data, bytes + 0xc8);
+}
+bool accepts_slot(void* slot, void* data) {
+    return item_permission(data, static_cast<std::byte*>(slot) + 0x160);
+}
+
+float ranked_transport(const void* candidate) {
+    const auto* status = storage::read<void*>(candidate, 8);
+    const auto priority = storage::read<std::uint8_t>(status, 0);
+    return storage::transport_priority(priority, [&] {
+        auto* model = storage::read<void*>(candidate, 0);
+        if (!storage::valid(model)) return false;
+        using Getter = void* (*)(void*);
+        using Data = void* (*)(void*, std::uint64_t);
+        using Maximum = std::int32_t (*)(void*);
+        auto* module = reinterpret_cast<Getter>(game_base + guard::module_rva)(model);
+        if (!storage::valid(module)) return false;
+        auto* container = reinterpret_cast<Getter>(game_base + guard::container_rva)(module);
+        if (!storage::valid(container)) return false;
+        const auto name = storage::read<std::uint64_t>(candidate, 0x10);
+        auto* data = reinterpret_cast<Data>(game_base + guard::static_data_rva)(model, name);
+        return storage::valid(data) && accepts_container(container, data)
+            && storage::has_transport_stack(container, name,
+                storage::read<std::uint64_t>(game_base, guard::none_rva),
+                reinterpret_cast<Maximum>(game_base + guard::maximum_rva),
+                [&](void* slot) { return accepts_slot(slot, data); });
+    });
+}
+
+bool install_transport() {
+    // Replace only the 14-byte priority load after vanilla builds its eligible
+    // candidate list. RBX points at a 32-byte candidate; all live nonvolatile
+    // registers (including XMM6/8/9) are preserved by the Win64 callee ABI.
+    std::array<std::uint8_t, 41> thunk{
+        0x48,0x89,0xd9,                   // mov rcx,rbx
+        0x48,0x83,0xec,0x20,             // aligned Win64 shadow space
+        0x48,0xb8,0,0,0,0,0,0,0,0,     // mov rax,ranked_transport
+        0xff,0xd0,                       // call rax
+        0x48,0x83,0xc4,0x20,
+        0xf3,0x0f,0x10,0xf8,             // movss xmm7,xmm0
+        0xff,0x25,0,0,0,0,              // jmp [rip]
+        0,0,0,0,0,0,0,0};
+    const auto callback = reinterpret_cast<std::uintptr_t>(&ranked_transport);
+    const auto continuation = reinterpret_cast<std::uintptr_t>(game_base + guard::transport_patch_rva + 14);
+    std::memcpy(thunk.data() + 9, &callback, 8);
+    std::memcpy(thunk.data() + 33, &continuation, 8);
+    transport_thunk = VirtualAlloc(nullptr, thunk.size(), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!transport_thunk) return false;
+    std::memcpy(transport_thunk, thunk.data(), thunk.size());
+    DWORD previous{};
+    if (!VirtualProtect(transport_thunk, thunk.size(), PAGE_EXECUTE_READ, &previous)) {
+        VirtualFree(transport_thunk, 0, MEM_RELEASE); transport_thunk = nullptr; return false;
+    }
+    FlushInstructionCache(GetCurrentProcess(), transport_thunk, thunk.size());
+    transport_target = game_base + guard::transport_patch_rva;
+    std::memcpy(transport_original.data(), transport_target, 14);
+    transport_replacement = absolute_jump(transport_thunk);
+    const bool success = write_code(transport_target, transport_replacement.data());
+    if (!success) {
+        transport_target = nullptr;
+        VirtualFree(transport_thunk, 0, MEM_RELEASE); transport_thunk = nullptr;
+    }
+    return success;
 }
 
 int native_ready(lua_State* state) {
@@ -81,22 +162,15 @@ int milliseconds(lua_State* state) {
 int container_allows(lua_State* state) {
     auto* container = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 1));
     auto* data = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 2));
-    bool accepted = false;
-    if (installed.load() && preview_inventory && game_base && container && data) {
-        using Permission = bool (*)(void*, void*);
-        using Filter = bool (*)(void*, void*, void*);
-        accepted = reinterpret_cast<Permission>(game_base + guard::permission_rva)(data, container + 0x80)
-            && reinterpret_cast<Filter>(game_base + guard::filter_rva)(container, data, container + 0xc8);
-    }
-    lua_pushboolean(state, accepted);
+    lua_pushboolean(state, installed.load() && preview_inventory && game_base && container && data
+        && accepts_container(container, data));
     return 1;
 }
 int slot_allows(lua_State* state) {
     auto* slot = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 1));
     auto* data = reinterpret_cast<std::uint8_t*>(luaL_checkinteger(state, 2));
-    using Permission = bool (*)(void*, void*);
     lua_pushboolean(state, installed.load() && preview_inventory && game_base && slot && data
-        && reinterpret_cast<Permission>(game_base + guard::permission_rva)(data, slot + 0x160));
+        && accepts_slot(slot, data));
     return 1;
 }
 
@@ -129,15 +203,21 @@ public:
         game_base = base;
         // Replace only the validated bulk helper. A RIP-indirect absolute jump
         // preserves every argument register; no trampoline or displaced code.
-        replacement = {0xff, 0x25, 0, 0, 0, 0};
-        const auto destination = reinterpret_cast<std::uintptr_t>(&ordered_transfer);
-        std::memcpy(replacement.data() + 6, &destination, sizeof(destination));
-        if (!write_code(replacement.data())) {
+        replacement = absolute_jump(reinterpret_cast<const void*>(&ordered_transfer));
+        if (!write_code(target, replacement.data())) {
             RC::Output::send(STR("[BetterBulkStorage] patch installation failed\n"));
             target = nullptr;
             return;
         }
         installed.store(true);
+        const bool transport_supported =
+            !std::memcmp(base + guard::transport_rva, guard::transport.data(), guard::transport.size())
+            && !std::memcmp(base + guard::module_rva, guard::module.data(), guard::module.size())
+            && !std::memcmp(base + guard::container_rva, guard::container.data(), guard::container.size())
+            && !std::memcmp(base + guard::static_data_rva, guard::static_data.data(), guard::static_data.size());
+        RC::Output::send(transport_supported && install_transport()
+            ? STR("[BetterBulkStorage] Pal transport stack preference ready\n")
+            : STR("[BetterBulkStorage] Pal transport patch unavailable; vanilla transport retained\n"));
         // Track synchronous Blueprint execution, including nested delegate calls.
         // Never pretend that the player is inside a base for unrelated gameplay.
         auto enter = [](auto& callback, RC::Unreal::UObject* context, RC::Unreal::FFrame& frame, void*) {
@@ -190,7 +270,11 @@ public:
         scope_ready.store(false);
         for (auto id : scope_hooks) if (id) RC::Unreal::Hook::UnregisterCallback(id);
         if (target && std::memcmp(target, replacement.data(), replacement.size()) == 0)
-            write_code(guard::function.data());
+            write_code(target, guard::function.data());
+        if (transport_target && !std::memcmp(transport_target, transport_replacement.data(), 14)) {
+            if (write_code(transport_target, transport_original.data()) && transport_thunk)
+                VirtualFree(transport_thunk, 0, MEM_RELEASE);
+        }
     }
 };
 }

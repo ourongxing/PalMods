@@ -18,3 +18,5 @@ This mod is open source under the GPL-3.0 license.
 Source code: https://github.com/ourongxing/PalMods
 
 Storage first merges matching stacks across all destination chests, then places remaining items into empty slots.
+
+Pal transport now prefers chests with non-full matching stacks within the same transport priority tier. Distance still breaks ties between matching chests. Full stacks receive no bonus, and vanilla chest priorities, category filters and production requirements still apply. The host or server must load the DLL; the rule applies when selecting new transport targets.
