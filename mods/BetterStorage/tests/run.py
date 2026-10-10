@@ -1,0 +1,43 @@
+"""Verify scoped base selection and a bootstrap without preview hooks."""
+from pathlib import Path
+import sys
+
+ROOT = Path(__file__).resolve().parents[3]
+sys.path.insert(0, str(ROOT / 'tools'))
+from palmods import load_lua_runtime, UE4SS_ROOT, GAME_EXE
+sys.path.insert(0, str(ROOT / 'mods/BetterBulkStorage/tests'))
+from audit_interfaces import audit, INTERFACES
+INTERFACES['CollectQuickStackTargetItemInfos'] = ('Pal.PalBaseCampUtility', ['WorldContextObject', 'TargetBaseCampID', 'TargetPlayerUId', 'StaticItemIds', 'OutItemInfos'])
+
+mod = ROOT / 'mods/BetterStorage'
+source = (mod / 'mod/Scripts/main.lua').read_text(encoding='utf-8')
+audit(source, UE4SS_ROOT / 'UE4SS_ObjectDump.txt')
+lua = load_lua_runtime()(unpack_returned_tuples=True)
+lua.globals().SCRIPTS = str(mod / 'mod/Scripts').replace('\\', '/')
+lua.execute((mod / 'tests/runtime.lua').read_text(encoding='utf-8'))
+native = (mod / 'native/src/main.cpp').read_text(encoding='utf-8')
+assert 'ordered_transfer' not in native
+assert 'PreventOriginalFunctionCall' not in native
+assert 'preview_state' not in native
+assert not (mod / 'mod/Scripts/Preview.lua').exists()
+# The real vanilla helper sets its per-chest same-type flag before attempting
+# a merge, and skips empty slots when that flag is false. Remote candidates
+# therefore cannot introduce a new item type into an empty/different chest.
+import pefile
+from capstone import Cs, CS_ARCH_X86, CS_MODE_64
+pe = pefile.PE(str(GAME_EXE), fast_load=True)
+instructions = {i.address: (i.mnemonic, i.op_str) for i in
+                Cs(CS_ARCH_X86, CS_MODE_64).disasm(pe.get_data(0x2da9a60, 0x259), 0x2da9a60)}
+for address, expected in {
+    0x2da9ac3: ('xor', 'r13b, r13b'),
+    0x2da9b1e: ('cmp', 'rax, qword ptr [r14]'),
+    0x2da9b21: ('jne', '0x2da9bbd'),
+    0x2da9b2d: ('mov', 'r13b, 1'),
+    0x2da9bca: ('test', 'r13b, r13b'),
+    0x2da9bcd: ('je', '0x2da9c78'),
+}.items():
+    assert instructions[address] == expected
+# The original local-player entry delegates to this same explicit-base collector.
+call = next(Cs(CS_ARCH_X86, CS_MODE_64).disasm(pe.get_data(0x2fa0cbc, 5), 0x2fa0cbc))
+assert (call.mnemonic, call.op_str) == ('call', '0x2db0a90')
+print('PASS: scoped base selection, exact vanilla collector with selected remote base, physical-base preservation, no preview/transfer override')
