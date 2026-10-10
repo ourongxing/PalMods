@@ -24,7 +24,7 @@ for _,failure in ipairs({'none','write','request','cost','missing_output','unkno
     local state={Session={Menu=menu},Controller=object('Controller',{HasAuthority=function() return true end}),
         Handle=handle,HandleKey='Pal-A',Parameter=parameter,Sources={{Object=bag,Backpack=true}},
         Stock=Plan.copy({[ids[3]]=1}),Current={0,0,0,0},Schedule={{Item=ids[1],Count=1}},
-        Limits=Plan.copy({[ids[1]]=99,[ids[2]]=99,[ids[3]]=99,[ids[4]]=99}),Slots={}}
+        Limits=Plan.copy({[ids[1]]=2,[ids[2]]=99,[ids[3]]=99,[ids[4]]=99}),Slots={}}
     for i,o in ipairs(objects) do state.Slots[i]={Object=o,Key=o:GetFullName(),Item=o.ItemId.StaticId:ToString(),Count=o.StackCount,Backpack=true} end
     local operation=object('Operation',{GetCurrentStatusRank=function(_,p,stat) return p.SaveParameter[fields[stat]] end,
         GetRequiredItemCountForCharacterStatus=function(_,_,_,ranks,out)
@@ -59,7 +59,7 @@ for _,failure in ipairs({'none','write','request','cost','missing_output','unkno
     if failure=='none' then
         assert(result and parameter.SaveParameter.Rank_Attack==1)
         assert(objects[1].ItemId.StaticId:ToString()==ids[1] and objects[1].StackCount==1)
-        assert(objects[2].ItemId.StaticId:ToString()==ids[2] and objects[2].StackCount==1)
+        assert(objects[2].ItemId.StaticId:ToString()==ids[1] and objects[2].StackCount==2)
     else
         assert(not result and parameter.SaveParameter.Rank_Attack==0)
         assert(objects[1].ItemId.StaticId:ToString()==ids[3] and objects[1].StackCount==1)
@@ -70,6 +70,6 @@ for _,failure in ipairs({'none','write','request','cost','missing_output','unkno
     end
 end
 local screenshotPlan=assert(Plan.prepare(Plan.copy({[ids[3]]=30}),Plan.copy({[ids[1]]=10,[ids[2]]=3})))
-assert(screenshotPlan.Remaining[ids[3]]==26 and screenshotPlan.Cost==16,
-    'Thirty large souls can pay ten small plus three medium souls, leaving twenty-six large')
+assert(screenshotPlan.Remaining[ids[1]]==104 and screenshotPlan.Remaining[ids[3]]==0 and screenshotPlan.Cost==16,
+    'Thirty large souls become 120 small, pay ten small plus three medium, and leave 104 small')
 print('Verified runtime slot writes, pre-mutation native cost check, partial-write and partial-request restoration.')

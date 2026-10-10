@@ -29,13 +29,14 @@ for a=0,4 do for b=0,3 do for c=0,3 do for d=0,2 do
             assert(Plan.value(p.Prepared)==Plan.value(stock))
             assert(Plan.value(p.Remaining)==Plan.value(stock)-Plan.value(bill))
             for _,id in ipairs(ids) do assert(p.Prepared[id]-bill[id]==p.Remaining[id] and p.Remaining[id]>=0) end
+            for i=2,4 do assert(p.Remaining[ids[i]]==0,'Unspent souls must all be small') end
         end
         cases=cases+1
     end end end end
 end end end end
-equal(Plan.prepare(counts(0,0,1),counts(1)).Remaining,counts(1,1))
+equal(Plan.prepare(counts(0,0,1),counts(1)).Remaining,counts(3))
 equal(Plan.prepare(counts(8),counts(0,0,0,1)).Prepared,counts(0,0,0,1))
-equal(Plan.prepare(counts(2,3,1,1),counts(1,2)).Remaining,counts(1,1,1,1))
+equal(Plan.prepare(counts(2,3,1,1),counts(1,2)).Remaining,counts(15))
 assert(not pcall(Plan.prepare,counts(-1),counts()))
 assert(not pcall(Plan.cost, {1,0,0,0},zero,schedule))
 local full=Plan.cost(zero,{20,0,0,0},schedule)
@@ -107,7 +108,7 @@ local function backend(failure)
 end
 local b=backend();local service=Service.new(b)
 assert(service:preview({}, {1,0,0,0}));equal(b.stock,counts(0,0,1));assert(b.mutations==0)
-assert(service:submit({}, {1,0,0,0},'Pal-A',zero));equal(b.stock,counts(1,1));assert(b.current[1]==1)
+assert(service:submit({}, {1,0,0,0},'Pal-A',zero));equal(b.stock,counts(3));assert(b.current[1]==1)
 for _,failure in ipairs({'check','cost','apply','upgrade','verify'}) do
     b=backend(failure);service=Service.new(b)
     local result=service:submit({}, {1,0,0,0},'Pal-A',zero)

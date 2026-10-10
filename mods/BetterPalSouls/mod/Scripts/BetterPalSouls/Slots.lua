@@ -40,8 +40,7 @@ function M.allocate(slots, counts, limits)
     for i, target in pairs(assigned) do
         local slot = slots[i]
         if target.Count ~= slot.Count or target.Item ~= slot.Item then
-            changes[#changes + 1] = { Index = i, BeforeItem = slot.Item, BeforeCount = slot.Count,
-                Item = target.Item, Count = target.Count }
+            changes[#changes + 1] = { Index = i, Item = target.Item, Count = target.Count }
         end
     end
     table.sort(changes, function(a, b) return a.Index < b.Index end)

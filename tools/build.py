@@ -99,7 +99,7 @@ def main(argv=None):
         'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
         'BetterBulkStorage': ROOT / 'dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip',
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
-        'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-0.2.6-experimental.zip',
+        'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-0.2.7-experimental.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

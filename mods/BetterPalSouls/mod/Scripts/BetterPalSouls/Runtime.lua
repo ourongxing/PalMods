@@ -167,7 +167,7 @@ function M:read(session)
         limits[id] = Plan.integer(data.MaxStackCount, 1, 1000000000)
     end
     return { Session = session, Handle = handle, HandleKey = name(handle), Parameter = parameter,
-        Controller = controller, Inventory = inventory, Sources = sources, Slots = slots, Stock = stock,
+        Controller = controller, Sources = sources, Slots = slots, Stock = stock,
         Limits = limits, Current = self:ranks(parameter), Schedule = self:schedule(session.Menu) }
 end
 function M:check(state)

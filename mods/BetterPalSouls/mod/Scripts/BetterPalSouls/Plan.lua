@@ -35,36 +35,17 @@ function M.cost(current, targets, schedule)
     return required, changed
 end
 
--- Preserve exact-tier stock first; convert only the deficit, returning change.
--- Prepared is the inventory BEFORE vanilla deducts Required. Remaining is after.
+-- Pool every tier as small souls, then exchange only the native bill's tiers.
+-- All unspent value remains small souls; no intermediate tiers are retained.
+-- Prepared is the inventory before vanilla deducts the bill; Remaining is after.
 function M.prepare(stock, required)
-    stock, required = M.copy(stock), M.copy(required)
-    if M.value(stock) < M.value(required) then return nil, "insufficient_souls" end
-    local remaining, deficit = {}, 0
-    for _, id in ipairs(M.items) do
-        remaining[id] = math.max(stock[id] - required[id], 0)
-        deficit = deficit + math.max(required[id] - stock[id], 0) * M.weight[id]
-    end
-    local change = 0
-    for _, id in ipairs(M.items) do
-        if deficit > 0 then
-            local take = math.min(remaining[id], math.ceil(deficit / M.weight[id]))
-            remaining[id] = remaining[id] - take
-            deficit = deficit - take * M.weight[id]
-            if deficit < 0 then change, deficit = -deficit, 0 end
-        end
-    end
-    assert(deficit == 0, "conversion_invariant")
-    for i = #M.items, 1, -1 do
-        local id, weight = M.items[i], M.weights[i]
-        local count = math.floor(change / weight)
-        remaining[id], change = remaining[id] + count, change % weight
-    end
-    local prepared = {}
-    for _, id in ipairs(M.items) do prepared[id] = remaining[id] + required[id] end
-    assert(M.value(prepared) == M.value(stock), "conversion_created_value")
-    return { Prepared = prepared, Remaining = remaining, Required = required,
-        Cost = M.value(required), Stock = stock }
+    local total, cost = M.value(stock), M.value(required)
+    if total < cost then return nil, "insufficient_souls" end
+    local remaining, prepared = M.copy({}), M.copy(required)
+    remaining[M.items[1]] = total - cost
+    prepared[M.items[1]] = prepared[M.items[1]] + remaining[M.items[1]]
+    assert(M.value(prepared) == total, "conversion_created_value")
+    return { Prepared = prepared, Remaining = remaining, Cost = cost }
 end
 
 -- Other selected rows reserve their budget; increasing this row cannot steal it.

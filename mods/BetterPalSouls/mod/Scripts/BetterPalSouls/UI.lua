@@ -1,5 +1,4 @@
 local Plan = require('BetterPalSouls.Plan')
-local Slots = require('BetterPalSouls.Slots')
 local Runtime = require('BetterPalSouls.Runtime')
 local Service = require('BetterPalSouls.Service')
 local I18n = require('BetterPalSouls.I18n')
@@ -11,8 +10,6 @@ local CLICK = 'BndEvt__WBP_CommonButton_WBP_PalInvisibleButton_K2Node_ComponentB
 local sessions, rows, buttons, hooks, diagnostics = {}, {}, {}, {}, {}
 local backend, service, update, installHooks
 local stopped = false
-local function trace(message) print('[BetterPalSouls] ' .. message .. '\n') end
-local function ranks(values) return table.concat(values, ',') end
 local function key(o) return o:GetFullName() end
 local function text(o, value) o:SetText(FText(value)) end
 local function once(message)
@@ -80,7 +77,6 @@ local function restore(session)
     for _, entry in ipairs(session.Rows) do
         if valid(entry.Min) then entry.Min:SetVisibility(1) end
         if valid(entry.Max) then entry.Max:SetVisibility(1) end
-        if valid(entry.Gauge) then entry.Gauge.Slot:SetOffsets(entry.Offsets) end
         if valid(entry.MinusVisual) then entry.MinusVisual:SetIsEnabled(true) end
         if valid(entry.PlusVisual) then entry.PlusVisual:SetIsEnabled(true) end
     end
@@ -92,23 +88,6 @@ local function signature(session, state)
     for _, row in ipairs(state.Schedule) do parts[#parts + 1] = row.Item; parts[#parts + 1] = tostring(row.Count) end
     for _, slot in ipairs(state.Slots) do parts[#parts + 1] = slot.Item; parts[#parts + 1] = tostring(slot.Count); parts[#parts + 1] = tostring(slot.Backpack) end
     return table.concat(parts, '|')
-end
-local function cleanOldSelector(row)
-    -- Remove only the earlier version's private workbench selector. Its PAK
-    -- is no longer referenced; original reinforcement widgets are retained.
-    pcall(function()
-        local canvas = row.CanvasPanel_0
-        for i = canvas:GetChildrenCount() - 1, 0, -1 do
-            local child = canvas:GetChildAt(i)
-            if child:GetClass():GetFName():ToString() == 'ScaleBox' then
-                local size = child:GetChildAt(0)
-                local selector = valid(size) and size:GetChildAt(0) or nil
-                if valid(selector) and selector:GetClass():GetFullName():find('/Game/Mods/BetterPalSouls/', 1, true) then
-                    child:RemoveFromParent()
-                end
-            end
-        end
-    end)
 end
 local function cleanAddedButtons(canvas, original)
     -- Lua hot-reload removes callbacks but leaves attached widgets alive.
@@ -134,19 +113,11 @@ local function attach(menu)
             assert(valid(row), 'row_unavailable')
             local stat = Plan.integer(row.Status, 1, 4)
             cleanAddedButtons(row.CanvasPanel_0)
-            cleanOldSelector(row)
-            row:Setup(stat) -- Restore the native stat title after the old selector.
             local gauge = row.HorizontalBox_Gauge:GetParent()
             local offsets = gauge.Slot:GetOffsets()
-            -- Earlier versions narrowed this canvas, pulling native +/- inward.
-            -- Normalize that exact footprint when attaching after a reload.
-            if offsets.Left == 378 and offsets.Top == 12 and offsets.Right == 168 and offsets.Bottom == 48 then
-                offsets = { Left = 352, Top = 12, Right = 220, Bottom = 48 }
-            end
-            local entry = { Row = row, Key = key(row), Stat = stat, Gauge = gauge,
+            local entry = { Row = row, Key = key(row), Stat = stat,
                 MinusVisual = row.WBP_PalInvisibleButton_Minus:GetParent(),
-                PlusVisual = row.WBP_PalInvisibleButton_Plus:GetParent(),
-                Offsets = { Left = offsets.Left, Top = offsets.Top, Right = offsets.Right, Bottom = offsets.Bottom } }
+                PlusVisual = row.WBP_PalInvisibleButton_Plus:GetParent() }
             entry.Min, entry.Max = create(session, '◀'), create(session, '▶')
             styleArrow(entry.Min); styleArrow(entry.Max)
             entry.MinKey, entry.MaxKey = key(entry.Min), key(entry.Max)
@@ -208,15 +179,12 @@ update = function(session)
         for i = 4, 1, -1 do session.Targets[i] = math.min(session.Targets[i], Plan.maximum(state.Stock, state.Current, session.Targets, state.Schedule, i)) end
         local nextSignature = signature(session, state)
         if nextSignature == session.Signature then return end
-        local required, changed = Plan.cost(state.Current, session.Targets, state.Schedule)
-        local plan, problem = Plan.prepare(state.Stock, required)
-        local writes
-        if plan then writes, problem = Slots.allocate(state.Slots, plan.Prepared, state.Limits) end
+        local plan = service:plan(state, session.Targets)
         local nativeCostOk = true
-        if changed and plan and writes then
+        if plan then
             local checked, error = pcall(function() backend:checkCost(state, session.Targets) end)
             nativeCostOk = checked
-            if checked then once('native cost preflight passed') else once(error) end
+            if not checked then once(error) end
         end
         local rankMap, mapChanged = session.Panel.TargetStatusRankMap, false
         for stat = 1, 4 do
@@ -236,8 +204,6 @@ update = function(session)
                 row:SetInfo(state.Parameter, session.Targets[stat])
             end
             row:SetEnable(true)
-            entry.Gauge:SetVisibility(0)
-            entry.Gauge.Slot:SetOffsets(entry.Offsets)
             entry.Min:SetVisibility(0); entry.Max:SetVisibility(0)
             entry.Min:SetIsEnabled(canDecrease)
             entry.Max:SetIsEnabled(canIncrease)
@@ -255,7 +221,7 @@ update = function(session)
         if mapChanged or changedPal then session.Panel:UpdateRequiredItemSufficiency() end
         session.Panel.WBP_CommonButton:SetVisibility(1)
         session.Confirm:SetVisibility(0)
-        session.Confirm:SetIsEnabled(changed and plan ~= nil and writes ~= nil and nativeCostOk and not service.disabled)
+        session.Confirm:SetIsEnabled(plan ~= nil and nativeCostOk and not service.disabled)
         session.Signature = nextSignature
     end)
     session.Updating = false
@@ -298,15 +264,11 @@ function M.start(config)
                 local stat = registered.Stat
                 session.Targets[stat] = registered.Action == 'min' and state.Current[stat]
                     or Plan.maximum(state.Stock, state.Current, session.Targets, state.Schedule, stat)
-                trace(registered.Action .. ' stat=' .. stat .. ' current=' .. ranks(state.Current)
-                    .. ' targets=' .. ranks(session.Targets) .. ' budget=' .. Plan.value(state.Stock))
                 update(session)
-                trace('reconciled targets=' .. ranks(session.Targets))
                 return
             end
             local targets, current = {}, {}
             for i = 1, 4 do targets[i], current[i] = session.Targets[i], session.Current[i] end
-            trace('submit current=' .. ranks(current) .. ' targets=' .. ranks(targets))
             session.Updating = true
             local result, reason = service:submit(session, targets, session.HandleKey, current)
             session.Updating = false
@@ -314,8 +276,7 @@ function M.start(config)
                 once(reason)
                 pcall(function() StaticFindObject('/Script/Pal.Default__PalUtility')
                     :Alert(session.Menu:GetOwningPlayer(), FText(I18n.text('failed', I18n.reason(reason)))) end)
-            else trace('upgrade committed; current=' .. ranks(current) .. ' targets=' .. ranks(targets)
-                .. ' cost=' .. result.Cost .. ' remaining=' .. Plan.value(result.Remaining)) end
+            end
             update(session)
         end)
     end
@@ -343,7 +304,7 @@ function M.start(config)
         end)
         return false
     end)
-    once('0.2.6 loaded; native selection reconciled after Blueprint execution; max tracing enabled')
+    once('0.2.7 loaded; all soul tiers pooled as small souls')
 end
 function M.stop()
     stopped = true
