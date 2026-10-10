@@ -2,11 +2,15 @@
 #include <atomic>
 #include <cstdint>
 #include <cstring>
+#include <mutex>
+#include <unordered_map>
 #include <DynamicOutput/Output.hpp>
 #include <Mod/CppUserModBase.hpp>
 #include <Unreal/Hooks/Hooks.hpp>
 #include <Unreal/CoreUObject/UObject/Class.hpp>
 #include <Unreal/UObject.hpp>
+#include <Unreal/UObjectGlobals.hpp>
+#include <Unreal/FWeakObjectPtr.hpp>
 #include <Unreal/FFrame.hpp>
 extern "C" {
 #include <lua.h>
@@ -16,15 +20,25 @@ extern "C" {
 #include <Windows.h>
 #include "binary_guard.hpp"
 #include "transport_priority.hpp"
+#include "stack_limits.hpp"
 
 namespace {
+constexpr std::size_t jump_size = 14;
+using Jump = std::array<std::uint8_t, jump_size>;
 std::atomic_bool installed{false};
 std::atomic_bool scope_ready{false};
 std::uint8_t* target{};
 std::uint8_t* game_base{};
 std::uint8_t* transport_target{};
 void* transport_thunk{};
-std::array<std::uint8_t, 14> transport_original{}, transport_replacement{};
+Jump transport_original{}, transport_replacement{};
+std::uint8_t* stack_target{};
+void* stack_trampoline{};
+Jump stack_replacement{};
+RC::Unreal::UClass* static_item_class{};
+struct SavedStackLimit { RC::Unreal::FWeakObjectPtr object; std::int32_t maximum; };
+std::mutex stack_mutex;
+std::unordered_map<std::uint64_t, SavedStackLimit> saved_stack_limits;
 RC::Unreal::UObject* preview_inventory{};
 thread_local unsigned storage_depth{};
 std::array<RC::Unreal::Hook::GlobalCallbackId, 4> scope_hooks{};
@@ -33,21 +47,18 @@ RC::Unreal::FName candidate_function_name;
 RC::Unreal::FName update_function_name;
 RC::Unreal::FName toggle_function_name;
 bool inventory_context(RC::Unreal::UObject* context) {
-    return scope_ready.load() && context && context->GetClassPrivate()
-        && context->GetClassPrivate()->GetFName() == inventory_name
-        && context->GetClassPrivate()->GetFullName() == STR("WidgetBlueprintGeneratedClass /Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C");
+    if (!scope_ready.load() || !context) return false;
+    const auto* cls = context->GetClassPrivate();
+    return cls && cls->GetFName() == inventory_name
+        && cls->GetFullName() == STR("WidgetBlueprintGeneratedClass /Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C");
 }
 int storage_scope(lua_State* state) {
     lua_pushboolean(state, installed.load() && scope_ready.load() && storage_depth > 0);
     return 1;
 }
-bool candidate_function(RC::Unreal::FFrame& frame) {
-    return frame.Node()
-        && frame.Node()->GetFName() == candidate_function_name;
-}
-std::array<std::uint8_t, 14> replacement{};
-std::array<std::uint8_t, 14> absolute_jump(const void* destination) {
-    std::array<std::uint8_t, 14> bytes{0xff, 0x25, 0, 0, 0, 0};
+Jump replacement{};
+Jump absolute_jump(const void* destination) {
+    Jump bytes{0xff, 0x25, 0, 0, 0, 0};
     std::memcpy(bytes.data() + 6, &destination, sizeof(destination));
     return bytes;
 }
@@ -62,12 +73,84 @@ void ordered_transfer(void* context, const void* source, const void* item) {
 
 bool write_code(std::uint8_t* address, const std::uint8_t* bytes) {
     DWORD previous{};
-    if (!VirtualProtect(address, replacement.size(), PAGE_EXECUTE_READWRITE, &previous)) return false;
-    std::memcpy(address, bytes, replacement.size());
-    FlushInstructionCache(GetCurrentProcess(), address, replacement.size());
+    if (!VirtualProtect(address, jump_size, PAGE_EXECUTE_READWRITE, &previous)) return false;
+    std::memcpy(address, bytes, jump_size);
+    FlushInstructionCache(GetCurrentProcess(), address, jump_size);
     DWORD ignored{};
-    VirtualProtect(address, replacement.size(), previous, &ignored);
+    VirtualProtect(address, jump_size, previous, &ignored);
     return true;
+}
+
+template <std::size_t Size>
+void* executable_code(const std::array<std::uint8_t, Size>& bytes) {
+    auto* memory = VirtualAlloc(nullptr, Size, MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    if (!memory) return nullptr;
+    std::memcpy(memory, bytes.data(), Size);
+    DWORD previous{};
+    if (!VirtualProtect(memory, Size, PAGE_EXECUTE_READ, &previous)) {
+        VirtualFree(memory, 0, MEM_RELEASE);
+        return nullptr;
+    }
+    FlushInstructionCache(GetCurrentProcess(), memory, Size);
+    return memory;
+}
+
+void* expanded_static_item(void* table, std::uint64_t name) {
+    using Lookup = void* (*)(void*, std::uint64_t);
+    auto* data = reinterpret_cast<Lookup>(stack_trampoline)(table, name);
+    if (!storage::valid(data) || !static_item_class
+        || !static_cast<RC::Unreal::UObject*>(data)->IsA(static_item_class)) return data;
+    std::lock_guard lock(stack_mutex);
+    const auto before = storage::read<std::int32_t>(data, 0x78);
+    const auto after = storage::expanded_limit(before, storage::read<void*>(data, 0x80) != nullptr);
+    if (before == after) return data;
+    // Weak identity prevents teardown from writing to a destroyed/reused row.
+    const RC::Unreal::FWeakObjectPtr weak(static_cast<RC::Unreal::UObject*>(data));
+    const auto key = static_cast<std::uint64_t>(static_cast<std::uint32_t>(weak.ObjectIndex))
+        | (static_cast<std::uint64_t>(static_cast<std::uint32_t>(weak.ObjectSerialNumber)) << 32);
+    try {
+        saved_stack_limits.try_emplace(key, SavedStackLimit{weak, before});
+    } catch (const std::bad_alloc&) { return data; }
+    storage::set_item_stack_limit(data, after);
+    return data;
+}
+
+bool install_stack_limits() {
+    if (std::memcmp(game_base + guard::stack_lookup_rva, guard::stack_lookup.data(), guard::stack_lookup.size())) return false;
+    static_item_class = RC::Unreal::UObjectGlobals::StaticFindObject<RC::Unreal::UClass*>(
+        nullptr, nullptr, STR("/Script/Pal.PalStaticItemDataBase"));
+    if (!static_item_class) return false;
+    // Guard generation verifies the first 14 bytes are complete instructions
+    // with no relative branches or RIP operands. The original row lookup runs
+    // first; all vanilla validation then reads the same updated data object.
+    std::array<std::uint8_t, jump_size * 2> trampoline{};
+    std::memcpy(trampoline.data(), guard::stack_lookup.data(), jump_size);
+    const auto continuation = absolute_jump(game_base + guard::stack_lookup_rva + jump_size);
+    std::memcpy(trampoline.data() + jump_size, continuation.data(), jump_size);
+    stack_trampoline = executable_code(trampoline);
+    if (!stack_trampoline) return false;
+    stack_target = game_base + guard::stack_lookup_rva;
+    stack_replacement = absolute_jump(reinterpret_cast<void*>(&expanded_static_item));
+    if (!write_code(stack_target, stack_replacement.data())) {
+        stack_target = nullptr;
+        VirtualFree(stack_trampoline, 0, MEM_RELEASE); stack_trampoline = nullptr; return false;
+    }
+    return true;
+}
+
+void remove_stack_limits() {
+    if (stack_target && !std::memcmp(stack_target, stack_replacement.data(), jump_size)) {
+        if (!write_code(stack_target, guard::stack_lookup.data())) return;
+        if (stack_trampoline) VirtualFree(stack_trampoline, 0, MEM_RELEASE);
+        stack_trampoline = nullptr;
+    }
+    std::lock_guard lock(stack_mutex);
+    for (const auto& [key, saved] : saved_stack_limits) {
+        auto* data = saved.object.Get();
+        if (storage::valid(data) && storage::read<std::int32_t>(data, 0x78) == storage::expanded_stack_limit)
+            storage::set_item_stack_limit(data, saved.maximum);
+    }
+    saved_stack_limits.clear();
 }
 
 bool item_permission(void* data, void* permission) {
@@ -121,19 +204,13 @@ bool install_transport() {
         0xff,0x25,0,0,0,0,              // jmp [rip]
         0,0,0,0,0,0,0,0};
     const auto callback = reinterpret_cast<std::uintptr_t>(&ranked_transport);
-    const auto continuation = reinterpret_cast<std::uintptr_t>(game_base + guard::transport_patch_rva + 14);
+    const auto continuation = reinterpret_cast<std::uintptr_t>(game_base + guard::transport_patch_rva + jump_size);
     std::memcpy(thunk.data() + 9, &callback, 8);
     std::memcpy(thunk.data() + 33, &continuation, 8);
-    transport_thunk = VirtualAlloc(nullptr, thunk.size(), MEM_COMMIT | MEM_RESERVE, PAGE_READWRITE);
+    transport_thunk = executable_code(thunk);
     if (!transport_thunk) return false;
-    std::memcpy(transport_thunk, thunk.data(), thunk.size());
-    DWORD previous{};
-    if (!VirtualProtect(transport_thunk, thunk.size(), PAGE_EXECUTE_READ, &previous)) {
-        VirtualFree(transport_thunk, 0, MEM_RELEASE); transport_thunk = nullptr; return false;
-    }
-    FlushInstructionCache(GetCurrentProcess(), transport_thunk, thunk.size());
     transport_target = game_base + guard::transport_patch_rva;
-    std::memcpy(transport_original.data(), transport_target, 14);
+    std::memcpy(transport_original.data(), transport_target, jump_size);
     transport_replacement = absolute_jump(transport_thunk);
     const bool success = write_code(transport_target, transport_replacement.data());
     if (!success) {
@@ -210,6 +287,9 @@ public:
             return;
         }
         installed.store(true);
+        RC::Output::send(install_stack_limits()
+            ? STR("[BetterBulkStorage] shared stack limit ready: 99999 (inventory, chests and production storage)\n")
+            : STR("[BetterBulkStorage] stack limit patch unavailable; original limits retained\n"));
         const bool transport_supported =
             !std::memcmp(base + guard::transport_rva, guard::transport.data(), guard::transport.size())
             && !std::memcmp(base + guard::module_rva, guard::module.data(), guard::module.size())
@@ -225,13 +305,15 @@ public:
             ++storage_depth;
             // Lua Blueprint hooks are post-only. Arm suppression here before
             // Toggle executes its synchronous per-slot greyout loop.
-            if (frame.Node() && frame.Node()->GetFName() == toggle_function_name)
+            const auto* node = frame.Node();
+            if (!node) return;
+            const auto name = node->GetFName();
+            if (name == toggle_function_name)
                 preview_inventory = context;
-            if (context == preview_inventory && frame.Node()) {
-                const auto name = frame.Node()->GetFName();
+            if (context == preview_inventory) {
                 // Replace only the quick-storage preview. Editing=false remains
                 // vanilla, including ordinary inventory sorting/reset colours.
-                if (candidate_function(frame)
+                if (name == candidate_function_name
                     || (name == update_function_name && frame.Locals() && frame.Locals()[0]))
                     callback.PreventOriginalFunctionCall();
             }
@@ -269,9 +351,10 @@ public:
         installed.store(false);
         scope_ready.store(false);
         for (auto id : scope_hooks) if (id) RC::Unreal::Hook::UnregisterCallback(id);
+        remove_stack_limits();
         if (target && std::memcmp(target, replacement.data(), replacement.size()) == 0)
             write_code(target, guard::function.data());
-        if (transport_target && !std::memcmp(transport_target, transport_replacement.data(), 14)) {
+        if (transport_target && !std::memcmp(transport_target, transport_replacement.data(), jump_size)) {
             if (write_code(transport_target, transport_original.data()) && transport_thunk)
                 VirtualFree(transport_thunk, 0, MEM_RELEASE);
         }

@@ -1,5 +1,6 @@
 #include "../native/src/storage_transfer.hpp"
 #include "../native/src/transport_priority.hpp"
+#include "../native/src/stack_limits.hpp"
 #ifdef NDEBUG
 #undef NDEBUG
 #endif
@@ -59,6 +60,39 @@ struct Fixture {
     }
 };
 int main() {
+    assert(storage::expanded_limit(9999, false) == 99999);
+    assert(storage::expanded_limit(200000, false) == 99999);
+    assert(storage::expanded_limit(1, false) == 1);
+    assert(storage::expanded_limit(0, false) == 0);
+    assert(storage::expanded_limit(100, true) == 100);
+    { std::array<std::byte, 0x88> data{};
+    put(data, 0x78, 9999);
+    const auto original = storage::read<int>(data.data(), 0x78);
+    storage::set_item_stack_limit(data.data(), storage::expanded_limit(original, false));
+    assert(storage::read<int>(data.data(), 0x78) == 99999);
+    assert(9999 < storage::read<int>(data.data(), 0x78)); // Mine must continue beyond vanilla full count.
+    assert(!(99999 < storage::read<int>(data.data(), 0x78))); // Mine stops at the new ceiling.
+    storage::set_item_stack_limit(data.data(), original);
+    assert(storage::read<int>(data.data(), 0x78) == 9999); // Unload restores data, not item quantities.
+    put(data, 0x80, reinterpret_cast<void*>(1));
+    assert(storage::expanded_limit(original, storage::read<void*>(data.data(), 0x80) != nullptr) == 9999); // Unique instance class.
+    }
+    { Fixture f;
+    f.capacity[0] = f.capacity[2] = storage::expanded_stack_limit;
+    put(f.slots[2], 0x154, 9999); f.run(100000);
+    assert(f.count(2) == 99999 && f.count(0) == 10000);
+    assert(f.attempts == (std::vector<int>{2, 0}));
+    }
+    { Fixture f;
+    f.capacity[0] = f.capacity[2] = storage::expanded_stack_limit;
+    put(f.slots[2], 0x154, 99998); f.run(3);
+    assert(f.count(2) == 99999 && f.count(0) == 2);
+    }
+    { Fixture f;
+    f.capacity[0] = f.capacity[2] = storage::expanded_stack_limit;
+    put(f.slots[2], 0x154, 110000); f.run(3);
+    assert(f.count(2) == 110000 && f.count(0) == 3); // Never truncate pre-existing oversized stacks.
+    }
     { Fixture f;
     auto rank = [&](std::uint8_t priority) {
         return storage::transport_priority(priority, [&] {

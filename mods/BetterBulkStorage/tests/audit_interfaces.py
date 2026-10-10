@@ -106,11 +106,16 @@ def audit(source, dump_path):
         assert actual == expected, f'Changed parameters: {key}'
     for key, expected in {
         'Pal.PalStaticItemDataBase:TypeB': 0x69,
+        'Pal.PalStaticItemDataBase:MaxStackCount': 0x78,
+        'Pal.PalStaticItemDataBase:DynamicItemDataClass': 0x80,
         'Pal.PalItemContainer:Permission': 0x80,
         'Pal.PalItemContainer:FilterPreference': 0xc8,
         'Pal.PalItemSlot:Permission': 0x160,
         'Pal.PalBaseCampModel:ModuleArray': 0x180,
         'Pal.PalBaseCampModuleItemStorage:ContainerInfos': 0x50,
+        'Pal.PalBaseCampModuleItemStorage:GuildContainerInfo': 0x60,
+        'Pal.PalGroupGuild:ItemStorage': 0x508,
+        'Pal.PalGuildItemStorage:ItemContainer': 0x48,
         'Pal.PalBaseCampItemContainerInfo:OwnerMapObjectConcreteModelInstanceId': 0,
         'Pal.PalPlayerLocalRecordData:Local_ItemQuickMoveExceptionIDList': 0x4d8,
         '/Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C:UpdateQuickStackableInventorySlot:Editing': 0,

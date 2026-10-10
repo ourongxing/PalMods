@@ -47,9 +47,11 @@ local function fixture(remote)
         GetPasswordLockModule=function() return f.password end,
         GetItemContainerModule=function() return module end})
     local storage=object({IsA=function() return true end,
-        ContainerInfos=array({{OwnerMapObjectConcreteModelInstanceId=guid(100)}})})
+        ContainerInfos=array({{OwnerMapObjectConcreteModelInstanceId=guid(100)}}),
+        GuildContainerInfo={OwnerMapObjectConcreteModelInstanceId=guid(0)}})
     f.storage=storage
-    f.base=object({GetId=function() return guid(f.baseId or 10) end,ModuleArray=array({storage})})
+f.base=object({GetId=function() return guid(f.baseId or 10) end,
+        GetGroupIdBelongTo=function() return guid(1) end,ModuleArray=array({storage})})
     f.record=object({address=50,Local_ItemQuickMoveExceptionIDList=array({})})
     local items=object({GetStaticItemData=function(_,item)
         local id=item:ToString(); count('data_'..id)
@@ -191,6 +193,41 @@ f.denied.wood=true; f.denied.stone=true; f.denied.egg=true
 f:open(); f:finish()
 assert(not next(f.selection) and f.counts.models==200)
 assert(not f.counts.chestSlots and f.counts.container_wood==200)
+
+-- Guild storage is a separate index/model and must work without an ordinary
+-- chest. Its role permission, base ownership, filters and capacity still apply.
+local function guildFixture()
+    local g=fixture()
+    g.storage.ContainerInfos=array({})
+    g.storage.GuildContainerInfo={OwnerMapObjectConcreteModelInstanceId=guid(200)}
+    g.bag[3].GetItemId=function()
+        return {StaticId=name('food'),DynamicId={LocalIdInCreatedWorld=guid(0)}}
+    end
+    local guild=object({GetId=function() return guid(g.guildId or 1) end,
+        ItemStorage=object({ItemContainer=g.container})})
+    g.pal.GetPalmi=function() return object({}) end
+    g.pal.GetLocalPlayerGuild=function() return guild end
+    local chest=object({IsA=function(_,class) return class=='/Script/Pal.PalMapObjectGuildChestModel' end,
+        GetBaseCampIdBelongTo=function() return guid(g.chestBaseId or 10) end,
+        GetGuildSecurityModule=function() return object({CheckGuildSecurityAccess=function()
+            return not g.guildDenied
+        end}) end,
+        IsLockedPrivateByNot=function() error('guild chest has no ordinary private lock') end,
+        GetItemContainerModule=function() error('guild chest has no ordinary container module') end})
+    g.pal.GetMapObjectManager=function() return object({FindConcreteModel=function(_,id)
+        assert(id.A==200) -- resolved through the separate guild record
+        return chest
+    end}) end
+    return g
+end
+f=guildFixture(); f:open(); f:finish()
+assert(f.selection[102] and f.buttons[3].alpha==1)
+f=guildFixture(); f.guildDenied=true; f:open(); f:finish(); assert(not next(f.selection))
+f=guildFixture(); f.guildId=2; f:open(); f:finish(); assert(not next(f.selection))
+f=guildFixture(); f.chestBaseId=20; f:open(); f:finish(); assert(not next(f.selection))
+f=guildFixture(); f.denied.food=true; f:open(); f:finish(); assert(not f.selection[102])
+f=guildFixture(); f.slotDenied[30]=true; f:open(); f:finish(); assert(not next(f.selection))
+f=guildFixture(); f.container.ItemSlotArray=array({}); f:open(); f:finish(); assert(not next(f.selection))
 
 -- Exercise the actual bootstrap: ordinary candidate/greyout notifications have
 -- no Lua scan hook. Only the post-only ToggleQuickStackPanel callback starts a job; sorting cancels it.

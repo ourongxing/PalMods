@@ -18,5 +18,7 @@ Storage first merges matching stacks across all destination chests, then places 
 
 Pal transport now prefers chests with non-full matching stacks within the same transport priority tier. Distance still breaks ties between matching chests. Full stacks receive no bonus, and vanilla chest priorities, category filters and production requirements still apply. The host or server must load the DLL; the rule applies when selecting new transport targets.
 
+Ordinary stackable items now use a shared per-slot limit of 99,999 in inventories, chests, mining sites, logging sites and other item containers. Mining and logging sites use the same limit when checking whether storage is full. This does not change production yield or work speed. Equipment, Pal Eggs and other unique-instance items keep their original rules. Filters, permissions and slot counts still apply. Existing quantities are preserved, and scattered stacks are not merged automatically. No separate stack-limit mod is needed; split oversized stacks before uninstalling. Mining stop/resume behavior, save/reload and multiplayer still need in-game verification.
+
 This mod is open source under the GPL-3.0 license.
 Source code: https://github.com/ourongxing/PalMods

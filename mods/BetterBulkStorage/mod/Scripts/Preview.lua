@@ -49,6 +49,7 @@ return function(d)
         local pal=StaticFindObject("/Script/Pal.Default__PalUtility")
         j.base,j.remote=d.resolveTarget(j.world)
         if not d.valid(pal) or not d.valid(j.base) then error("no storage destination") end
+        j.pal=pal
         j.baseKey=key(j.base)
         j.items=pal:GetItemIDManager(j.world)
         local state=pal:GetLocalPlayerState(j.world)
@@ -73,26 +74,39 @@ return function(d)
         callback(value)
         return true
     end
+    local function addContainer(j,container)
+        if not d.valid(container) then return end
+        local address=container:GetAddress()
+        if j.seen[address] then return end
+        j.seen[address]=true
+        j.containers[#j.containers+1]={container=container,slots={},nextSlot=1}
+    end
+    local function indexedChest(j,info,class)
+        j.containerRecords=j.containerRecords+1
+        -- Both indexes store concrete-model IDs, not parent model IDs.
+        local chest=j.maps:FindConcreteModel(d.guid(info.OwnerMapObjectConcreteModelInstanceId))
+        if not d.valid(chest) then return end
+        j.resolvedChests=j.resolvedChests+1
+        if chest:IsA(class) and d.sameGuid(chest:GetBaseCampIdBelongTo(),j.base:GetId()) then return chest end
+    end
     local function addChest(j)
         local module=j.chest:GetItemContainerModule()
-        if not d.valid(module) then return end
-        local container=module:GetContainer()
-        if not d.valid(container) or j.seen[container:GetAddress()] then return end
-        j.seen[container:GetAddress()]=true
-        j.containers[#j.containers+1]={container=container,slots={},nextSlot=1}
+        if d.valid(module) then addContainer(j,module:GetContainer()) end
     end
     local function finishItem(j,allowed)
         j.cache[j.entry.id]=allowed
         render(j,j.entry,allowed)
         j.phase="buttons"
     end
-    local function matches(j,slot)
-        if not d.valid(slot) or not d.valid(j.data) then return false end
-        if not slot:IsEmpty() then
-            if slot:IsMaxStack() then return false end
-            local item=slot:GetItemId()
-            if item.StaticId:ToString()~=j.entry.id or d.nonzero(item.DynamicId.LocalIdInCreatedWorld) then return false end
-        end
+    local function usableSlot(slot)
+        if not d.valid(slot) then return false end
+        if slot:IsEmpty() then return true end
+        if slot:IsMaxStack() then return false end
+        local item=slot:GetItemId()
+        return not d.nonzero(item.DynamicId.LocalIdInCreatedWorld),item
+    end
+    local function matches(j,slot,item)
+        if not d.valid(j.data) or (item and item.StaticId:ToString()~=j.entry.id) then return false end
         return d.slotAllows(slot:GetAddress(),j.data:GetAddress())
     end
     local function step(j)
@@ -110,13 +124,8 @@ return function(d)
             end
         elseif j.phase=="containers" then
             if not nextArray(j,j.storage.ContainerInfos,function(info)
-                j.containerRecords=j.containerRecords+1
-                -- This index stores concrete-model IDs, not parent model IDs.
-                local chest=j.maps:FindConcreteModel(d.guid(info.OwnerMapObjectConcreteModelInstanceId))
-                if d.valid(chest) then j.resolvedChests=j.resolvedChests+1 end
-                if not d.valid(chest) or not chest:IsA("/Script/Pal.PalMapObjectItemChestModel")
-                    or not d.sameGuid(chest:GetBaseCampIdBelongTo(),j.base:GetId())
-                    or chest:IsLockedPrivateByNot(j.uid) then return end
+                local chest=indexedChest(j,info,"/Script/Pal.PalMapObjectItemChestModel")
+                if not chest or chest:IsLockedPrivateByNot(j.uid) then return end
                 local security=chest:GetGuildSecurityModule()
                 if d.valid(security) and not security:CheckGuildSecurityAccess(j.uid) then return end
                 j.chest=chest
@@ -125,7 +134,25 @@ return function(d)
                     j.lock,j.lockCursor,j.unlocked=lock,1,false
                     j.phase="password"
                 else addChest(j) end
-            end) then j.phase="getButtons" end
+            end) then j.phase="guildContainer" end
+        elseif j.phase=="guildContainer" then
+            j.phase="getButtons"
+            -- Guild storage has its own base index and model class; it is not
+            -- part of ContainerInfos and has no ordinary chest container module.
+            local info=j.storage.GuildContainerInfo
+            if not d.nonzero(info.OwnerMapObjectConcreteModelInstanceId) then return end
+            local chest=indexedChest(j,info,"/Script/Pal.PalMapObjectGuildChestModel")
+            if not chest then return end
+            local security=chest:GetGuildSecurityModule()
+            if not d.valid(security) or not security:CheckGuildSecurityAccess(j.uid) then return end
+            local groups=StaticFindObject("/Script/Pal.Default__PalGroupUtility")
+            if not d.valid(groups) or not d.valid(j.pal) then return end
+            local player=j.pal:GetPalmi(j.world)
+            if not d.valid(player) then return end
+            local guild=groups:GetLocalPlayerGuild(player)
+            if not d.valid(guild) or not d.sameGuid(guild:GetId(),j.base:GetGroupIdBelongTo()) then return end
+            local storage=guild.ItemStorage
+            if d.valid(storage) then addContainer(j,storage.ItemContainer) end
         elseif j.phase=="password" then
             if not d.valid(j.chest) or not d.valid(j.lock) then j.phase="containers"; return end
             local infos=j.lock.PlayerInfos
@@ -176,21 +203,18 @@ return function(d)
             if not d.valid(chest.container) then j.phase="acceptContainer"; return end
             if j.slotCursor>#chest.slots then j.phase="newSlots"; return end
             local slot=chest.slots[j.slotCursor]; j.slotCursor=j.slotCursor+1
-            if matches(j,slot) then finishItem(j,true) end
+            local usable,item=usableSlot(slot)
+            if usable and matches(j,slot,item) then finishItem(j,true) end
         elseif j.phase=="newSlots" then
             local chest=j.currentChest
             if not d.valid(chest.container) or not d.valid(j.data) then j.phase="acceptContainer"; return end
             local slots=chest.container.ItemSlotArray
             if chest.nextSlot>slots:GetArrayNum() then j.phase="acceptContainer"; return end
             local slot=d.unwrap(slots[chest.nextSlot]); chest.nextSlot=chest.nextSlot+1
-            if not d.valid(slot) then return end
-            local usable=slot:IsEmpty()
-            if not usable and not slot:IsMaxStack() then
-                usable=not d.nonzero(slot:GetItemId().DynamicId.LocalIdInCreatedWorld)
-            end
+            local usable,item=usableSlot(slot)
             if usable then
                 chest.slots[#chest.slots+1]=slot
-                if matches(j,slot) then finishItem(j,true) end
+                if matches(j,slot,item) then finishItem(j,true) end
             end
         end
     end

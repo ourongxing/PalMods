@@ -33,4 +33,4 @@ subprocess.run(['cmake', '-S', str(Path(__file__).parent), '-B', str(native_test
 subprocess.run(['cmake', '--build', str(native_test), '--config', 'Release',
     '--', '/p:VCToolsVersion=14.44.35207'], check=True)
 subprocess.run([str(native_test/'Release/storage_transfer.exe')], check=True)
-print('PASS: supported interfaces/binary guards, key-only bounded preview, cancellation, deduplication, filters, locks, eggs, exclusions and base transitions')
+print('PASS: supported interfaces/binary guards, key-only bounded preview, guild-only food storage/permissions/ownership/capacity, cancellation, deduplication, filters, locks, eggs, exclusions and base transitions')
