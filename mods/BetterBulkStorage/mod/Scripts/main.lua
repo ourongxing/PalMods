@@ -8,7 +8,15 @@ if not loader then
     print("[BetterBulkStorage] native bridge unavailable; original storage retained: " .. tostring(errorMessage) .. "\n")
     return
 end
-local ready, inStorageScope, inCandidateScope = loader()
+local bridge = loader()
+if type(bridge) ~= "table" or not bridge.ready or not bridge.inStorageScope
+    or not bridge.setPreview or not bridge.containerAllows or not bridge.slotAllows
+    or not bridge.milliseconds or not ExecuteInGameThreadAfterFrames then
+    print("[BetterBulkStorage] incremental preview requires the updated DLL and frame scheduler; original storage retained\n")
+    return
+end
+local ready, inStorageScope = bridge.ready, bridge.inStorageScope
+local queryingPhysicalBase = false
 local inventoryClass = "/Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C"
 local function unwrap(value)
     local ok, inner = pcall(function() return value:get() end)
@@ -22,7 +30,7 @@ end
 local function valid(object)
     return object and object:IsValid()
 end
-local function beforeHook() end
+local function noop() end
 local function guid(value)
     value = unwrap(value)
     return { A = unwrap(value.A), B = unwrap(value.B), C = unwrap(value.C), D = unwrap(value.D) }
@@ -75,109 +83,94 @@ end
 
 -- Scope comes from native Blueprint pre/post callbacks, so it ends immediately
 -- when inventory execution returns (including cancel and nested delegates).
-if inStorageScope then
-    local function selectedBase(component, returnId)
-        local ok, result = pcall(function()
-            local model = largestOwnedBase(unwrap(component))
-            if returnId then
-                if valid(model) then return guid(model:GetId()) end
-                return
-            end
-            return model
-        end)
-        if ok then return result end
-        print("[BetterBulkStorage] largest base lookup failed: " .. tostring(result) .. "\n")
-    end
-    RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel", beforeHook,
-        function(context, original)
-            if not ready() or not inStorageScope() or valid(unwrap(original)) then return end
-            return selectedBase(context, false)
-        end)
-    RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID", beforeHook,
-        function(context, original)
-            if not ready() or not inStorageScope() or nonzero(original) then return end
-            return selectedBase(context, true)
-        end)
-    print("[BetterBulkStorage] outside-base selection: most buildings, nearest on ties\n")
-end
-
--- The inventory's candidate-building function skips dynamic items before
--- CollectLocalPlayerQuickStackTargetItemInfos is called. Admit only Pal eggs
--- there; keep their real dynamic IDs for the official slot transfer afterwards.
--- MaterialPalEgg = 30 in the supported game's EPalItemTypeB.
-if inCandidateScope then
-    RegisterHook("/Script/Pal.PalStaticItemDataBase:HasDynamicItemClass", beforeHook,
-        function(context, original)
-            if not ready() or not inCandidateScope() or unwrap(original) ~= true then return end
-            local ok, isEgg = pcall(function()
-                local data = unwrap(context)
-                return valid(data) and unwrap(data.TypeB) == 30
-            end)
-            if not ok then
-                print("[BetterBulkStorage] egg candidate lookup failed: " .. tostring(isEgg) .. "\n")
-                return
-            end
-            if isEgg then return false end
-        end)
-    print("[BetterBulkStorage] scoped Pal egg candidate hook registered\n")
-else
-    print("[BetterBulkStorage] egg candidate scope unavailable; update companion DLL\n")
-end
-
--- Candidate display deliberately does not predict chest filters or capacity.
--- The official transfer validates the destination when storage is submitted.
-local function hasDestination(world)
-    if not inStorageScope or not inStorageScope() then return false end
-    local pal = StaticFindObject("/Script/Pal.Default__PalUtility")
-    if not valid(pal) then return false end
-    local player = pal:GetPalmi(world)
-    if not valid(player) then return false end
-    local component = player.InsideBaseCampCheckComponent
-    if not valid(component) then return false end
-    -- Our scoped getter supplies the guild destination outside a physical base.
-    return valid(component:GetInsideBaseCampModel()) or valid(largestOwnedBase(component))
-end
-
-RegisterHook("/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemInfos", beforeHook,
-    function(context, worldContext, staticItemIds, outItemInfos)
-        if not ready() then return end
-        local world = unwrap(worldContext)
-        if not valid(world) or not world:IsA(inventoryClass) or world.CurrentInBaseCamp ~= true then return end
-        local ok, err = pcall(function()
-            local utility = unwrap(context)
-            local existing = unwrap(outItemInfos)
-            if not hasDestination(world) then return end
-            local result, seen = {}, {}
-            local changed = false
-            each(existing, function(info)
-                local name = unwrap(info.StaticItemId)
-                local id = name:ToString()
-                if not seen[id] then
-                    result[#result + 1] = { StaticItemId = FName(id), Num = unwrap(info.Num) }
-                    seen[id] = true
-                else
-                    changed = true
-                end
-            end)
-            -- The native caller supplies the names. Keep its exclusion handling,
-            -- slot selection and confirmation; never enumerate equipment.
-            local visited = {}
-            each(unwrap(staticItemIds), function(name)
-                local id = name:ToString()
-                if id ~= "None" and not seen[id] and not visited[id] then
-                    visited[id] = true
-                    local count = utility:CountLocalPlayerInventoryItemNum64(world, name)
-                    if count > 0 then
-                        result[#result + 1] = { StaticItemId = FName(id), Num = math.min(count, 2147483647) }
-                        seen[id], changed = true, true
-                    end
-                end
-            end)
-            if not changed then return end
-            -- Release the previous TArray before UE4SS table marshaling replaces it.
-            existing:Empty()
-            outItemInfos:set(result)
-        end)
-        if not ok then print("[BetterBulkStorage] candidate update failed: " .. tostring(err) .. "\n") end
+local function selectedBase(component, returnId)
+    local ok, result = pcall(function()
+        local model = largestOwnedBase(unwrap(component))
+        if returnId then
+            if valid(model) then return guid(model:GetId()) end
+            return
+        end
+        return model
     end)
-print("[BetterBulkStorage] official inventory candidate hook registered; chest greyout prediction disabled\n")
+    if ok then return result end
+    print("[BetterBulkStorage] largest base lookup failed: " .. tostring(result) .. "\n")
+end
+RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel", noop,
+    function(context, original)
+        if queryingPhysicalBase or not ready() or not inStorageScope() or valid(unwrap(original)) then return end
+        return selectedBase(context, false)
+    end)
+RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID", noop,
+    function(context, original)
+        if queryingPhysicalBase or not ready() or not inStorageScope() or nonzero(original) then return end
+        return selectedBase(context, true)
+    end)
+print("[BetterBulkStorage] outside-base selection: most buildings, nearest on ties\n")
+
+local function resolveTarget(world)
+    local pal = StaticFindObject("/Script/Pal.Default__PalUtility")
+    if not valid(pal) then return end
+    local player = pal:GetPalmi(world)
+    if not valid(player) or not valid(player.InsideBaseCampCheckComponent) then return end
+    local component = player.InsideBaseCampCheckComponent
+    queryingPhysicalBase = true
+    local ok, base = pcall(function() return component:GetInsideBaseCampModel() end)
+    queryingPhysicalBase = false
+    if not ok then error(base) end
+    if valid(base) then return base, false end
+    return largestOwnedBase(component), true
+end
+local createPreview = dofile(directory .. "/Scripts/Preview.lua")
+local preview = createPreview({
+    valid = valid, unwrap = unwrap, guid = guid, sameGuid = sameGuid, nonzero = nonzero,
+    resolveTarget = resolveTarget,
+    activate = function(world)
+        bridge.setPreview(world and world:GetAddress() or 0)
+    end,
+    containerAllows = bridge.containerAllows, slotAllows = bridge.slotAllows,
+    now = bridge.milliseconds,
+    defer = function(callback) ExecuteInGameThreadAfterFrames(1, callback) end,
+})
+local prefix = inventoryClass .. ":"
+local hooksInstalled=false
+local function installInventoryHooks()
+    if hooksInstalled or not valid(StaticFindObject(prefix .. "ToggleQuickStackPanel")) then return end
+    -- UE4SS script RegisterHook invokes only its first callback, after execution.
+    -- The native Toggle pre-callback suppresses vanilla greyout before this runs.
+    RegisterHook(prefix .. "ToggleQuickStackPanel", function(context)
+        local world = unwrap(context)
+        if ready() and valid(world) then
+            if valid(world.Canvas_QuickStack) and world.Canvas_QuickStack:IsVisible() then
+                preview:arm(world)
+                preview:opened(world)
+            else
+                preview:stop(false)
+            end
+        end
+    end)
+    RegisterHook(prefix .. "BndEvt__WBP_InventoryEquipment_WBP_InventoryEquipment_TabList_K2Node_ComponentBoundEvent_1_OnClickedSortButton__DelegateSignature",
+        function() preview:stop(true) end)
+    RegisterHook(prefix .. "Destruct", function() preview:stop(false) end)
+    hooksInstalled=true
+    print("[BetterBulkStorage] key-triggered incremental greyout ready; inventory sorting does not start scans\n")
+end
+-- Inventory Blueprint functions may not exist during Lua startup. Register
+-- after the class is created, without a perpetual world/inventory polling loop.
+if NotifyOnNewObject then
+    NotifyOnNewObject(inventoryClass,function()
+        ExecuteInGameThreadAfterFrames(1,installInventoryHooks)
+    end)
+end
+installInventoryHooks()
+RegisterHook("/Script/CommonUI.CommonActivatableWidget:BP_OnDeactivated", function(context)
+    local world=unwrap(context)
+    if valid(world) and world:IsA(inventoryClass) then preview:stop(true) end
+end)
+RegisterHook("/Script/Pal.PalPlayerLocalRecordData:AddQuickStackExceptId", noop,
+    function(context, name, result)
+        if unwrap(result)==true then preview:excludeChanged(unwrap(context),unwrap(name),true) end
+    end)
+RegisterHook("/Script/Pal.PalPlayerLocalRecordData:RemoveQuickStackExceptId", noop,
+    function(context, name) preview:excludeChanged(unwrap(context),unwrap(name),false) end)
+RegisterHook("/Script/Pal.PalPlayerLocalRecordData:ResetQuickStackExceptList",
+    function() preview:stop(true) end)

@@ -1,0 +1,7 @@
+cmake_minimum_required(VERSION 3.24)
+project(StorageTransferTests LANGUAGES CXX)
+add_executable(storage_transfer storage_transfer.cpp)
+target_compile_features(storage_transfer PRIVATE cxx_std_20)
+if(MSVC)
+    target_compile_options(storage_transfer PRIVATE /W4 /WX)
+endif()

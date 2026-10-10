@@ -18,9 +18,10 @@ MOD = ROOT / 'mods/BetterBulkStorage'
 BUILD = ROOT / '.build/BetterBulkStorage/native'
 EXPECTED_HASH = 'e590b5e7bfaa3fea40fab1a02cc72c8fc5fd6f8631ef2308e95ac56c25195837'
 FUNCTION_RVA, FUNCTION_END = 0x2da9a60, 0x2da9cb9
-PATCH_RVA, CALL_RVA = 0x2da9bcd, 0x2dbd9d6
+CALL_RVA = 0x2dbd9d6
 PERMISSION_RVA, PERMISSION_END = 0x2fb1750, 0x2fb17ec
 FILTER_RVA, FILTER_END = 0x2faf900, 0x2fafb89
+MAXIMUM_RVA, TRANSFER_RVA = 0x2fad5a0, 0x2fbc1f0
 
 def generate_guard():
     digest = hashlib.sha256(GAME_EXE.read_bytes()).hexdigest()
@@ -28,11 +29,14 @@ def generate_guard():
         raise SystemExit('Unsupported game binary; re-analyze storage before building')
     pe = pefile.PE(str(GAME_EXE), fast_load=True)
     code = pe.get_data(FUNCTION_RVA, FUNCTION_END - FUNCTION_RVA)
-    instructions = {i.address: i for i in Cs(CS_ARCH_X86, CS_MODE_64).disasm(code, FUNCTION_RVA)}
-    patch = instructions[PATCH_RVA]
-    assert patch.mnemonic == 'je' and patch.op_str == '0x2da9c78' and patch.size == 6
-    assert instructions[PATCH_RVA - 3].mnemonic == 'test' and instructions[PATCH_RVA - 3].op_str == 'r13b, r13b'
-    assert len([i for i in instructions.values() if i.mnemonic == 'call' and i.op_str == '0x2fbc1f0']) == 2
+    decoder = Cs(CS_ARCH_X86, CS_MODE_64)
+    decoder.detail = True
+    instructions = {i.address: i for i in decoder.disasm(code, FUNCTION_RVA)}
+    none_reference = instructions[0x2da9b11]
+    none_rva = none_reference.address + none_reference.size + none_reference.operands[1].mem.disp
+    assert instructions[0x2da9b5d].op_str == hex(MAXIMUM_RVA)
+    assert instructions[0x2da9c13].address + instructions[0x2da9c13].size + instructions[0x2da9c13].operands[1].mem.disp == none_rva
+    assert len([i for i in instructions.values() if i.mnemonic == 'call' and i.op_str == hex(TRANSFER_RVA)]) == 2
     call = pe.get_data(CALL_RVA, 5)
     decoded = next(Cs(CS_ARCH_X86, CS_MODE_64).disasm(call, CALL_RVA))
     assert decoded.mnemonic == 'call' and decoded.op_str == hex(FUNCTION_RVA)
@@ -47,17 +51,21 @@ def generate_guard():
     generated = BUILD / 'generated'
     generated.mkdir(parents=True, exist_ok=True)
     header = '#pragma once\n#include <array>\n#include <cstdint>\nnamespace guard {\n'
-    for name, value in [('function_rva', FUNCTION_RVA), ('patch_rva', PATCH_RVA), ('call_rva', CALL_RVA),
+    for name, value in [('function_rva', FUNCTION_RVA), ('call_rva', CALL_RVA),
                         ('timestamp', pe.FILE_HEADER.TimeDateStamp), ('image_size', pe.OPTIONAL_HEADER.SizeOfImage),
-                        ('permission_rva', PERMISSION_RVA), ('filter_rva', FILTER_RVA)]:
+                        ('permission_rva', PERMISSION_RVA), ('filter_rva', FILTER_RVA),
+                        ('maximum_rva', MAXIMUM_RVA), ('transfer_rva', TRANSFER_RVA), ('none_rva', none_rva)]:
         header += f'inline constexpr std::uint32_t {name} = 0x{value:x};\n'
-    header += array('function', code) + array('original', bytes(patch.bytes)) + array('call', call)
+    header += array('function', code) + array('call', call)
     header += array('permission', pe.get_data(PERMISSION_RVA, PERMISSION_END - PERMISSION_RVA))
-    header += array('filter', pe.get_data(FILTER_RVA, FILTER_END - FILTER_RVA)) + '}\n'
+    header += array('filter', pe.get_data(FILTER_RVA, FILTER_END - FILTER_RVA))
+    header += array('maximum', pe.get_data(MAXIMUM_RVA, 0x40))
+    header += array('transfer', pe.get_data(TRANSFER_RVA, 0x40)) + '}\n'
     (generated / 'binary_guard.hpp').write_text(header, encoding='utf-8')
     (BUILD / 'analysis.json').write_text(json.dumps({'game_sha256': digest, 'function_rva': hex(FUNCTION_RVA),
-        'patch_rva': hex(PATCH_RVA), 'original': bytes(patch.bytes).hex(), 'call_rva': hex(CALL_RVA),
-        'permission_rva': hex(PERMISSION_RVA), 'filter_rva': hex(FILTER_RVA)}, indent=2))
+        'entry_size': 14, 'entry_original': code[:14].hex(), 'call_rva': hex(CALL_RVA),
+        'permission_rva': hex(PERMISSION_RVA), 'filter_rva': hex(FILTER_RVA),
+        'maximum_rva': hex(MAXIMUM_RVA), 'transfer_rva': hex(TRANSFER_RVA), 'none_rva': hex(none_rva)}, indent=2))
 
 def main():
     parser = argparse.ArgumentParser(description=__doc__)
@@ -66,7 +74,8 @@ def main():
     args = parser.parse_args()
     generate_guard()
     lua = load_lua_runtime()()
-    lua.execute('assert(load(...))', (MOD / 'mod/Scripts/main.lua').read_text(encoding='utf-8'))
+    for script in (MOD / 'mod/Scripts').rglob('*.lua'):
+        lua.execute('assert(load(...))', script.read_text(encoding='utf-8'))
     env = toolset_environment(args.toolset)
     subprocess.run(['cmake', '-S', str(MOD / 'native'), '-B', str(BUILD), '-G', 'Visual Studio 17 2022', '-A', 'x64', '-T', args.toolset], env=env, check=True)
     command = ['cmake', '--build', str(BUILD), '--config', 'Game__Shipping__Win64', '--parallel', str(args.parallel)]
