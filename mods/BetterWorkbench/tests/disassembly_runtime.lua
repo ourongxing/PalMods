@@ -210,6 +210,20 @@ return function(test, equal)
         accessible = 29
         readable, mismatch = pcall(backend.read, backend, session)
         assert(not readable and mismatch:find("production inventory scope mismatch", 1, true))
+        -- Expanded base storage must include stock beyond the old 256-slot
+        -- cutoff, even when the product is in the last slot.
+        local emptySlot = object({ ItemId = { StaticId = name("None") }, StackCount = 0 })
+        baseContainer.Num = function() return 360 end
+        baseContainer.Get = function(_, index) return index == 359 and baseSlot or emptySlot end
+        accessible = 30
+        local expanded, expandedRuntime = backend:read(session)
+        equal(expanded.Inventory.Part, 30)
+        equal(#expandedRuntime.sourceSlots, 364)
+        equal(expandedRuntime.sourceSlots[364].Key, "base:359")
+        equal(expandedRuntime.sourceSlots[364].Count, 24)
+        baseContainer.Num = function() return 4097 end
+        readable, mismatch = pcall(backend.read, backend, session)
+        assert(not readable and mismatch:find("invalid container size", 1, true))
         controller.HasAuthority = function() return false end
         local ok, reason = pcall(backend.read, backend, session)
         assert(not ok and reason:find("requires the local server host", 1, true))

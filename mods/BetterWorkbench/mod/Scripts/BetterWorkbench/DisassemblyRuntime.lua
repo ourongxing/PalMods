@@ -25,7 +25,9 @@ local function scan(inventory, sourceContainers)
     local slots, totals = {}, {}
     for _, container in ipairs(sourceContainers or containers(inventory)) do
         local containerId = identity(container)
-        local size = Util.integer(container:Num(), 0, 256, "container size")
+        -- BetterStorage expands some base containers to 360 slots. This is
+        -- an inventory bound, independent of the 256-batch disassembly limit.
+        local size = Util.integer(container:Num(), 0, 4096, "container size")
         for index = 0, size - 1 do
             local slot = container:Get(index)
             assert(valid(slot), "inventory slot unavailable")
