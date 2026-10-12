@@ -10,8 +10,8 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls')
-SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage'}
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
+SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'ExtraImplantDrops'}
 
 
 def positive_int(value):
@@ -62,7 +62,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build_native.py', *options), python_script('audit_native_imports.py')]
-    if mod == 'BetterBulkStorage':
+    if mod in ('BetterBulkStorage', 'ExtraImplantDrops'):
         options = ['--parallel', str(args.parallel)]
         if toolset:
             options.extend(['--toolset', toolset])
@@ -100,6 +100,7 @@ def main(argv=None):
         'BetterBulkStorage': ROOT / 'dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip',
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
+        'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

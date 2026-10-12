@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 
 
@@ -63,6 +63,14 @@ def payload(mod):
     elif mod == 'PalCombo':
         files += [(source / 'config.ini', 'config.ini'),
                   (PALCOMBO_BUILD / 'Game__Shipping__Win64/bin/PalComboFillerNative.dll', 'dlls/main.dll')]
+    elif mod == 'ExtraImplantDrops':
+        dll = BUILD_ROOT / mod / 'Game__Shipping__Win64/bin/ExtraImplantDropsNative.dll'
+        report = read_json(BUILD_ROOT / mod / 'import-audit.json')
+        if digest(dll).lower() != report['dll_sha256'].lower():
+            raise ValueError('ExtraImplantDrops DLL differs from import audit; rebuild and audit first')
+        if report['imports_verified'] < 24:
+            raise ValueError('ExtraImplantDrops import audit is incomplete')
+        files += [(source / 'config.ini', 'config.ini'), (dll, 'dlls/main.dll')]
     elif mod == 'BetterBulkStorage':
         files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterBulkStorageNative.dll',
                    'dlls/main.dll')]

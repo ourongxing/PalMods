@@ -80,12 +80,16 @@ class WorkshopTests(unittest.TestCase):
                                 installed.add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
                 if mod != 'PointBlankBurstSkills':
-                    self.assertIn(lua_root + '/Scripts/main.lua', installed)
+                    if mod != 'ExtraImplantDrops':
+                        self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
-                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage'):
+                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
-                if mod == 'PalCombo':
+                if mod in ('PalCombo', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/config.ini', installed)
+                if mod == 'ExtraImplantDrops':
+                    self.assertFalse(any('/Scripts/' in path for path in installed))
+                    self.assertEqual(info['Version'], '1.0.0')
                 if mod == 'AnywherePalBox':
                     self.assertIn(lua_root + '/Scripts/config.lua', installed)
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
