@@ -83,7 +83,7 @@ class WorkshopTests(unittest.TestCase):
                     if mod != 'ExtraImplantDrops':
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
-                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'ExtraImplantDrops'):
+                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
                 if mod in ('PalCombo', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/config.ini', installed)
@@ -98,6 +98,10 @@ class WorkshopTests(unittest.TestCase):
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/paks/UpdraftElevator_P.pak', installed)
                 if mod == 'PointBlankBurstSkills':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/PointBlankBurstSkills/raw/point_blank_burst_skills.json', installed)
+                if mod == 'BetterStorage':
+                    self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json', installed)
+                    self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
+                    self.assertEqual(info['Version'], '1.0.0')
                 manifest = workshop.read_json(package / 'package-manifest.json')
                 with zipfile.ZipFile(output / (mod + '.zip')) as archive:
                     self.assertIsNone(archive.testzip())

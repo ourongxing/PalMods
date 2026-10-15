@@ -10,8 +10,8 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
-SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'ExtraImplantDrops'}
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
+SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops'}
 
 
 def positive_int(value):
@@ -62,7 +62,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build_native.py', *options), python_script('audit_native_imports.py')]
-    if mod in ('BetterBulkStorage', 'ExtraImplantDrops'):
+    if mod in ('BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops'):
         options = ['--parallel', str(args.parallel)]
         if toolset:
             options.extend(['--toolset', toolset])
@@ -98,6 +98,7 @@ def main(argv=None):
         'UpdraftElevator': ROOT / 'dist/UpdraftElevator/UpdraftElevator-v10.zip',
         'PointBlankBurstSkills': BUILD_ROOT / 'PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills',
         'BetterBulkStorage': ROOT / 'dist/BetterBulkStorage/BetterBulkStorage-0.1.0-experimental.zip',
+        'BetterStorage': ROOT / 'dist/BetterStorage/BetterStorage-0.1.0.zip',
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
         'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',

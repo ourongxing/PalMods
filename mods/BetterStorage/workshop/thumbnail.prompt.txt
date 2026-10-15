@@ -1,0 +1,4 @@
+Tool: built-in image_gen
+Reference image: mods/BetterBulkStorage/workshop/thumbnail.png
+
+Use this image as a style and composition reference for a sibling Palworld mod Workshop cover, square. Preserve the bright polished stylized 3D game look, grassy fantasy base, sunlit timber chests, turquoise transfer glow, dramatic readable white fantasy serif title in the lower third, small 'PALWORLD MOD' at top left. Make a new image for 'Better Storage': exact large English title 'BETTER STORAGE' (remove BULK), exact smaller Simplified Chinese subtitle '更好的收纳'. Upper scene: one open wooden chest holding neatly stacked logs and ore, alongside an antique wooden bookshelf containing blueprints and scrolls. Turquoise glowing transfer trails guide matching logs into the already log-filled chest. The shelf is a prominent second feature. No empty-chest promises, numbers, UI, or extra text. Keep the title fully visible and avoid cropping letters.

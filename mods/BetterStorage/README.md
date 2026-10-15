@@ -22,6 +22,8 @@
 
 产物：`dist/BetterStorage/BetterStorage-0.1.0.zip`。
 
+创意工坊资料参照 BetterBulkStorage，位于 `workshop/`：简体中文、繁体中文、日语、英语说明、PNG 封面与 `Info.json`。工坊发布版本为 `1.0.0`，依赖 UE4SSExperimentalPW 和 PalSchema。构建后运行 `python tools/package_workshop.py BetterStorage --output-root dist/workshop-better-storage` 生成完整工坊包；对应目录若已存在，请使用新的输出目录。列表标题与正文仅维护四份本地化 README，由打包工具生成 `listing.json`。
+
 退出游戏后，将 ZIP 中的 `BetterStorage` 和 `PalSchema` 两个文件夹合并到 UE4SS/Mods，保留已有 PalSchema 插件。更新旧版时删除 `BetterStorage/Scripts/BlueprintStorage.lua`、`StorageWatch.lua`、`config.lua` 和 `GuildStorage.lua`，Scripts 中仅保留 `main.lua`。先禁用 BetterBulkStorage，两个 mod 不能同时启用。
 
 联机的堆叠上限与搬运修改需要主机或服务器加载 DLL；野外收纳沿用服务器验证，联机尚未验收。

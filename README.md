@@ -12,6 +12,7 @@ Palworld mod 源码仓库。
 | — | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
 | <img src="mods/AnywherePalBox/workshop/thumbnail.png" width="160" alt="随处打开终端封面"> | [AnywherePalBox](mods/AnywherePalBox/README.md) | 按 K 随处打开终端，支持地下城及自定义快捷键 |
 | <img src="mods/BetterBulkStorage/workshop/thumbnail.png" width="160" alt="更好的快速收纳封面"> | [BetterBulkStorage](mods/BetterBulkStorage/README.md) | 更好的快速收纳：沿用官方操作，将新物品存入空槽（本机实测可用） |
+| <img src="mods/BetterStorage/workshop/thumbnail.png" width="160" alt="更好的收纳封面"> | [BetterStorage](mods/BetterStorage/README.md) · [工坊资料](mods/BetterStorage/workshop/README.md) | 原版同类物品收纳、野外主据点收纳、99,999 堆叠上限、搬运优先叠放、360 格设计图家具与新公会库存 |
 | <img src="mods/BetterPalSouls/workshop/thumbnail.png" width="160" alt="更好的帕鲁魂强化封面"> | [BetterPalSouls](mods/BetterPalSouls/README.md) | 自动转换帕鲁魂、原版强化界面快速选择最低／最高等级 |
 
 ## 构建与测试
@@ -46,6 +47,7 @@ python -m unittest discover -s tools/tests
 | sdk | 编译 UE4SS、导出 CMake 包 | `.build/UE4SS/PalModsSDKConfig.cmake`、`sdk.json` |
 | PalCombo | 编译 DLL | `.build/PalCombo/Game__Shipping__Win64/bin/PalComboFillerNative.dll` |
 | BetterWorkbench | 头文件审核、编译、C++ 测试、导入审核 | `.build/BetterWorkbench/native/Release/BetterWorkbenchNative.dll`、`import-audit.json` |
+| BetterStorage | 编译 DLL、校验 Lua 与容量配置、打包 | `dist/BetterStorage/BetterStorage-0.1.0.zip` |
 | UpdraftElevator | 编辑器构建、生成资源、Cook、打包 | `dist/UpdraftElevator/UpdraftElevator-v10.zip` |
 | PointBlankBurstSkills | JSON 校验、暂存 | `.build/PointBlankBurstSkills/stage/Mods/PalSchema/mods/PointBlankBurstSkills/` |
 
@@ -54,12 +56,14 @@ python -m unittest discover -s tools/tests
 
 ## 创意工坊打包
 
-七个 mod 的工坊模板与封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
+各 mod 的工坊模板与封面位于各自 `workshop/` 目录，作者为 `ourongxing`。
 首次发布版本统一为 `1.0.0`，发布包包含简体中文、繁体中文、日语、英语的玩家说明和工坊介绍；
 BetterWorkbench 的新增界面文字和上升气流的建筑／科技文字支持四语。
 构建完成后运行 `python tools/package_workshop.py all`，生成
 `dist/workshop/<Mod>/` 和对应 ZIP，不安装或上传。
 安装规则、版本字段、导入上传工具的步骤见 [工坊打包说明](docs/WORKSHOP.md)。
+
+BetterStorage 的[工坊资料](mods/BetterStorage/workshop/README.md)包含四语介绍、封面与发布配置，依赖 UE4SSExperimentalPW 和 PalSchema。可单独运行 `python tools/build.py BetterStorage` 构建，再运行 `python tools/package_workshop.py BetterStorage` 生成工坊包；输出已存在时，用 `--output-root` 指定新的目录。
 
 ## 环境
 

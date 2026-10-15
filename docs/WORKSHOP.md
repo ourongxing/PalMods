@@ -1,8 +1,8 @@
 # 创意工坊打包
 
-七个 mod 各有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
+各 mod 有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
 作者为 `ourongxing`；包名固定为源码目录名，首次发布后不要随意修改。
-七个工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
+工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
 ## 简繁中文、日英四语
@@ -74,6 +74,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | BetterWorkbench | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | PalCombo | `Scripts/`、`dlls/main.dll`、`config.ini`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | BetterBulkStorage | `Scripts/`、`dlls/main.dll`、`enabled.txt` | Lua | UE4SSExperimentalPW |
+| BetterStorage | `Scripts/`、`dlls/main.dll`、`enabled.txt`、`PalSchema/blueprints/storage.json` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | AnywherePalBox | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | BetterPalSouls | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
@@ -81,10 +82,11 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 
 `Lua` 规则将选中的脚本、DLL、配置和启用标记部署到
 `Mods/NativeMods/UE4SS/Mods/<PackageName>/`。
-`PalSchema` 规则选中包内 `PalSchema/`，其中直接放 `raw/`、`buildings/`、`paks/` 等数据目录。
+`PalSchema` 规则选中包内 `PalSchema/`，其中直接放 `raw/`、`buildings/`、`blueprints/`、`paks/` 等数据目录。
 加载器使用包名部署到 `Mods/NativeMods/UE4SS/Mods/PalSchema/mods/<PackageName>/`，
 包内不要再多套一层 `<PackageName>`。
 上升气流使用构建暂存中的 Lua 和资源，保持生成的默认高度与建筑资源一致。
+BetterStorage 采用 BetterBulkStorage 的四语资料结构，保留原版同类物品收纳条件，另附设计图家具与新公会库存容量补丁；两者不能同时启用。
 所有规则目前仅用于游戏客户端，未声明专用服务器支持。
 
 发布包不含框架本体、SDK、源码工程、`mods.txt`、本机 `Jobs`、存档或日志。

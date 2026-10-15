@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 
 
@@ -74,6 +74,12 @@ def payload(mod):
     elif mod == 'BetterBulkStorage':
         files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterBulkStorageNative.dll',
                    'dlls/main.dll')]
+    elif mod == 'BetterStorage':
+        files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterStorageNative.dll',
+                   'dlls/main.dll')]
+        schema = MODS_ROOT / mod / 'schema'
+        files += [(p, 'PalSchema/' + p.relative_to(schema).as_posix())
+                  for p in sorted(schema.rglob('*.json'))]
     elif mod == 'UpdraftElevator':
         schema = BUILD_ROOT / mod / 'stage/Mods/PalSchema/mods/UpdraftElevator'
         files += [(schema / 'buildings/wind_small.json', 'PalSchema/buildings/wind_small.json'),
@@ -141,8 +147,8 @@ def validate(package):
         for target in rule['Targets']:
             path = target_path(target)
             if rule['Type'] == 'PalSchema' and (not path.is_dir() or
-                    not any((path / name).is_dir() for name in ('raw', 'buildings'))):
-                raise ValueError('PalSchema target must directly contain raw/ or buildings/')
+                    not any((path / name).is_dir() for name in ('raw', 'buildings', 'blueprints'))):
+                raise ValueError('PalSchema target must directly contain raw/, buildings/ or blueprints/')
     return info
 
 
