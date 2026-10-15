@@ -89,9 +89,16 @@ void* expanded_static_item(void* table, std::uint64_t name) {
     auto* data = reinterpret_cast<Lookup>(stack_trampoline)(table, name);
     if (!storage::valid(data) || !static_item_class
         || !static_cast<RC::Unreal::UObject*>(data)->IsA(static_item_class)) return data;
+    // Most lookups revisit rows that were already expanded. Quick storage
+    // resolves the same rows for many slots; those reads need no bookkeeping.
+    auto before = storage::read<std::int32_t>(data, 0x78);
+    auto after = storage::expanded_limit(before, storage::read<void*>(data, 0x80) != nullptr);
+    if (before == after) return data;
     std::lock_guard lock(stack_mutex);
-    const auto before = storage::read<std::int32_t>(data, 0x78);
-    const auto after = storage::expanded_limit(before, storage::read<void*>(data, 0x80) != nullptr);
+    // Another caller may have expanded this row while we waited. Re-read so
+    // teardown always retains the original limit rather than our own value.
+    before = storage::read<std::int32_t>(data, 0x78);
+    after = storage::expanded_limit(before, storage::read<void*>(data, 0x80) != nullptr);
     if (before == after) return data;
     // Weak identity prevents teardown from writing to a destroyed/reused row.
     const RC::Unreal::FWeakObjectPtr weak(static_cast<RC::Unreal::UObject*>(data));

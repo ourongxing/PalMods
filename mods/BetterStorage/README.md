@@ -16,6 +16,8 @@
 
 野外直接调用原版 CollectQuickStackTargetItemInfos，传入主基地与本地玩家 ID。基地查询限定于背包蓝图执行范围，类名校验按弱引用缓存。
 
+堆叠上限补丁在物品数据无需修改时直接返回，避免快速收纳反复读取同类物品时进入恢复记录互斥锁；首次修改仍在锁内复查并保存原始上限。此优化减少 mod 额外开销，基地内原版候选计算、槽位检查与转移仍同步执行，实际卡顿改善需实机确认。
+
 构建：`python mods/BetterStorage/tools/build.py`。
 
 产物：`dist/BetterStorage/BetterStorage-0.1.0.zip`。
