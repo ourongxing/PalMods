@@ -5,6 +5,24 @@
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
+## 已发布条目
+
+2026-10-15：以下七个包以 `1.0.0` 发布，已从 Steam 读回核对四语标题与正文、公开可见性、标签、封面和前置依赖。
+
+| 包名 | Workshop |
+| --- | --- |
+| AnywherePalBox | [3820048264](https://steamcommunity.com/sharedfiles/filedetails/?id=3820048264) |
+| BetterPalSouls | [3820049739](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049739) |
+| BetterStorage | [3820049820](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049820) |
+| BetterWorkbench | [3820049890](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049890) |
+| ExtraImplantDrops | [3820049962](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049962) |
+| PointBlankBurstSkills | [3820050011](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050011) |
+| UpdraftElevator | [3820050074](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050074) |
+
+本次上传目录为 `dist/workshop-publish-20261015/`，上传用预览图压缩为 768 × 768 PNG、每张小于 1 MB，源码高清封面保留。首次使用原始大图上传曾返回 `k_EResultLimitExceeded`；压缩预览图后成功。后续上传也应检查预览图大小。
+
+工具可继续从 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/` 更新这些条目，各目录的 `.workshop.json` 已保存对应发布 ID 和上次版本。更新时沿用现有 ID，并提高 `Info.json.Version`，避免重复创建条目。
+
 ## 简繁中文、日英四语
 
 包内 `README.md` 提供简体中文、繁體中文、日本語、English 入口；四份玩家说明分别为
