@@ -19,6 +19,43 @@ def read_json(path):
     return json.loads(path.read_text(encoding='utf-8-sig'))
 
 
+def steam_format_markdown(text):
+    """Convert the headings, flat lists and inline markup used by our READMEs."""
+    def inline(value):
+        def replace(match):
+            code, bold, label, url = match.groups()
+            if code is not None:
+                return '[b][noparse]' + code + '[/noparse][/b]'
+            if bold is not None:
+                return '[b]' + bold + '[/b]'
+            return '[url=' + url + ']' + label + '[/url]'
+        return re.sub(r'`([^`\n]+)`|\*\*([^*\n]+)\*\*|\[([^]\n]+)\]\(([^)\n]+)\)', replace, value)
+
+    output, list_type = [], None
+    for line in text.strip().splitlines():
+        bullet = re.fullmatch(r'[-*] (.+)', line)
+        ordered = re.fullmatch(r'\d+\. (.+)', line)
+        next_type = 'list' if bullet else 'olist' if ordered else None
+        if list_type and next_type != list_type:
+            output.append('[/' + list_type + ']')
+            list_type = None
+        if next_type:
+            if not list_type:
+                list_type = next_type
+                output.append('[' + list_type + ']')
+            output.append('[*]' + inline((bullet or ordered).group(1)))
+        else:
+            heading = re.fullmatch(r'(#{1,6})\s+(.+)', line)
+            if heading:
+                tag = 'h' + str(min(len(heading.group(1)), 3))
+                output.append('[' + tag + ']' + inline(heading.group(2)) + '[/' + tag + ']')
+            else:
+                output.append(inline(line))
+    if list_type:
+        output.append('[/' + list_type + ']')
+    return '\n'.join(output)
+
+
 def generate_listings(folder):
     """Use localized README titles and bodies as the only listing sources."""
     listings = {}
@@ -29,8 +66,8 @@ def generate_listings(folder):
                 or not re.fullmatch(r'\d+\.\d+\.\d+\S* · [^\n]+', sections[1])
                 or not sections[2].strip()):
             raise ValueError(f'Expected title, version/author and body in {path}')
-        # The Workshop listings are plain text; preserve paragraphs and code contents.
-        description = re.sub(r'`([^`\n]+)`', r'\1', sections[2]).strip()
+        # Steam descriptions use BBCode. Keep the version/author from the README.
+        description = '[b]' + sections[1] + '[/b]\n\n' + steam_format_markdown(sections[2])
         listings[language] = {'Title': sections[0][2:].strip(), 'Description': description}
     return listings
 

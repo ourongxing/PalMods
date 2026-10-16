@@ -2,17 +2,52 @@
 
 1.0.0 · ourongxing
 
-Press K to open the standard Palbox from the wilderness or a dungeon, making it easy to view, organize, and swap your Pals.
+Press K to open the standard Palbox anywhere, including the wilderness and dungeons, to view, organize, and swap your Pals.
 
-Inside your guild's base, opens that base's Palbox. Outside a base or inside a dungeon, selects the base in your guild with the most structures. If multiple bases have the same number of structures, selects the closest one to the player. The selection is refreshed on every key press. Your guild must have a base, and its terminal model must be available.
+## Features and usage
 
-Uses the game's standard terminal interface and closing behavior. Key presses are ignored while another menu is open, during screen fades, or before the player is ready. Inside another guild's base, the mod does not open a terminal or switch to one of your guild's bases.
+- Inside your guild's base, opens that base's Palbox.
+- In the wilderness or a dungeon, selects your guild's base with the most structures. Ties are resolved by distance to the player. The selection is refreshed on every key press.
+- Your guild must have a base with an available Palbox.
+- Does not open a Palbox while you are inside another guild's base.
+- Uses the standard Palbox interface. The shortcut is ignored while another menu is open, during screen transitions, or before the player is ready.
 
-The default shortcut is K. Edit `Mods/NativeMods/UE4SS/Mods/AnywherePalBox/Scripts/config.lua` in the game installation and change `Hotkey = "K"` to a UE4SS key name such as `"J"` or `"F6"`, then restart the game. Key names are case-insensitive. Only a single key is supported. Missing or invalid configuration falls back to K and reports the issue in the UE4SS log.
+## Installation
 
-Verified in local single-player, including dungeons. Multiplayer has not been verified.
+1. Subscribe to and enable the required mods: UE4SSExperimentalPW.
+2. Enable this mod in the game's Mod Management menu.
+3. Fully exit the game, then launch it again.
 
-Subscribe to and enable the required mod: UE4SSExperimentalPW. Then enable this mod in the game's Mod Management menu and restart the game.
+## Configuration
 
-This mod is open source under the GPL-3.0 license.
-Source code: https://github.com/ourongxing/PalMods
+Edit `Mods/NativeMods/UE4SS/Mods/AnywherePalBox/Scripts/config.lua` under your Palworld installation, save your changes, then fully exit and restart the game.
+
+`Hotkey = "K"` sets the shortcut. Change it to a single key such as `"J"` or `"F6"`. Key names are case-insensitive. Missing or invalid settings use K.
+
+## Before you play
+
+Tested in single-player, including dungeons. Multiplayer has not been verified.
+
+## Report a problem
+
+Report problems on GitHub Issues: https://github.com/ourongxing/PalMods/issues
+
+Without the UE4SS log, I cannot diagnose and fix bugs.
+
+Please include:
+
+- The mod name, game and mod versions, and game language.
+- Whether you are playing alone, hosting co-op, joining another player, or using a dedicated server.
+- Steps to reproduce the problem, expected and actual behavior, relevant screenshots, and other enabled mods.
+- The complete `UE4SS.log` from the session where the problem occurred, uploaded as an attachment.
+
+In Steam, right-click Palworld → Manage → Browse local files, then open `Mods\NativeMods\UE4SS\UE4SS.log`.
+For example, with the game installed on drive G:
+`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
+
+Use your own drive letter and Steam library location. Copy the log before launching the game again so the record of the problem is not overwritten.
+
+## Source code
+
+Open source under GPL-3.0.
+https://github.com/ourongxing/PalMods

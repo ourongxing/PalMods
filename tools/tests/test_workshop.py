@@ -19,16 +19,32 @@ class WorkshopTests(unittest.TestCase):
             folder = Path(temporary)
             for language in workshop.LANGUAGES:
                 (folder / f'README.{language}.md').write_text(
-                    '# Sample mod\n\n1.0.0 · author\n\nUse `Hotkey = "K"`.\n\n'
+                    '# Sample mod\n\n1.0.0 · author\n\n## Usage\n\nUse `Hotkey = "K"`.\n\n'
+                    '## Report a problem\n\nhttps://github.com/ourongxing/PalMods/issues\n\n'
+                    'Attach `Mods\\NativeMods\\UE4SS\\UE4SS.log`.\n\n'
                     'GPL-3.0\nSource: https://github.com/ourongxing/PalMods\n', encoding='utf-8')
             listings = workshop.generate_listings(folder)
             self.assertEqual(listings['en'], {
                 'Title': 'Sample mod',
-                'Description': 'Use Hotkey = "K".\n\nGPL-3.0\nSource: https://github.com/ourongxing/PalMods',
+                'Description': '[b]1.0.0 · author[/b]\n\n[h2]Usage[/h2]\n\nUse [b][noparse]Hotkey = "K"[/noparse][/b].\n\n'
+                               '[h2]Report a problem[/h2]\n\nhttps://github.com/ourongxing/PalMods/issues\n\n'
+                               'Attach [b][noparse]Mods\\NativeMods\\UE4SS\\UE4SS.log[/noparse][/b].\n\n'
+                               'GPL-3.0\nSource: https://github.com/ourongxing/PalMods',
             })
             (folder / 'README.en.md').write_text('# Sample mod\n\n1.0.0 · author\n', encoding='utf-8')
             with self.assertRaisesRegex(ValueError, 'README.en.md'):
                 workshop.generate_listings(folder)
+
+    def test_steam_format_headings_lists_links_and_literal_code(self):
+        self.assertEqual(workshop.steam_format_markdown(
+            '## Features\n\n- **First**\n- [Guide](https://example.com/guide)\n\n'
+            '1. Install\n2. Restart\n\n### Config\n\nUse `value[b]`.'),
+            '[h2]Features[/h2]\n\n[list]\n[*][b]First[/b]\n'
+            '[*][url=https://example.com/guide]Guide[/url]\n[/list]\n\n'
+            '[olist]\n[*]Install\n[*]Restart\n[/olist]\n\n'
+            '[h3]Config[/h3]\n\nUse [b][noparse]value[b][/noparse][/b].')
+        self.assertEqual(workshop.steam_format_markdown('- First\n- Last'),
+                         '[list]\n[*]First\n[*]Last\n[/list]')
 
     def test_listings_only_needs_no_build_and_preflights_all_languages(self):
         with tempfile.TemporaryDirectory() as temporary:

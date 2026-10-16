@@ -2,13 +2,53 @@
 
 1.1.0 · ourongxing
 
-Adds small, medium, and large updraft elevators. Jump inside an updraft to launch into the air. Default heights are 8/16/32 m, with area diameters of 2/4/6 m. Overlapping updrafts use the highest lift setting.
+Build updraft elevators and press jump inside their range to launch into the air using the game's original updraft jump animation.
 
-Unlock all three sizes at Ancient Technology level 9 for 1 Ancient Technology Point. Each elevator costs 10 Paldium Fragments, 30 Stone, and 3 Ancient Civilization Parts. Place it from the Infrastructure/Updraft Elevator section of the build menu. Completed elevators are invisible; aim at the base of the updraft to dismantle them.
+## Features and usage
 
-Configuration: `Small`, `Medium`, and `Large` in `Scripts/config.lua`. Values are in metres, from 0.1 to 1000, and may include decimals. Restart the game after changes. PalSchema loads building and technology text for the game language.
+- Small: default height 8 m, area diameter 2 m.
+- Medium: default height 16 m, area diameter 4 m.
+- Large: default height 32 m, area diameter 6 m.
+- Overlapping updrafts use the highest lift setting.
 
-Subscribe to and enable the required mods: UE4SSExperimentalPW, PalSchema. Then enable this mod in the game’s Mod Management menu and restart the game.
+Unlock all three sizes at level 9 in Ancient Technology for 1 Ancient Technology Point. Each elevator costs 10 Paldium Fragments, 30 Stone, and 3 Ancient Civilization Parts.
 
-This mod is open source under the GPL-3.0 license.
-Source code: https://github.com/ourongxing/PalMods
+Place elevators from the Infrastructure/Updraft Elevator section of the build menu. Completed elevators are invisible. To dismantle one, enter disassembly mode and aim at the base of the updraft.
+
+## Installation
+
+1. Subscribe to and enable the required mods: UE4SSExperimentalPW, PalSchema.
+2. Enable this mod in the game's Mod Management menu.
+3. Fully exit the game, then launch it again.
+
+## Configuration
+
+Edit `Mods/NativeMods/UE4SS/Mods/UpdraftElevator/Scripts/config.lua` under your Palworld installation, save your changes, then fully exit and restart the game.
+
+`Small`, `Medium`, and `Large` set the lift height for each size in metres. Defaults are 8, 16, and 32. Values from 0.1 to 1000, including decimals, are supported; invalid values use the defaults.
+
+Building and technology text supports Simplified Chinese, Traditional Chinese, Japanese, and English. Other languages use English. Restart the game after changing its language.
+
+## Report a problem
+
+Report problems on GitHub Issues: https://github.com/ourongxing/PalMods/issues
+
+Without the UE4SS log, I cannot diagnose and fix bugs.
+
+Please include:
+
+- The mod name, game and mod versions, and game language.
+- Whether you are playing alone, hosting co-op, joining another player, or using a dedicated server.
+- Steps to reproduce the problem, expected and actual behavior, relevant screenshots, and other enabled mods.
+- The complete `UE4SS.log` from the session where the problem occurred, uploaded as an attachment.
+
+In Steam, right-click Palworld → Manage → Browse local files, then open `Mods\NativeMods\UE4SS\UE4SS.log`.
+For example, with the game installed on drive G:
+`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
+
+Use your own drive letter and Steam library location. Copy the log before launching the game again so the record of the problem is not overwritten.
+
+## Source code
+
+Open source under GPL-3.0.
+https://github.com/ourongxing/PalMods

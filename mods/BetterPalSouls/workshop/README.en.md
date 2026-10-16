@@ -2,17 +2,57 @@
 
 1.0.0 · ourongxing
 
-Quickly select enhancement levels in the standard Statue of Power interface and automatically convert Pal Souls for the enhancement you confirm.
+Quickly choose enhancement levels in the standard Statue of Power interface and automatically convert Pal Souls for the enhancement you confirm.
 
-Keeps the standard stats, level bars, single-step controls, and cost display, adding arrows beside each percentage. ◀ clears pending enhancements for that stat and returns the selection to its current enhanced level; it does not reset stats or refund spent souls. ▶ selects the highest level affordable with the remaining soul budget while reserving the budget for other stats. All four stats share one inventory budget. The standard − / + controls still adjust one level at a time.
+## Features and usage
 
-Small, Medium, Large, and Giant Pal Souls are valued at 1 / 2 / 4 / 8. Previewing does not change inventory. When you confirm an enhancement, the mod converts souls as needed and keeps all remaining value as Small Pal Souls. Enhancement effects, level caps, and costs use current game data. Uses your backpack and containers in the current base that the standard enhancement interface can access. Free backpack slots if conversion needs more space. The reset page retains its standard behavior.
+- ◀: clears pending enhancements for that stat and returns the selection to its current enhanced level. It does not reset stats or refund spent souls.
+- ▶: selects the highest affordable level while reserving souls for enhancements already selected for other stats.
+- Standard − / +: adjusts one level at a time. All four stats share the available souls, with costs displayed in the standard interface.
 
-Configuration: `Scripts/config.lua`. `Enabled` toggles the mod. `Language` defaults to `auto` to follow the game language, or can be set to `zh-Hans`, `zh-Hant`, `ja`, or `en`.
+Small, Medium, Large, and Giant Pal Souls are valued at 1 / 2 / 4 / 8. Previewing does not change inventory. Confirming an enhancement converts souls as needed and keeps all remaining value as Small Pal Souls.
 
-Currently supports single-player and the co-op host's local player. Remote clients and dedicated servers are unsupported. Enhancement submission, save synchronization, failure recovery, and controller operation still require in-game verification. Back up your save before first use.
+Uses your backpack and containers in the current base that the standard enhancement interface can access. Free backpack slots if conversion needs more space. Enhancement effects, level caps, and costs follow the game settings. The reset page works as usual.
 
-Subscribe to and enable the required mod: UE4SSExperimentalPW. Then enable this mod in the game's Mod Management menu, fully exit the game, and restart it.
+## Installation
 
-This mod is open source under the GPL-3.0 license.
-Source code: https://github.com/ourongxing/PalMods
+1. Subscribe to and enable the required mods: UE4SSExperimentalPW.
+2. Enable this mod in the game's Mod Management menu.
+3. Fully exit the game, then launch it again.
+
+## Configuration
+
+Edit `Mods/NativeMods/UE4SS/Mods/BetterPalSouls/Scripts/config.lua` under your Palworld installation, save your changes, then fully exit and restart the game.
+
+- `Enabled`: turns the feature on or off.
+- `Language`: defaults to `auto` to follow the game language. You can also choose `zh-Hans`, `zh-Hant`, `ja`, or `en`.
+
+## Before you play
+
+Supports single-player and the co-op host's own character only. Joining players and dedicated servers are unsupported.
+
+Enhancement confirmation, saving and reloading, recovery from failed operations, and controller input have not been fully verified in-game. Back up your save before first use.
+
+## Report a problem
+
+Report problems on GitHub Issues: https://github.com/ourongxing/PalMods/issues
+
+Without the UE4SS log, I cannot diagnose and fix bugs.
+
+Please include:
+
+- The mod name, game and mod versions, and game language.
+- Whether you are playing alone, hosting co-op, joining another player, or using a dedicated server.
+- Steps to reproduce the problem, expected and actual behavior, relevant screenshots, and other enabled mods.
+- The complete `UE4SS.log` from the session where the problem occurred, uploaded as an attachment.
+
+In Steam, right-click Palworld → Manage → Browse local files, then open `Mods\NativeMods\UE4SS\UE4SS.log`.
+For example, with the game installed on drive G:
+`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
+
+Use your own drive letter and Steam library location. Copy the log before launching the game again so the record of the problem is not overwritten.
+
+## Source code
+
+Open source under GPL-3.0.
+https://github.com/ourongxing/PalMods

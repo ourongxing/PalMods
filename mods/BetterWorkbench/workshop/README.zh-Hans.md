@@ -2,15 +2,57 @@
 
 1.0.0 · ourongxing
 
-在同一工作台内自动展开缺少的中间材料，支持材料列表滚动和即时分解。
+在同一工作台自动计算缺少的中间材料，滚动查看完整材料列表，并将成品即时分解为原材料。
 
-制作时优先使用已有中间材料；不足的部分按当前工作台已解锁配方展开。点击配方详情中的已有成品数量，可切换到分解模式。选择批数并确认后，成品按整批消耗，原配方材料全额返还到背包。
+## 功能与使用
 
-配置：`Scripts/config.lua`。`Disassembly.Language` 默认为 `auto`，跟随游戏语言，也可设置为 `zh-Hans`、`zh-Hant`、`ja` 或 `en`。物品名称使用游戏自带译名。
+- 制作时优先使用已有中间材料，仅将不足的部分继续展开为当前工作台已解锁配方的原料。不能使用其他工作台的配方。
+- 例如需要 3 个铁锭、已有 1 个时，若同一工作台可制作铁锭，就使用这 1 个铁锭与制作剩余 2 个所需的矿石。
+- 材料列表默认显示 5 行，材料较多时可用鼠标滚轮查看。
+- 点击配方详情右上角的成品持有数量，切换制作／分解模式。选择批数并确认后，按完整配方批次消耗成品，原配方材料全额返还背包。
+- 单次制作最多 256 批。制作工时按所选成品配方计算，不额外增加中间材料的制作时间。
 
-当前分解功能支持单人及房主本机。多人任务定义同步尚未实现；库存扣除、手柄操作、退款和保存恢复仍待游戏内验收。未完成任务的 `Jobs/*.bwj` 应与存档一起保留。
+## 安装
 
-先订阅并启用依赖：UE4SSExperimentalPW。然后在游戏的mod管理中启用本mod，并重新启动游戏。
+1. 订阅并启用前置 Mod：UE4SSExperimentalPW。
+2. 在游戏的 Mod 管理中启用本 Mod。
+3. 完全退出游戏，再重新启动。
 
-本 mod 基于 GPL-3.0 协议开源。
-源码地址：https://github.com/ourongxing/PalMods
+## 配置
+
+在 Palworld 安装目录中编辑 `Mods/NativeMods/UE4SS/Mods/BetterWorkbench/Scripts/config.lua`，保存后完全退出并重启游戏。
+
+- `Enabled`：开启或关闭功能。
+- `MaterialScroll.Enabled`、`MaterialScroll.VisibleRows`：开启材料列表滚动、设置显示行数。
+- `Disassembly.Enabled`：开启或关闭即时分解。
+- `Disassembly.Language`：默认 `auto`，跟随游戏语言；也可指定 `zh-Hans`、`zh-Hant`、`ja` 或 `en`。物品名称使用游戏译名。
+
+## 使用须知
+
+分解仅支持单人游戏和联机房主本人。多人制作任务同步尚不支持。
+
+物品扣除、材料返还、保存后恢复和手柄操作尚未完成游戏内验证。备份或迁移存档时，请同时保留本 Mod 目录下的 `Jobs` 文件夹，其中保存未完成制作任务所需的数据。
+
+## 问题反馈
+
+请到 GitHub Issues 报告问题：https://github.com/ourongxing/PalMods/issues
+
+没有 UE4SS 日志，我无法定位并修复 Bug。
+
+请提供以下信息，方便定位：
+
+- Mod 名称、游戏与 Mod 版本、游戏语言。
+- 单人游戏、联机房主、加入他人房间或专用服务器。
+- 复现步骤、预期与实际表现，以及相关截图和已启用的其他 Mod。
+- 出现问题后的完整 `UE4SS.log` 文件，请作为附件上传。
+
+在 Steam 中右键 Palworld → 管理 → 浏览本地文件，然后打开 `Mods\NativeMods\UE4SS\UE4SS.log`。
+例如，游戏安装在 G 盘时，完整路径为：
+`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
+
+盘符和 Steam 库目录以你的安装位置为准。请在再次启动游戏前复制日志，避免本次问题的记录被覆盖。
+
+## 开源
+
+本 Mod 以 GPL-3.0 协议开源。
+https://github.com/ourongxing/PalMods

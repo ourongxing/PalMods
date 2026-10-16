@@ -2,25 +2,61 @@
 
 1.1.0 · ourongxing
 
-Use vanilla Easy Bulk Storage outside your base, increase stack limits, and add larger schematic furniture and a configurable guild storage capacity.
+Use vanilla Easy Bulk Storage in the wilderness, increase stack limits, improve Pal transport, and add larger schematic furniture and configurable guild storage capacity.
 
-Inside a base, items go to that base. Outside a base, they go to your guild's base with the most buildings; ties are resolved by distance to the player. Open your inventory and use the vanilla Easy Bulk Storage button or shortcut (R by default on keyboard).
+## Features and usage
 
-Keeps vanilla eligibility highlighting, exclusion list and confirmation dialog, and respects chest categories, access permissions and capacity. A destination chest must already contain the same item type. New item types will not be placed in empty chests or chests containing only other items.
+Open your inventory and use the standard Easy Bulk Storage button or shortcut (R by default on keyboard).
 
-Ordinary stackable items have a minimum stack limit of 99,999 across inventory, chests and production storage. Higher vanilla limits are preserved, including the 99,999,999 coin limit. Unstackable and individually instanced items keep vanilla rules. Existing separate stacks are not automatically merged. Split stacks exceeding vanilla limits before uninstalling.
+- Destination: the current base while inside a base; otherwise your guild's base with the most structures. Ties are resolved by distance to the player.
+- Vanilla storage rules: a destination chest must already contain the same item type. New types are not placed in empty chests or chests containing only other items. Keeps eligibility highlighting, the exclusion list, and confirmation window, respecting categories, permissions, and capacity.
+- Stack limits: ordinary stackable items have a minimum per-slot limit of 99,999 across inventory, chests, and production storage. Higher vanilla limits are preserved, including the 99,999,999 coin limit. Equipment and other items that do not stack normally retain their original rules.
+- Pal transport: prefers chests with matching partial stacks within the same transport priority. Existing categories, permissions, and priorities remain in effect.
+- Schematic furniture: the antique bookshelf and antique large cabinet have 360 slots and accept schematics only. Rebuild existing copies to apply the capacity and category settings.
+- Guild storage: newly created guild storage defaults to 360 slots. All guild chests still share one inventory. Existing guild storage is not expanded, and rebuilding a guild chest does not change its capacity.
 
-When Pals transport items, chests with a matching partial stack are preferred within the same transport priority. Existing chest categories, permissions and priorities still apply.
+## Installation
 
-The antique bookshelf and antique large cabinet (Shelf01_Stone and Shelf07_Stone) have 360 slots and accept schematics only. Rebuild existing copies of these furniture items to apply the capacity and filter settings.
+1. Subscribe to and enable the required mods: UE4SSExperimentalPW, PalSchema.
+2. Enable this mod in the game's Mod Management menu.
+3. Fully exit the game, then launch it again.
 
-Newly created guild storage defaults to 360 slots. All guild chests still share one inventory. Existing guild storage is not expanded, and rebuilding a guild chest does not change its capacity. The vanilla interface for 360-slot furniture can be expensive to display.
+## Configuration
 
-Capacity configuration: UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json. Adjust each furniture item's SlotNum and the guild's GuildChestSlotNum separately, then fully restart the game or server. Changes only affect matching containers or guild inventories created afterwards.
+Edit `Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json` under your Palworld installation, save your changes, then fully exit and restart the game.
 
-Subscribe to and enable UE4SSExperimentalPW and PalSchema, then enable this mod in the game Mod Management menu, fully exit the game, and restart. Do not enable it together with BetterBulkStorage.
+The two `SlotNum` settings control the bookshelf and cabinet capacities separately. `GuildChestSlotNum` sets the capacity of new guild storage.
 
-Outside-base storage and eligibility highlighting have been tested locally in single-player; the quick-storage optimization also received positive player feedback. Multiplayer is unverified. Stack limits, transport and capacity patches require host or server installation; client-only installation cannot change server rules. New guild storage capacity and synchronization still need in-game verification.
+Fully restart the game or server after editing. Changes apply only to matching furniture or guild inventories created afterwards.
+
+## Before you play
+
+Wilderness storage and eligibility highlighting have been tested in single-player. Multiplayer is unverified. Stack, transport, and capacity changes require host or server installation; installing only on a joining player's computer cannot change server rules. New guild storage capacity and multiplayer synchronization are also unverified.
+
+Do not enable together with BetterBulkStorage. The 360-slot furniture interface may lower frame rates; you can reduce the capacity for furniture you build afterwards.
+
+Existing separate stacks are not automatically merged. Split stacks exceeding vanilla limits before uninstalling.
+
+## Report a problem
+
+Report problems on GitHub Issues: https://github.com/ourongxing/PalMods/issues
+
+Without the UE4SS log, I cannot diagnose and fix bugs.
+
+Please include:
+
+- The mod name, game and mod versions, and game language.
+- Whether you are playing alone, hosting co-op, joining another player, or using a dedicated server.
+- Steps to reproduce the problem, expected and actual behavior, relevant screenshots, and other enabled mods.
+- The complete `UE4SS.log` from the session where the problem occurred, uploaded as an attachment.
+
+In Steam, right-click Palworld → Manage → Browse local files, then open `Mods\NativeMods\UE4SS\UE4SS.log`.
+For example, with the game installed on drive G:
+`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
+
+Use your own drive letter and Steam library location. Copy the log before launching the game again so the record of the problem is not overwritten.
+
+## Source code
 
 Open source under GPL-3.0.
-Source: https://github.com/ourongxing/PalMods
+https://github.com/ourongxing/PalMods
