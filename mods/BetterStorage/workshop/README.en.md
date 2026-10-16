@@ -1,6 +1,6 @@
 # Better Storage
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 Use vanilla Easy Bulk Storage outside your base, increase stack limits, and add larger schematic furniture and a configurable guild storage capacity.
 

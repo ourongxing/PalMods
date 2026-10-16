@@ -1,6 +1,6 @@
 # Point-Blank Burst Skills
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 Makes Pals move close to their target before using Volcanic Rain, Rockburst, or Poison Shower.
 

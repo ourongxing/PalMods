@@ -1,6 +1,6 @@
 # Updraft Elevator
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 Adds small, medium, and large updraft elevators. Jump inside an updraft to launch into the air. Default heights are 8/16/32 m, with area diameters of 2/4/6 m. Overlapping updrafts use the highest lift setting.
 

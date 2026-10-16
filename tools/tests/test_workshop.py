@@ -76,7 +76,7 @@ class WorkshopTests(unittest.TestCase):
                         paths = list(source.rglob('*')) if source.is_dir() else [source]
                         for file in paths:
                             if file.is_file():
-                                relative = file.relative_to(source if rule['Type'] == 'PalSchema' else source.parent).as_posix()
+                                relative = file.relative_to(source if target.endswith('/') else source.parent).as_posix()
                                 installed.add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
                 if mod != 'PointBlankBurstSkills':
@@ -96,12 +96,14 @@ class WorkshopTests(unittest.TestCase):
                     self.assertFalse(any('/dlls/' in path or '/PalSchema/' in path for path in installed))
                 if mod == 'UpdraftElevator':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/paks/UpdraftElevator_P.pak', installed)
+                    self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/buildings/wind_small.json', installed)
+                    self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/translations/zh-Hans/updraft.json', installed)
                 if mod == 'PointBlankBurstSkills':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/PointBlankBurstSkills/raw/point_blank_burst_skills.json', installed)
                 if mod == 'BetterStorage':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json', installed)
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
-                    self.assertEqual(info['Version'], '1.0.0')
+                    self.assertEqual(info['Version'], '1.1.0')
                 manifest = workshop.read_json(package / 'package-manifest.json')
                 with zipfile.ZipFile(output / (mod + '.zip')) as archive:
                     self.assertIsNone(archive.testzip())
@@ -138,7 +140,7 @@ class WorkshopTests(unittest.TestCase):
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)
             info = self.make_schema_package(folder)
-            for target in ('../outside', 'C:/outside', './missing', './PalSchema/PointBlankBurstSkills'):
+            for target in ('../outside', 'C:/outside', './missing', './PalSchema/PointBlankBurstSkills', './PalSchema'):
                 info['InstallRule'][0]['Targets'] = [target]
                 (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
                 with self.subTest(target=target), self.assertRaises(ValueError):

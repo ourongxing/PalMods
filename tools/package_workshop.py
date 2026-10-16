@@ -146,9 +146,11 @@ def validate(package):
             raise ValueError('InstallRule needs targets')
         for target in rule['Targets']:
             path = target_path(target)
-            if rule['Type'] == 'PalSchema' and (not path.is_dir() or
+            # The game copies directory contents only with a trailing slash.
+            # Without it, PalSchema/ itself is nested under the mod root.
+            if rule['Type'] == 'PalSchema' and (not target.endswith('/') or not path.is_dir() or
                     not any((path / name).is_dir() for name in ('raw', 'buildings', 'blueprints'))):
-                raise ValueError('PalSchema target must directly contain raw/, buildings/ or blueprints/')
+                raise ValueError('PalSchema target must end with / and directly contain raw/, buildings/ or blueprints/')
     return info
 
 

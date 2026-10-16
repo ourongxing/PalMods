@@ -19,6 +19,8 @@
 | PointBlankBurstSkills | [3820050011](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050011) |
 | UpdraftElevator | [3820050074](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050074) |
 
+2026-10-16：UpdraftElevator、BetterStorage、PointBlankBurstSkills 沿用上述条目更新至 `1.1.0`，仅修正 PalSchema 安装目标的末尾斜杠并更新版本标记。脚本、DLL、建筑资源、封面及工坊四语标题／介绍、标签、依赖和可见性保持不变。已通过 Steam 游戏端重新下载三包并逐文件核对 SHA-256；发布记录位于 `.build/workshop-update-1.1.0-20261016/`，上传包位于 `dist/workshop-install-fix-1.1.0-20261016/`。
+
 本次上传目录为 `dist/workshop-publish-20261015/`，上传用预览图压缩为 768 × 768 PNG、每张小于 1 MB，源码高清封面保留。首次使用原始大图上传曾返回 `k_EResultLimitExceeded`；压缩预览图后成功。后续上传也应检查预览图大小。
 
 工具可继续从 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/` 更新这些条目，各目录的 `.workshop.json` 已保存对应发布 ID 和上次版本。更新时沿用现有 ID，并提高 `Info.json.Version`，避免重复创建条目。
@@ -100,7 +102,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 
 `Lua` 规则将选中的脚本、DLL、配置和启用标记部署到
 `Mods/NativeMods/UE4SS/Mods/<PackageName>/`。
-`PalSchema` 规则选中包内 `PalSchema/`，其中直接放 `raw/`、`buildings/`、`blueprints/`、`paks/` 等数据目录。
+`PalSchema` 规则的目标必须写成 `./PalSchema/`，保留末尾斜杠以复制目录内容；省略斜杠会在安装目录中多套一层 `PalSchema/`，导致建筑和科技等数据未加载。包内该目录直接放 `raw/`、`buildings/`、`blueprints/`、`paks/` 等数据目录。
 加载器使用包名部署到 `Mods/NativeMods/UE4SS/Mods/PalSchema/mods/<PackageName>/`，
 包内不要再多套一层 `<PackageName>`。
 上升气流使用构建暂存中的 Lua 和资源，保持生成的默认高度与建筑资源一致。
