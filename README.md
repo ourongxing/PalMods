@@ -31,7 +31,9 @@ python -m unittest discover -s tools/tests
 ```
 
 不指定名称时构建全部 mod。原生 mod 构建前准备共享 UE4SS SDK，任一步失败即停止。
-构建产物保存在 `.build/` 和 `dist/`；安装命令见各 mod 文档。
+构建产物保存在 `.build/` 和 `dist/`；开发测试沿用现有本地安装方式，安装命令见各 mod 文档。
+准备发布到创意工坊时，再切换到 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/`。
+已发布 mod 使用[工坊打包说明](docs/WORKSHOP.md)中对应的现有 ID，保留 `.workshop.json` 与工坊包目录结构。
 
 | 参数 | 用途 |
 | --- | --- |

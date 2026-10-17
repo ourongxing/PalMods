@@ -16,6 +16,16 @@
 - All commit messages must follow Conventional Commits: `<type>(<scope>): <summary>`.
 - Example: `chore(init): initial import`.
 
+### Development Testing
+
+- Keep the existing local installation workflow during mod development/testing.
+  Switch to Workshop deployment when the mod is being prepared for Workshop
+  publication; do not migrate all development mods in advance.
+- When switching, use the corresponding item folder under
+  `G:/SteamLibrary/steamapps/workshop/content/1623730/`. For published mods, use
+  the existing PublishedId documented in `docs/WORKSHOP.md`; preserve
+  `.workshop.json` and the Workshop package layout.
+
 ### Workshop Listings
 
 - Localized `mods/<Mod>/workshop/README.<language>.md` files are the only
