@@ -28,8 +28,15 @@
 
 ### Workshop Listings
 
-- Localized `mods/<Mod>/workshop/README.<language>.md` files are the only
-  source of Workshop listing titles and descriptions.
+- Localized `mods/<Mod>/workshop/README.<language>.md` files are the source
+  of Workshop listing titles and mod-specific descriptions.
+- Shared feedback, log instructions, and source/license text live in
+  `tools/workshop/templates/`. The packaging tool appends the localized
+  footer to generated listings and packaged READMEs; do not duplicate it in
+  individual mod READMEs. UE4SS log instructions apply only to mods depending
+  on UE4SSExperimentalPW.
+- Do not maintain or package `mods/<Mod>/workshop/README.md` language-index
+  files; use the four localized READMEs directly.
 - Do not directly edit `listing.json`. Change the corresponding localized
   README files, then regenerate the listings with `tools/package_workshop.py`.
 - Run `python tools/package_workshop.py all --listings-only` to generate

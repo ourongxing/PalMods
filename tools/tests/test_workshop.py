@@ -19,21 +19,54 @@ class WorkshopTests(unittest.TestCase):
             folder = Path(temporary)
             for language in workshop.LANGUAGES:
                 (folder / f'README.{language}.md').write_text(
-                    '# Sample mod\n\n1.0.0 · author\n\n## Usage\n\nUse `Hotkey = "K"`.\n\n'
-                    '## Report a problem\n\nhttps://github.com/ourongxing/PalMods/issues\n\n'
-                    'Attach `Mods\\NativeMods\\UE4SS\\UE4SS.log`.\n\n'
-                    'GPL-3.0\nSource: https://github.com/ourongxing/PalMods\n', encoding='utf-8')
+                    '# Sample mod\n\n1.0.0 · author\n\n## Usage\n\nUse `Hotkey = "K"`.\n', encoding='utf-8')
             listings = workshop.generate_listings(folder)
-            self.assertEqual(listings['en'], {
-                'Title': 'Sample mod',
-                'Description': '[b]1.0.0 · author[/b]\n\n[h2]Usage[/h2]\n\nUse [b][noparse]Hotkey = "K"[/noparse][/b].\n\n'
-                               '[h2]Report a problem[/h2]\n\nhttps://github.com/ourongxing/PalMods/issues\n\n'
-                               'Attach [b][noparse]Mods\\NativeMods\\UE4SS\\UE4SS.log[/noparse][/b].\n\n'
-                               'GPL-3.0\nSource: https://github.com/ourongxing/PalMods',
-            })
+            self.assertEqual(listings['en']['Title'], 'Sample mod')
+            self.assertTrue(listings['en']['Description'].startswith(
+                '[b]1.0.0 · author[/b]\n\n[h2]Usage[/h2]\n\nUse [b][noparse]Hotkey = "K"[/noparse][/b].\n\n'))
+            self.assertIn('[h2]Report a problem[/h2]', listings['en']['Description'])
+            self.assertIn('[h2]Source code[/h2]', listings['en']['Description'])
             (folder / 'README.en.md').write_text('# Sample mod\n\n1.0.0 · author\n', encoding='utf-8')
             with self.assertRaisesRegex(ValueError, 'README.en.md'):
                 workshop.generate_listings(folder)
+
+    def test_shared_footer_is_localized_dependency_aware_and_not_duplicated(self):
+        headings = {'zh-Hans': ('问题反馈', '开源'), 'zh-Hant': ('問題回報', '原始碼'),
+                    'ja': ('不具合の報告', 'ソースコード'), 'en': ('Report a problem', 'Source code')}
+        for mod in ('AnywherePalBox', 'QuickButcher'):
+            source = workshop.MODS_ROOT / mod / 'workshop'
+            with tempfile.TemporaryDirectory() as temporary:
+                folder = Path(temporary)
+                (folder / 'Info.json').write_bytes((source / 'Info.json').read_bytes())
+                for language, titles in headings.items():
+                    path = source / f'README.{language}.md'
+                    original = path.read_text(encoding='utf-8-sig')
+                    self.assertNotIn('https://github.com/ourongxing/PalMods/issues', original)
+                    rendered = workshop.render_readme(source, language)
+                    for title in titles:
+                        self.assertEqual(rendered.count('## ' + title), 1)
+                    self.assertEqual(rendered.count('GPL-3.0'), 1)
+                    self.assertEqual(rendered.count('https://github.com/ourongxing/PalMods/issues'), 1)
+                    self.assertEqual('UE4SS.log' in rendered, mod == 'AnywherePalBox')
+                    self.assertNotIn('{{runtime_logs}}', rendered)
+                    (folder / path.name).write_text(rendered, encoding='utf-8')
+                    self.assertEqual(workshop.render_readme(folder, language), rendered)
+
+    def test_template_changes_flow_into_generated_listings(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            templates = Path(temporary)
+            for language in workshop.LANGUAGES:
+                (templates / f'README.{language}.md').write_text('## Shared support\n\nFirst footer', encoding='utf-8')
+            source = workshop.MODS_ROOT / 'QuickButcher/workshop'
+            with patch.object(workshop, 'TEMPLATES_ROOT', templates):
+                first = workshop.generate_listings(source)
+                for language in workshop.LANGUAGES:
+                    (templates / f'README.{language}.md').write_text('## Shared support\n\nUpdated footer', encoding='utf-8')
+                updated = workshop.generate_listings(source)
+            for language in workshop.LANGUAGES:
+                self.assertEqual(first[language]['Title'], updated[language]['Title'])
+                self.assertIn('Updated footer', updated[language]['Description'])
+                self.assertNotIn('First footer', updated[language]['Description'])
 
     def test_steam_format_headings_lists_links_and_literal_code(self):
         self.assertEqual(workshop.steam_format_markdown(
@@ -83,10 +116,17 @@ class WorkshopTests(unittest.TestCase):
                     self.skipTest(str(error))
                 package = workshop.package_mod(mod, plan, output)
                 info = workshop.validate(package)
+                expected_listings = workshop.generate_listings(workshop.MODS_ROOT / mod / 'workshop')
+                self.assertEqual(workshop.read_json(package / 'listing.json'), expected_listings)
+                for language in workshop.LANGUAGES:
+                    rendered = (package / f'README.{language}.md').read_text(encoding='utf-8')
+                    self.assertTrue(rendered.strip().endswith(workshop.common_footer(package, language)))
+                    self.assertEqual(rendered.count('GPL-3.0'), 1)
                 installed = set()
                 for rule in info['InstallRule']:
-                    base = ('Mods/NativeMods/UE4SS/Mods/' + mod if rule['Type'] == 'Lua'
-                            else 'Mods/NativeMods/UE4SS/Mods/PalSchema/mods/' + mod)
+                    base = {'Lua': 'Mods/NativeMods/UE4SS/Mods/' + mod,
+                            'PalSchema': 'Mods/NativeMods/UE4SS/Mods/PalSchema/mods/' + mod,
+                            'Paks': 'Pal/Content/Paks/~WorkshopMods/' + mod}[rule['Type']]
                     for target in rule['Targets']:
                         source = package / target
                         paths = list(source.rglob('*')) if source.is_dir() else [source]
@@ -95,7 +135,7 @@ class WorkshopTests(unittest.TestCase):
                                 relative = file.relative_to(source if target.endswith('/') else source.parent).as_posix()
                                 installed.add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
-                if mod != 'PointBlankBurstSkills':
+                if mod not in ('PointBlankBurstSkills', 'QuickButcher'):
                     if mod != 'ExtraImplantDrops':
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
@@ -120,10 +160,15 @@ class WorkshopTests(unittest.TestCase):
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json', installed)
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
                     self.assertEqual(info['Version'], '1.1.0')
+                if mod == 'QuickButcher':
+                    self.assertEqual(installed, {'Pal/Content/Paks/~WorkshopMods/QuickButcher/QuickButcher_P.pak'})
+                    self.assertEqual(info['Dependencies'], [])
+                    self.assertEqual(info['Version'], '1.0.0')
                 manifest = workshop.read_json(package / 'package-manifest.json')
                 with zipfile.ZipFile(output / (mod + '.zip')) as archive:
                     self.assertIsNone(archive.testzip())
                     self.assertIn('Info.json', archive.namelist())
+                    self.assertNotIn('README.md', archive.namelist())
                     for name, sha in manifest['Files'].items():
                         self.assertEqual(workshop.digest(package / name), sha)
                         self.assertEqual(archive.read(name), (package / name).read_bytes())
@@ -180,6 +225,36 @@ class WorkshopTests(unittest.TestCase):
                 'bridge_sha256': '0' * 64, 'ue4ss_imports_verified': 67}), encoding='utf-8')
             with patch.object(workshop, 'BUILD_ROOT', build), self.assertRaisesRegex(ValueError, 'differs'):
                 workshop.payload('BetterWorkbench')
+
+    def test_pak_payload_rejects_changed_artifact(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            dist = Path(temporary)
+            folder = dist / 'QuickButcher'
+            folder.mkdir()
+            (folder / 'QuickButcher_P.pak').write_bytes(b'changed')
+            (folder / 'build-audit.json').write_text(json.dumps({
+                'Mod': 'QuickButcher', 'PakSHA256': '0' * 64}), encoding='utf-8')
+            with patch.object(workshop, 'DIST_ROOT', dist), self.assertRaisesRegex(ValueError, 'differs'):
+                workshop.payload('QuickButcher')
+
+    def test_paks_rule_rejects_missing_slash_empty_folder_and_file_target(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            info = self.make_schema_package(folder)
+            (folder / 'Paks').mkdir()
+            info['InstallRule'] = [{'Type': 'Paks', 'Targets': ['./Paks/']}]
+            (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+            with self.assertRaisesRegex(ValueError, 'Paks target'):
+                workshop.validate(folder)
+            (folder / 'Paks/test.pak').write_bytes(b'package')
+            for target in ('./Paks', './Paks/test.pak'):
+                info['InstallRule'][0]['Targets'] = [target]
+                (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+                with self.subTest(target=target), self.assertRaisesRegex(ValueError, 'Paks target'):
+                    workshop.validate(folder)
+            info['InstallRule'][0]['Targets'] = ['./Paks/']
+            (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+            self.assertEqual(workshop.validate(folder), info)
 
 
 if __name__ == '__main__':

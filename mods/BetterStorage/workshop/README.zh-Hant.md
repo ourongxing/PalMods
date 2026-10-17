@@ -36,27 +36,3 @@
 請勿與 BetterBulkStorage 同時啟用。360 格家具介面可能降低幀率，可適度調低新家具的容量。
 
 不會自動合併既有的分散堆疊。解除安裝前請將超過原版上限的堆疊拆分。
-
-## 問題回報
-
-請到 GitHub Issues 回報問題：https://github.com/ourongxing/PalMods/issues
-
-沒有 UE4SS 日誌，我無法定位並修復 Bug。
-
-請提供以下資訊，方便查明原因：
-
-- Mod 名稱、遊戲與 Mod 版本、遊戲語言。
-- 單人遊戲、連線房主、加入他人房間或專用伺服器。
-- 重現步驟、預期與實際情況，以及相關截圖和已啟用的其他 Mod。
-- 發生問題後的完整 `UE4SS.log` 檔案，請以附件上傳。
-
-在 Steam 中以右鍵點選 Palworld → 管理 → 瀏覽本機檔案，然後開啟 `Mods\NativeMods\UE4SS\UE4SS.log`。
-例如，遊戲安裝在 G 槽時，完整路徑為：
-`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
-
-磁碟代號和 Steam 收藏庫目錄請依實際安裝位置調整。請在再次啟動遊戲前複製日誌，避免本次問題的紀錄被覆蓋。
-
-## 開放原始碼
-
-本 Mod 以 GPL-3.0 授權開放原始碼。
-https://github.com/ourongxing/PalMods

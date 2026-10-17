@@ -11,8 +11,9 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
+TEMPLATES_ROOT = ROOT / 'tools/workshop/templates'
 
 
 def read_json(path):
@@ -56,16 +57,39 @@ def steam_format_markdown(text):
     return '\n'.join(output)
 
 
+def common_footer(folder, language):
+    """One localized support/source template; add logs only for UE4SS mods."""
+    metadata = folder / 'Info.json'
+    dependencies = (read_json(metadata).get('Dependencies') or []) if metadata.exists() else []
+    logs = ''
+    if 'UE4SSExperimentalPW' in dependencies:
+        logs = (TEMPLATES_ROOT / f'UE4SS.{language}.md').read_text(encoding='utf-8-sig').strip() + '\n\n'
+    template = (TEMPLATES_ROOT / f'README.{language}.md').read_text(encoding='utf-8-sig')
+    return template.replace('{{runtime_logs}}', logs).strip()
+
+
+def append_footer(content, footer):
+    content = content.strip()
+    # Package READMEs already include the footer when validate() regenerates listings.
+    return content + '\n' if content.endswith(footer) else content + '\n\n' + footer + '\n'
+
+
+def render_readme(folder, language):
+    path = folder / f'README.{language}.md'
+    content = path.read_text(encoding='utf-8-sig').strip()
+    sections = re.split(r'\n\s*\n', content, maxsplit=2)
+    if (len(sections) != 3 or not re.fullmatch(r'# [^\n]+', sections[0])
+            or not re.fullmatch(r'\d+\.\d+\.\d+\S* · [^\n]+', sections[1])
+            or not sections[2].strip()):
+        raise ValueError(f'Expected title, version/author and body in {path}')
+    return append_footer(content, common_footer(folder, language))
+
+
 def generate_listings(folder):
-    """Use localized README titles and bodies as the only listing sources."""
+    """Render localized mod READMEs with the shared support/source footer."""
     listings = {}
     for language in LANGUAGES:
-        path = folder / f'README.{language}.md'
-        sections = re.split(r'\n\s*\n', path.read_text(encoding='utf-8-sig').strip(), maxsplit=2)
-        if (len(sections) != 3 or not re.fullmatch(r'# [^\n]+', sections[0])
-                or not re.fullmatch(r'\d+\.\d+\.\d+\S* · [^\n]+', sections[1])
-                or not sections[2].strip()):
-            raise ValueError(f'Expected title, version/author and body in {path}')
+        sections = re.split(r'\n\s*\n', render_readme(folder, language).strip(), maxsplit=2)
         # Steam descriptions use BBCode. Keep the version/author from the README.
         description = '[b]' + sections[1] + '[/b]\n\n' + steam_format_markdown(sections[2])
         listings[language] = {'Title': sections[0][2:].strip(), 'Description': description}
@@ -83,6 +107,13 @@ def digest(path):
 
 def payload(mod):
     """Explicit runtime inputs exclude local jobs, logs, SDKs and old mod names."""
+    if mod == 'QuickButcher':
+        folder = DIST_ROOT / mod
+        pak = folder / 'QuickButcher_P.pak'
+        report = read_json(folder / 'build-audit.json')
+        if report.get('Mod') != mod or digest(pak) != report['PakSHA256']:
+            raise ValueError('QuickButcher PAK differs from build audit; rebuild first')
+        return [(pak, 'Paks/QuickButcher_P.pak')]
     source = MODS_ROOT / mod / 'mod'
     files = []
     if mod != 'PointBlankBurstSkills':
@@ -177,7 +208,7 @@ def validate(package):
                    for key in ('Title', 'Description')):
             raise ValueError(f'Missing Workshop listing text: {language}')
     for rule in info['InstallRule']:
-        if rule['Type'] not in ('Lua', 'PalSchema') or rule.get('IsServer', False):
+        if rule['Type'] not in ('Lua', 'PalSchema', 'Paks') or rule.get('IsServer', False):
             raise ValueError('These packages support client installation rules only')
         if not isinstance(rule['Targets'], list) or not rule['Targets']:
             raise ValueError('InstallRule needs targets')
@@ -188,6 +219,9 @@ def validate(package):
             if rule['Type'] == 'PalSchema' and (not target.endswith('/') or not path.is_dir() or
                     not any((path / name).is_dir() for name in ('raw', 'buildings', 'blueprints'))):
                 raise ValueError('PalSchema target must end with / and directly contain raw/, buildings/ or blueprints/')
+            if rule['Type'] == 'Paks' and (not target.endswith('/') or not path.is_dir() or
+                    not any(p.is_file() for p in path.rglob('*.pak'))):
+                raise ValueError('Paks target must end with / and contain a .pak file')
     return info
 
 
@@ -199,8 +233,7 @@ def prepare(mod, author=None, min_revision=None, version=None):
         if value is not None:
             info[key] = value
     files = payload(mod)
-    files += [(template / 'thumbnail.png', 'thumbnail.png'),
-              (template / 'README.md', 'README.md')]
+    files += [(template / 'thumbnail.png', 'thumbnail.png')]
     files += [(template / f'README.{language}.md', f'README.{language}.md')
               for language in LANGUAGES]
     if mod == 'PalCombo':
@@ -229,6 +262,9 @@ def package_mod(mod, plan, output):
             else:
                 shutil.copy2(src, target)
         (stage / 'Info.json').write_text(json.dumps(info, ensure_ascii=False, indent=2) + '\n', encoding='utf-8')
+        for language in LANGUAGES:
+            rendered = render_readme(stage, language)
+            (stage / f'README.{language}.md').write_text(rendered, encoding='utf-8')
         write_listings(stage, generate_listings(stage))
         validate(stage)
         manifest = {

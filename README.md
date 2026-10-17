@@ -10,9 +10,10 @@ Palworld mod 源码仓库。
 | <img src="mods/UpdraftElevator/workshop/thumbnail.png" width="160" alt="上升气流封面"> | [UpdraftElevator](mods/UpdraftElevator/README.md) | 三种尺寸的起跳升空气流建筑 |
 | <img src="mods/PointBlankBurstSkills/workshop/thumbnail.png" width="160" alt="贴脸爆发封面"> | [PointBlankBurstSkills](mods/PointBlankBurstSkills/README.md) | 让熔岩爆发、岩爆和毒雨改为贴脸释放 |
 | — | [RainbowWildGlow](mods/RainbowWildGlow/README.md) | 彩色词条帕鲁显示淡紫色世界树光晕 |
+| <img src="mods/QuickButcher/workshop/thumbnail.png" width="160" alt="快速肢解封面"> | [快速肢解（Quick Butcher）](mods/QuickButcher/README.md) · [工坊资料](mods/QuickButcher/workshop/README.zh-Hans.md) | 切肉刀跳过玩家肢解动画（待游戏内验证） |
 | <img src="mods/AnywherePalBox/workshop/thumbnail.png" width="160" alt="随处打开终端封面"> | [AnywherePalBox](mods/AnywherePalBox/README.md) | 按 K 随处打开终端，支持地下城及自定义快捷键 |
 | <img src="mods/BetterBulkStorage/workshop/thumbnail.png" width="160" alt="更好的快速收纳封面"> | [BetterBulkStorage](mods/BetterBulkStorage/README.md) | 更好的快速收纳：沿用官方操作，将新物品存入空槽（本机实测可用） |
-| <img src="mods/BetterStorage/workshop/thumbnail.png" width="160" alt="更好的收纳封面"> | [BetterStorage](mods/BetterStorage/README.md) · [工坊资料](mods/BetterStorage/workshop/README.md) | 原版同类物品收纳、野外主据点收纳、99,999 堆叠上限、搬运优先叠放、360 格设计图家具与新公会库存 |
+| <img src="mods/BetterStorage/workshop/thumbnail.png" width="160" alt="更好的收纳封面"> | [BetterStorage](mods/BetterStorage/README.md) · [工坊资料](mods/BetterStorage/workshop/README.zh-Hans.md) | 原版同类物品收纳、野外主据点收纳、99,999 堆叠上限、搬运优先叠放、360 格设计图家具与新公会库存 |
 | <img src="mods/BetterPalSouls/workshop/thumbnail.png" width="160" alt="更好的帕鲁魂强化封面"> | [BetterPalSouls](mods/BetterPalSouls/README.md) | 自动转换帕鲁魂、原版强化界面快速选择最低／最高等级 |
 
 ## 构建与测试
@@ -65,7 +66,7 @@ BetterWorkbench 的新增界面文字和上升气流的建筑／科技文字支�
 `dist/workshop/<Mod>/` 和对应 ZIP，不安装或上传。
 安装规则、版本字段、导入上传工具的步骤见 [工坊打包说明](docs/WORKSHOP.md)。
 
-BetterStorage 的[工坊资料](mods/BetterStorage/workshop/README.md)包含四语介绍、封面与发布配置，依赖 UE4SSExperimentalPW 和 PalSchema。可单独运行 `python tools/build.py BetterStorage` 构建，再运行 `python tools/package_workshop.py BetterStorage` 生成工坊包；输出已存在时，用 `--output-root` 指定新的目录。
+BetterStorage 的[工坊资料](mods/BetterStorage/workshop/README.zh-Hans.md)包含四语介绍、封面与发布配置，依赖 UE4SSExperimentalPW 和 PalSchema。可单独运行 `python tools/build.py BetterStorage` 构建，再运行 `python tools/package_workshop.py BetterStorage` 生成工坊包；输出已存在时，用 `--output-root` 指定新的目录。
 
 ## 环境
 

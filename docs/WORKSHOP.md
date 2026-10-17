@@ -7,6 +7,10 @@
 
 ## 已发布条目
 
+待发布：QuickButcher（Quick Butcher / 快速肢解）的四语资料、封面与 `Paks` 安装配置位于
+`mods/QuickButcher/workshop/`，首次工坊版本 `1.0.0`，无前置依赖。尚无 PublishedId，
+未上传；静态检查不替代游戏内验收，单机和联机表现仍待确认。
+
 2026-10-15：以下七个包以 `1.0.0` 发布，已从 Steam 读回核对四语标题与正文、公开可见性、标签、封面和前置依赖。
 
 | 包名 | Workshop |
@@ -27,11 +31,14 @@
 
 ## 简繁中文、日英四语
 
-包内 `README.md` 提供简体中文、繁體中文、日本語、English 入口；四份玩家说明分别为
+包内仅保留四份玩家说明，分别为
 `README.zh-Hans.md`、`README.zh-Hant.md`、`README.ja.md`、`README.en.md`。
-四份玩家说明是工坊标题与介绍的唯一维护入口；打包时自动生成 `listing.json`，可在发布时填写对应语言的页面。
+四份玩家说明维护工坊标题与各 mod 的功能介绍；打包时自动生成 `listing.json`，可在发布时填写对应语言的页面。
 README 第一段为 `# 标题`，第二段为 `版本 · 作者`，后续正文作为简介；生成时保留版本／作者行，并将 Markdown 标题、无序／有序列表、粗体和链接转换为 Steam BBCode，行内代码以粗体原样显示，保留段落与换行。
-GPL-3.0 开源说明及源码地址放在各语言 README 正文末尾。
+反馈要求、日志说明及 GPL-3.0／源码地址统一维护在 `tools/workshop/templates/`，生成简介和打包 README 时自动追加。
+各 mod 的源 README 只写功能、安装、配置和自身兼容说明，不重复写公共结尾。
+依赖 UE4SSExperimentalPW 的 mod 自动附带 UE4SS 日志要求；独立 PAK mod 不附带该要求。
+包内四语 README 与 `listing.json` 使用同一份渲染结果，不维护或生成额外的 `README.md` 导航页。
 `listing.json` 是本仓库的发布素材，不是官方加载器的语言字段；`Info.json.ModName` 只保留英文与简体中文标题（英文 / 简体中文）。
 
 BetterWorkbench 分解界面的新增文字通过 Unreal 的 `GetCurrentLanguage()` 跟随游戏语言，
@@ -81,7 +88,7 @@ python tools/package_workshop.py all --author ourongxing --min-revision 82182 --
 各 mod 的版本在各自模板中维护；`--version` 可临时统一覆盖本次所选包的版本。
 发布新版本时必须改变 `Version`，否则官方加载器可能不会重新安装。
 
-`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表七个 mod 已在该游戏版本测试通过。
+`MinRevision=82182` 来自官方模板和本机框架包，表示框架基线，不代表各 mod 已在该游戏版本测试通过。
 正式发布前应根据实机验证填写最低支持修订号（游戏标题版本号的最后五位）。
 三个原生 mod 还要求匹配的 UE4SS ABI；该字段只检查游戏最低修订号，不能保证 DLL 兼容性。
 BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导入审核数量；
@@ -99,6 +106,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | BetterPalSouls | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | PointBlankBurstSkills | `PalSchema/raw/point_blank_burst_skills.json` | PalSchema | UE4SSExperimentalPW、PalSchema |
+| QuickButcher | `Paks/QuickButcher_P.pak` | Paks | 无 |
 
 `Lua` 规则将选中的脚本、DLL、配置和启用标记部署到
 `Mods/NativeMods/UE4SS/Mods/<PackageName>/`。
@@ -106,6 +114,9 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 加载器使用包名部署到 `Mods/NativeMods/UE4SS/Mods/PalSchema/mods/<PackageName>/`，
 包内不要再多套一层 `<PackageName>`。
 上升气流使用构建暂存中的 Lua 和资源，保持生成的默认高度与建筑资源一致。
+`Paks` 规则使用 `./Paks/`，将目录内容部署到 `Pal/Content/Paks/~WorkshopMods/<PackageName>/`。
+QuickButcher 打包前检查 PAK 与 `build-audit.json` 的 SHA-256 一致；工坊验收时先移除
+`Pal/Content/Paks/~mods/QuickButcher/QuickButcher_P.pak` 手动副本，避免重复加载。
 BetterStorage 采用 BetterBulkStorage 的四语资料结构，保留原版同类物品收纳条件，另附设计图家具与新公会库存容量补丁；两者不能同时启用。
 所有规则目前仅用于游戏客户端，未声明专用服务器支持。
 

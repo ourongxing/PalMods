@@ -32,27 +32,3 @@
 分解仅支持单人游戏和联机房主本人。多人制作任务同步尚不支持。
 
 物品扣除、材料返还、保存后恢复和手柄操作尚未完成游戏内验证。备份或迁移存档时，请同时保留本 Mod 目录下的 `Jobs` 文件夹，其中保存未完成制作任务所需的数据。
-
-## 问题反馈
-
-请到 GitHub Issues 报告问题：https://github.com/ourongxing/PalMods/issues
-
-没有 UE4SS 日志，我无法定位并修复 Bug。
-
-请提供以下信息，方便定位：
-
-- Mod 名称、游戏与 Mod 版本、游戏语言。
-- 单人游戏、联机房主、加入他人房间或专用服务器。
-- 复现步骤、预期与实际表现，以及相关截图和已启用的其他 Mod。
-- 出现问题后的完整 `UE4SS.log` 文件，请作为附件上传。
-
-在 Steam 中右键 Palworld → 管理 → 浏览本地文件，然后打开 `Mods\NativeMods\UE4SS\UE4SS.log`。
-例如，游戏安装在 G 盘时，完整路径为：
-`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
-
-盘符和 Steam 库目录以你的安装位置为准。请在再次启动游戏前复制日志，避免本次问题的记录被覆盖。
-
-## 开源
-
-本 Mod 以 GPL-3.0 协议开源。
-https://github.com/ourongxing/PalMods

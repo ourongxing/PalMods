@@ -28,27 +28,3 @@ Edit `Mods/NativeMods/UE4SS/Mods/UpdraftElevator/Scripts/config.lua` under your 
 `Small`, `Medium`, and `Large` set the lift height for each size in metres. Defaults are 8, 16, and 32. Values from 0.1 to 1000, including decimals, are supported; invalid values use the defaults.
 
 Building and technology text supports Simplified Chinese, Traditional Chinese, Japanese, and English. Other languages use English. Restart the game after changing its language.
-
-## Report a problem
-
-Report problems on GitHub Issues: https://github.com/ourongxing/PalMods/issues
-
-Without the UE4SS log, I cannot diagnose and fix bugs.
-
-Please include:
-
-- The mod name, game and mod versions, and game language.
-- Whether you are playing alone, hosting co-op, joining another player, or using a dedicated server.
-- Steps to reproduce the problem, expected and actual behavior, relevant screenshots, and other enabled mods.
-- The complete `UE4SS.log` from the session where the problem occurred, uploaded as an attachment.
-
-In Steam, right-click Palworld → Manage → Browse local files, then open `Mods\NativeMods\UE4SS\UE4SS.log`.
-For example, with the game installed on drive G:
-`G:\SteamLibrary\steamapps\common\Palworld\Mods\NativeMods\UE4SS\UE4SS.log`
-
-Use your own drive letter and Steam library location. Copy the log before launching the game again so the record of the problem is not overwritten.
-
-## Source code
-
-Open source under GPL-3.0.
-https://github.com/ourongxing/PalMods

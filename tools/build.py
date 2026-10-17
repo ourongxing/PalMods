@@ -10,7 +10,7 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops')
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher')
 SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops'}
 
 
@@ -67,7 +67,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build.py', *options)]
-    if mod in ('AnywherePalBox', 'BetterPalSouls'):
+    if mod in ('AnywherePalBox', 'BetterPalSouls', 'QuickButcher'):
         return [python_script('build.py')]
     if mod == 'UpdraftElevator':
         return [python_script('build_native.py'), python_script('run_native_build.py'),
@@ -102,6 +102,7 @@ def main(argv=None):
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
         'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',
+        'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-0.1.0.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:
