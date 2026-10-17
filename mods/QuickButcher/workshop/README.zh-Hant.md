@@ -1,4 +1,4 @@
-# 快速肢解
+# Quick Butcher / 快速肢解
 
 1.0.0 · ourongxing
 

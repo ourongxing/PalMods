@@ -1,4 +1,4 @@
-# 作業台の機能拡張
+# Better Workbench / 作業台の機能拡張
 
 1.0.0 · ourongxing
 

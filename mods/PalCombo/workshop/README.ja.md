@@ -1,4 +1,4 @@
-# パルの連続攻撃
+# Pal Combo / パルの連続攻撃
 
 1.0.0 · ourongxing
 

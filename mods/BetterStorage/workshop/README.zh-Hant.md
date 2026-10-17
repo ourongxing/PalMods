@@ -1,4 +1,4 @@
-# 更好的收納
+# Better Storage / 更好的收納
 
 1.1.0 · ourongxing
 

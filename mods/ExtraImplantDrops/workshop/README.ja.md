@@ -1,4 +1,4 @@
-# インプラント追加ドロップ
+# Extra Implant Drops / インプラント追加ドロップ
 
 1.0.0 · ourongxing
 

@@ -57,7 +57,7 @@ def build():
         for extension in HASHES:
             command += ['-i', ASSET + extension]
         subprocess.run(command, check=True)
-        audit = {'Mod': 'QuickButcher', 'Version': '0.1.0',
+        audit = {'Mod': 'QuickButcher', 'Version': '1.0.0',
                  'GameTest': 'Pending in-game verification', 'Files': {}}
         for extension, expected in HASHES.items():
             source = original / (ASSET + extension)
@@ -88,10 +88,10 @@ def build():
         audit['Continuation'] = {'From': MONTAGE_ENTRY, 'To': COMPLETION_ENTRY, 'FileOffset': PATCH_OFFSET}
         shutil.copy2(pak, output / pak.name)
         (output / 'build-audit.json').write_text(json.dumps(audit, indent=2) + '\n', encoding='utf-8')
-        with ZipFile(output / 'QuickButcher-0.1.0.zip', 'w', ZIP_DEFLATED) as archive:
+        with ZipFile(output / 'QuickButcher-1.0.0.zip', 'w', ZIP_DEFLATED) as archive:
             archive.write(pak, 'Pal/Content/Paks/~mods/QuickButcher/' + pak.name)
             archive.write(MOD / 'README.md', 'QuickButcher-README.md')
-    print(output / 'QuickButcher-0.1.0.zip')
+    print(output / 'QuickButcher-1.0.0.zip')
 
 
 if __name__ == '__main__':

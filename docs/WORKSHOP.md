@@ -7,10 +7,6 @@
 
 ## 已发布条目
 
-待发布：QuickButcher（Quick Butcher / 快速肢解）的四语资料、封面与 `Paks` 安装配置位于
-`mods/QuickButcher/workshop/`，首次工坊版本 `1.0.0`，无前置依赖。尚无 PublishedId，
-未上传；静态检查不替代游戏内验收，单机和联机表现仍待确认。
-
 2026-10-15：以下七个包以 `1.0.0` 发布，已从 Steam 读回核对四语标题与正文、公开可见性、标签、封面和前置依赖。
 
 | 包名 | Workshop |
@@ -22,12 +18,25 @@
 | ExtraImplantDrops | [3820049962](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049962) |
 | PointBlankBurstSkills | [3820050011](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050011) |
 | UpdraftElevator | [3820050074](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050074) |
+| QuickButcher | [3821569615](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615) |
+
+2026-10-17：QuickButcher（Quick Butcher / 快速肢解）以 `1.0.0` 首次公开发布，
+四语标题／描述、标签、封面及无前置依赖已从 Steam 读回核对。通过游戏 AppID 下载后，
+8 个包内文件的 SHA-256 全部匹配。发布包为 `dist/workshop-quickbutcher-publish-20261017/`，
+发布与核对记录位于 `.build/workshop-quickbutcher-publish-20261017/`。
+本机开发测试已切换到对应工坊目录；静态与下载校验不代替游戏内功能验收。
 
 2026-10-16：UpdraftElevator、BetterStorage、PointBlankBurstSkills 沿用上述条目更新至 `1.1.0`，仅修正 PalSchema 安装目标的末尾斜杠并更新版本标记。脚本、DLL、建筑资源、封面及工坊四语标题／介绍、标签、依赖和可见性保持不变。已通过 Steam 游戏端重新下载三包并逐文件核对 SHA-256；发布记录位于 `.build/workshop-update-1.1.0-20261016/`，上传包位于 `dist/workshop-install-fix-1.1.0-20261016/`。
 
+2026-10-17：上述七个已发布条目的四语标题与描述已更新并从 Steam 读回核对。非英语标题统一为
+`英文名 / 对应语言名`，英语保留英文名；描述使用本地化 README 与四语公共反馈／开源模板生成。
+未重新上传 mod 文件，版本、封面、标签、依赖和可见性保持不变；本地工坊文件 SHA-256 核对一致。
+页面快照、更新进度与核对记录位于 `.build/workshop-localization-update-20261017/`，
+简介来源为 `dist/workshop-listings-bilingual-titles-20261017/`。该次更新未包含 QuickButcher。
+
 本次上传目录为 `dist/workshop-publish-20261015/`，上传用预览图压缩为 768 × 768 PNG、每张小于 1 MB，源码高清封面保留。首次使用原始大图上传曾返回 `k_EResultLimitExceeded`；压缩预览图后成功。后续上传也应检查预览图大小。
 
-工具可继续从 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/` 更新这些条目，各目录的 `.workshop.json` 已保存对应发布 ID 和上次版本。更新时沿用现有 ID，并提高 `Info.json.Version`，避免重复创建条目。
+工具可继续从 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/` 更新这些条目，各目录的 `.workshop.json` 已保存对应发布 ID 和上次版本。更新文件时沿用现有 ID，并提高 `Info.json.Version`，避免重复创建条目；只更新页面标题／描述时无需改变包版本或上传文件。
 
 ## 简繁中文、日英四语
 
@@ -35,6 +44,8 @@
 `README.zh-Hans.md`、`README.zh-Hant.md`、`README.ja.md`、`README.en.md`。
 四份玩家说明维护工坊标题与各 mod 的功能介绍；打包时自动生成 `listing.json`，可在发布时填写对应语言的页面。
 README 第一段为 `# 标题`，第二段为 `版本 · 作者`，后续正文作为简介；生成时保留版本／作者行，并将 Markdown 标题、无序／有序列表、粗体和链接转换为 Steam BBCode，行内代码以粗体原样显示，保留段落与换行。
+非英语工坊标题统一为 `英文名 / 对应语言名`，英文名以 `README.en.md` 标题为准；英语页面只保留英文名。
+例如简体中文为 `Quick Butcher / 快速肢解`，日语为 `Quick Butcher / 高速解体`，英语为 `Quick Butcher`。
 反馈要求、日志说明及 GPL-3.0／源码地址统一维护在 `tools/workshop/templates/`，生成简介和打包 README 时自动追加。
 各 mod 的源 README 只写功能、安装、配置和自身兼容说明，不重复写公共结尾。
 依赖 UE4SSExperimentalPW 的 mod 自动附带 UE4SS 日志要求；独立 PAK mod 不附带该要求。

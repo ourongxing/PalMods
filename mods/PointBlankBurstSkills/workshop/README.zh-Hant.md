@@ -1,4 +1,4 @@
-# 爆發技能近身施放
+# Point-Blank Burst Skills / 爆發技能近身施放
 
 1.1.0 · ourongxing
 

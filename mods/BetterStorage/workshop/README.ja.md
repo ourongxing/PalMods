@@ -1,4 +1,4 @@
-# より便利な収納
+# Better Storage / より便利な収納
 
 1.1.0 · ourongxing
 

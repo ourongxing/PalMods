@@ -30,6 +30,9 @@
 
 - Localized `mods/<Mod>/workshop/README.<language>.md` files are the source
   of Workshop listing titles and mod-specific descriptions.
+- Non-English Workshop titles must use `<English name> / <localized name>`,
+  using the title in `README.en.md` as the English name. English titles keep
+  only the English name, without a repeated translation.
 - Shared feedback, log instructions, and source/license text live in
   `tools/workshop/templates/`. The packaging tool appends the localized
   footer to generated listings and packaged READMEs; do not duplicate it in

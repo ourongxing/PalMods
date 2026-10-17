@@ -1,4 +1,4 @@
-# 随处打开终端
+# Anywhere Palbox / 随处打开终端
 
 1.0.0 · ourongxing
 

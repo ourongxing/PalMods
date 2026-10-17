@@ -1,4 +1,4 @@
-# パルソウル強化の改善
+# Better Pal Souls / パルソウル強化の改善
 
 1.0.0 · ourongxing
 

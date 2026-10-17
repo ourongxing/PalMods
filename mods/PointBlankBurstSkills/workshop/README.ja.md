@@ -1,4 +1,4 @@
-# 範囲スキルを至近距離で使用
+# Point-Blank Burst Skills / 範囲スキルを至近距離で使用
 
 1.1.0 · ourongxing
 

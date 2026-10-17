@@ -1,4 +1,4 @@
-# 更好的帕魯魂強化
+# Better Pal Souls / 更好的帕魯魂強化
 
 1.0.0 · ourongxing
 

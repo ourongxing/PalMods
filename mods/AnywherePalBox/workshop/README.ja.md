@@ -1,4 +1,4 @@
-# どこでもパルボックス
+# Anywhere Palbox / どこでもパルボックス
 
 1.0.0 · ourongxing
 

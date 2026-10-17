@@ -1,4 +1,4 @@
-# 更好的快速收纳
+# Better Bulk Storage / 更好的快速收纳
 
 1.0.0 · ourongxing
 

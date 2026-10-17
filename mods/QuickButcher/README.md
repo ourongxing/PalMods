@@ -1,33 +1,38 @@
 # 快速肢解（Quick Butcher）
 
-0.1.0 · ourongxing · 开发测试版
+1.0.0 · ourongxing
 
 第一个功能：使用切肉刀肢解帕鲁时，跳过玩家的肢解动画，进入原版的肢解结束流程。
 仍从原版肢解入口操作，沿用目标检查、服务端结算、掉落、肢解次数记录与角色状态恢复。
 原版结束流程中的延迟仍保留，因此不保证材料在点击后立刻到账。
 
-## 构建与安装
+## 安装
+
+[Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615)
+
+订阅后在游戏模组管理中启用，完全退出并重启游戏。无前置 mod。
+
+## 构建与开发测试
 
 在仓库根目录执行：
 
 ```powershell
 python tools/build.py QuickButcher
 python mods/QuickButcher/tests/run.py
-powershell -ExecutionPolicy Bypass -File mods/QuickButcher/install.ps1
 ```
 
-安装前完全退出游戏。当前是独立 PAK mod，不依赖 UE4SS；普通开发测试使用本地安装。
-安装位置：`<Palworld>/Pal/Content/Paks/~mods/QuickButcher/QuickButcher_P.pak`。
-安装脚本校验构建及安装哈希，覆盖旧版本前备份。
-卸载时退出游戏并移除此 PAK，然后重启。
+修改前完全退出游戏。发布后的开发测试使用工坊目录：
+`G:/SteamLibrary/steamapps/workshop/content/1623730/3821569615/`。
+将构建的 PAK 放入该目录的 `Paks/`，保留 `.workshop.json`；本地测试可将 `Info.json.DebugMode`
+设为 `true`，使游戏每次启动重新安装。正式发布的模板保持 `false`。
 
-产物：`dist/QuickButcher/QuickButcher-0.1.0.zip`，解压到游戏根目录；
-单独的 PAK 和 `build-audit.json` 也保存在该目录。
+产物：`dist/QuickButcher/QuickButcher-1.0.0.zip`；单独的 PAK 和 `build-audit.json` 也保存在该目录。
+ZIP 与 `install.ps1` 用于独立手动安装，勿与工坊副本同时加载。
 
 ## 工坊资料
 
 `workshop/` 保存工坊元数据、封面和简体中文／繁體中文／日本語／English 四语介绍。
-首次工坊版本为 `1.0.0`，沿用现有 `0.1.0` 开发构建的 PAK；尚未发布，游戏内验收仍待完成。
+首次工坊版本为 `1.0.0`，PublishedId 为 `3821569615`。游戏内功能验收仍待完成。
 功能介绍只编辑四份本地化 README；反馈与开源部分由 `tools/workshop/templates/` 的四语公共模板自动追加，
 `listing.json` 由统一打包工具生成：
 
@@ -39,7 +44,7 @@ python tools/package_workshop.py QuickButcher --output-root dist/quickbutcher-wo
 输出目录已存在时请指定新目录。工坊包使用 `Paks` 规则，将 `Paks/` 的内容安装到
 `Pal/Content/Paks/~WorkshopMods/QuickButcher/`，无前置依赖。
 切换到工坊验收时，先移除旧的 `~mods/QuickButcher/QuickButcher_P.pak` 手动副本，避免重复加载。
-当前仅准备资料与候选包，不创建 Steam 条目或上传。
+打包命令仅生成本地包；更新工坊时沿用现有 PublishedId。
 
 ## 实现与兼容
 

@@ -1,4 +1,4 @@
-# 高速解体
+# Quick Butcher / 高速解体
 
 1.0.0 · ourongxing
 

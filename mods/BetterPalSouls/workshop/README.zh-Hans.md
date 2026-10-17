@@ -1,4 +1,4 @@
-# 更好的帕鲁魂强化
+# Better Pal Souls / 更好的帕鲁魂强化
 
 1.0.0 · ourongxing
 

@@ -1,4 +1,4 @@
-# 爆发技能贴脸释放
+# Point-Blank Burst Skills / 爆发技能贴脸释放
 
 1.1.0 · ourongxing
 

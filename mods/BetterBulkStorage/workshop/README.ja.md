@@ -1,4 +1,4 @@
-# 一括便利収納の機能拡張
+# Better Bulk Storage / 一括便利収納の機能拡張
 
 1.0.0 · ourongxing
 

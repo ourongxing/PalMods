@@ -1,4 +1,4 @@
-# 隨處開啟終端
+# Anywhere Palbox / 隨處開啟終端
 
 1.0.0 · ourongxing
 

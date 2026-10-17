@@ -1,4 +1,4 @@
-# 帕魯連招
+# Pal Combo / 帕魯連招
 
 1.0.0 · ourongxing
 

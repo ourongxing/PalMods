@@ -1,4 +1,4 @@
-# 植入體掉落
+# Extra Implant Drops / 植入體掉落
 
 1.0.0 · ourongxing
 
