@@ -2,7 +2,7 @@
   "ModName": "Updraft Elevator / 上升气流",
   "PackageName": "UpdraftElevator",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.1.0",
+  "Version": "1.1.1",
   "DebugMode": false,
   "MinRevision": 82182,
   "Author": "ourongxing",
@@ -25,6 +25,21 @@
     },
     {
       "Type": "PalSchema",
+      "Targets": [
+        "./PalSchema/"
+      ]
+    },
+    {
+      "Type": "Lua",
+      "IsServer": true,
+      "Targets": [
+        "./Scripts",
+        "./enabled.txt"
+      ]
+    },
+    {
+      "Type": "PalSchema",
+      "IsServer": true,
       "Targets": [
         "./PalSchema/"
       ]

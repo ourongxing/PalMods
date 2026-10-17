@@ -123,6 +123,7 @@ class WorkshopTests(unittest.TestCase):
                     self.assertTrue(rendered.strip().endswith(workshop.common_footer(package, language)))
                     self.assertEqual(rendered.count('GPL-3.0'), 1)
                 installed = set()
+                installed_by_server = {False: set(), True: set()}
                 for rule in info['InstallRule']:
                     base = {'Lua': 'Mods/NativeMods/UE4SS/Mods/' + mod,
                             'PalSchema': 'Mods/NativeMods/UE4SS/Mods/PalSchema/mods/' + mod,
@@ -134,6 +135,7 @@ class WorkshopTests(unittest.TestCase):
                             if file.is_file():
                                 relative = file.relative_to(source if target.endswith('/') else source.parent).as_posix()
                                 installed.add(base + '/' + relative)
+                                installed_by_server[rule.get('IsServer', False)].add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
                 if mod not in ('PointBlankBurstSkills', 'QuickButcher'):
                     if mod != 'ExtraImplantDrops':
@@ -151,6 +153,12 @@ class WorkshopTests(unittest.TestCase):
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
                     self.assertFalse(any('/dlls/' in path or '/PalSchema/' in path for path in installed))
                 if mod == 'UpdraftElevator':
+                    self.assertEqual(info['Version'], '1.1.1')
+                    self.assertEqual(len(info['InstallRule']), 4)
+                    for server in (False, True):
+                        self.assertEqual({rule['Type'] for rule in info['InstallRule']
+                                          if rule.get('IsServer', False) == server}, {'Lua', 'PalSchema'})
+                    self.assertEqual(installed_by_server[True], installed_by_server[False])
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/paks/UpdraftElevator_P.pak', installed)
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/buildings/wind_small.json', installed)
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/UpdraftElevator/translations/zh-Hans/updraft.json', installed)
@@ -205,6 +213,25 @@ class WorkshopTests(unittest.TestCase):
                 info['InstallRule'][0]['Targets'] = [target]
                 (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
                 with self.subTest(target=target), self.assertRaises(ValueError):
+                    workshop.validate(folder)
+
+    def test_server_rules_validate_targets_and_require_boolean_flag(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            folder = Path(temporary)
+            info = self.make_schema_package(folder)
+            info['InstallRule'][0]['IsServer'] = True
+            (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+            self.assertEqual(workshop.validate(folder), info)
+            for target in ('../outside', './missing', './PalSchema'):
+                info['InstallRule'][0]['Targets'] = [target]
+                (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+                with self.subTest(target=target), self.assertRaises(ValueError):
+                    workshop.validate(folder)
+            info['InstallRule'][0]['Targets'] = ['./PalSchema/']
+            for flag in ('true', 1, None):
+                info['InstallRule'][0]['IsServer'] = flag
+                (folder / 'Info.json').write_text(json.dumps(info), encoding='utf-8')
+                with self.subTest(flag=flag), self.assertRaisesRegex(ValueError, 'IsServer must be a boolean'):
                     workshop.validate(folder)
 
     def test_missing_native_input_fails_before_emitting_any_package(self):

@@ -1,6 +1,6 @@
 # Updraft Elevator
 
-1.1.0 · ourongxing
+1.1.1 · ourongxing
 
 Build updraft elevators and press jump inside their range to launch into the air using the game's original updraft jump animation.
 

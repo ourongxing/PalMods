@@ -1,6 +1,6 @@
 # Updraft Elevator / 上升氣流
 
-1.1.0 · ourongxing
+1.1.1 · ourongxing
 
 建造上升氣流，在氣流範圍內按跳躍鍵，透過原版氣流的起跳動畫升空。
 

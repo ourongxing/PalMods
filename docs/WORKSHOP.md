@@ -7,6 +7,8 @@
 
 ## 已发布条目
 
+2026-10-18：UpdraftElevator 沿用 `3820050074` 发布 `1.1.1`，保留客户端规则，新增专用服务器 Lua 与 PalSchema 安装规则。四语简介版本同步更新；公开状态、封面、标签和依赖已读回核对。已通过游戏 AppID 重新下载，17 个包内文件的 SHA-256 全部匹配，并确认四条安装规则。发布包位于 `dist/workshop-updraft-server-1.1.1-20261018/`，发布记录及旧工坊包备份位于 `.build/workshop-updraft-server-1.1.1-20261018/`。专用服务器内功能仍待实机验收。
+
 2026-10-15：以下七个包以 `1.0.0` 发布，已从 Steam 读回核对四语标题与正文、公开可见性、标签、封面和前置依赖。
 
 | 包名 | Workshop |
@@ -129,7 +131,8 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 QuickButcher 打包前检查 PAK 与 `build-audit.json` 的 SHA-256 一致；工坊验收时先移除
 `Pal/Content/Paks/~mods/QuickButcher/QuickButcher_P.pak` 手动副本，避免重复加载。
 BetterStorage 采用 BetterBulkStorage 的四语资料结构，保留原版同类物品收纳条件，另附设计图家具与新公会库存容量补丁；两者不能同时启用。
-所有规则目前仅用于游戏客户端，未声明专用服务器支持。
+安装规则默认用于客户端；需要部署到专用服务器的内容须额外添加同类型、同目标且带 `"IsServer": true` 的规则，保留原客户端规则。打包器接受布尔值 `IsServer`，并对两端执行相同的路径与目录布局校验。
+UpdraftElevator 的 `1.1.1` 包同时包含客户端和服务器的 Lua、PalSchema 规则，修复服务器未部署脚本及建筑／科技数据的问题；其他 mod 不随此次改动添加服务器规则。安装规则不代表多人功能已经通过实机验收。
 
 发布包不含框架本体、SDK、源码工程、`mods.txt`、本机 `Jobs`、存档或日志。
 `enabled.txt` 仅启用自己的 UE4SS mod，不覆盖用户的全局启用列表。

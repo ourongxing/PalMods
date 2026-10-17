@@ -208,8 +208,10 @@ def validate(package):
                    for key in ('Title', 'Description')):
             raise ValueError(f'Missing Workshop listing text: {language}')
     for rule in info['InstallRule']:
-        if rule['Type'] not in ('Lua', 'PalSchema', 'Paks') or rule.get('IsServer', False):
-            raise ValueError('These packages support client installation rules only')
+        if rule['Type'] not in ('Lua', 'PalSchema', 'Paks'):
+            raise ValueError('Unsupported InstallRule type')
+        if 'IsServer' in rule and not isinstance(rule['IsServer'], bool):
+            raise ValueError('InstallRule IsServer must be a boolean')
         if not isinstance(rule['Targets'], list) or not rule['Targets']:
             raise ValueError('InstallRule needs targets')
         for target in rule['Targets']:
