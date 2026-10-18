@@ -161,6 +161,8 @@ Expand-Archive .tools/sdk-2281fa31/source.zip -DestinationPath .tools/sdk-2281fa
 
 ## 新增原生 mod
 
+所有 mod 的新增、修改和调试，先遵循 [Mod 开发 SOP](docs/MOD_DEVELOPMENT_SOP.md)，完成需求、原生逻辑研究、实现、关闭游戏后安装和实机验收。
+
 共享 SDK 工程位于 `tools/sdk/`，构建与导出逻辑位于 `tools/build_sdk.py`。
 `PalModsSDKProbe` 提供 Shipping 配置的头文件、宏与链接库，导出目标 `PalMods::UE4SS`。
 

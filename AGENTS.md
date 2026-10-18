@@ -18,6 +18,21 @@
 
 ### Development Testing
 
+- For every new mod, feature change, or mod debugging task, first read and
+  follow [the Mod Development SOP](docs/MOD_DEVELOPMENT_SOP.md). A request to
+  "write a mod" authorizes carrying the workflow through implementation,
+  local installation, and applicable in-game validation within the user's
+  existing scope; do not stop at a proposal or offline tests alone.
+- Never overwrite installed Lua, DLL, PAK, or other mod runtime files while
+  Palworld is running, and never trigger hot reload by touching `main.lua`.
+  Close the game, confirm its processes have exited, install, then fully
+  restart. This applies to probes and their removal as well as releases.
+- Verify partial/unlocked/locked and exhausted-resource UI states where
+  applicable, including actual reward feedback, return navigation, and
+  preservation of original game behavior. Record evidence and unverified
+  scope in the mod's validation document; distinguish offline, interface,
+  real UI, and user-confirmed results.
+
 - Keep the existing local installation workflow during mod development/testing.
   Switch to Workshop deployment when the mod is being prepared for Workshop
   publication; do not migrate all development mods in advance.
