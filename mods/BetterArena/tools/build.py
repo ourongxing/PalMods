@@ -8,6 +8,11 @@ output = MOD.parents[1] / 'dist/BetterArena/BetterArena-0.1.0.zip'
 output.parent.mkdir(parents=True, exist_ok=True)
 base = json.loads((MOD / 'mod/Config/arena_rewards.base.json').read_text(encoding='utf-8'))
 rewards, points = patches(base, 2)
+schema = MOD.parents[1] / '.build/BetterArena/schema'
+for name, data in (('raw/arena_rewards.json', rewards), ('blueprints/arena_points.json', points)):
+    target = schema / name
+    target.parent.mkdir(parents=True, exist_ok=True)
+    target.write_text(json.dumps(data, indent=2) + '\n', encoding='utf-8')
 with ZipFile(output, 'w', ZIP_DEFLATED) as archive:
     for path in sorted((MOD / 'mod').rglob('*')):
         if path.is_file():

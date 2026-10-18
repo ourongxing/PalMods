@@ -14,6 +14,28 @@ import package_workshop as workshop
 
 
 class WorkshopTests(unittest.TestCase):
+    def test_better_arena_installs_automatic_configuration_and_shared_reward_patches(self):
+        if not (workshop.BUILD_ROOT / 'BetterArena/schema/raw/arena_rewards.json').is_file():
+            self.skipTest('Run tools/build.py BetterArena to check generated reward patches')
+        files = dict((dest, src) for src, dest in workshop.payload('BetterArena'))
+        required = {'Scripts/BetterArena/BaseRewards.lua', 'Scripts/BetterArena/Schema.lua',
+                    'Scripts/config.lua', 'enabled.txt',
+                    'PalSchema/raw/arena_rewards.json', 'PalSchema/blueprints/arena_points.json'}
+        self.assertTrue(required <= files.keys())
+        rewards = workshop.read_json(files['PalSchema/raw/arena_rewards.json'])
+        base = workshop.read_json(workshop.MODS_ROOT / 'BetterArena/mod/Config/arena_rewards.base.json')
+        for rank, row in base['DT_ArenaSoloRewardTable'].items():
+            for field in ('FirstClearReward', 'RepeatClearReward'):
+                expected = [dict(item, Min=item['Min'] * 2, Max=item['Max'] * 2) for item in row[field]]
+                self.assertEqual(rewards['DT_ArenaSoloRewardTable'][rank][field], expected)
+        self.assertEqual(workshop.read_json(files['PalSchema/blueprints/arena_points.json']),
+                         {key: {'Arena_RankPoint_WinToNPC': 100}
+                          for key in ('BP_PalGameSetting_C', '/Game/Pal/Blueprint/System/BP_PalGameSetting')})
+        info = workshop.read_json(workshop.MODS_ROOT / 'BetterArena/workshop/Info.json')
+        lua_targets = next(rule['Targets'] for rule in info['InstallRule'] if rule['Type'] == 'Lua')
+        self.assertEqual(lua_targets, ['./Scripts', './enabled.txt'])
+        self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
+
     def test_readme_listing_conversion_and_missing_body(self):
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)

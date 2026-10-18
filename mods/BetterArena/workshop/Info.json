@@ -1,0 +1,15 @@
+{
+  "ModName": "Better Arena / 更好的竞技场",
+  "PackageName": "BetterArena",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 102999,
+  "Author": "ourongxing",
+  "Dependencies": ["UE4SSExperimentalPW", "PalSchema"],
+  "Tags": ["UE4SS", "PalSchema", "Gameplay"],
+  "InstallRule": [
+    {"Type": "Lua", "Targets": ["./Scripts", "./enabled.txt"]},
+    {"Type": "PalSchema", "Targets": ["./PalSchema/"]}
+  ]
+}

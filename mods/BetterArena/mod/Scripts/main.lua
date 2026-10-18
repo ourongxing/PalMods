@@ -1,7 +1,9 @@
 local config=require('config')
 local Quota=require('BetterArena.Quota')
 for rank=1,7 do Quota.limit(config,rank) end
-require('BetterArena.Balance').verify(config,require('applied_multiplier'))
+local source=debug.getinfo(1,'S').source:gsub('^@',''):gsub('\\','/')
+local modDirectory=assert(source:match('^(.*)/Scripts/[^/]+$'),'mod directory unavailable')
+require('BetterArena.Balance').start(config,modDirectory)
 local directory=assert(os.getenv('LOCALAPPDATA'),'LOCALAPPDATA unavailable'):gsub('\\','/')..'/Pal/Saved/BetterArena'
 local store=require('BetterArena.Store').new(directory)
 local runtime=require('BetterArena.Runtime').new()

@@ -14,4 +14,5 @@ def patches(base, multiplier):
                 for key in ('Min', 'Max'):
                     assert type(reward[key]) is int and reward[key] >= 0
                     reward[key] *= multiplier
-    return result, {'BP_PalGameSetting_C': {'Arena_RankPoint_WinToNPC': 50 * multiplier}}
+    points = {'Arena_RankPoint_WinToNPC': 50 * multiplier}
+    return result, {'BP_PalGameSetting_C': points, '/Game/Pal/Blueprint/System/BP_PalGameSetting': points.copy()}

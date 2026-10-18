@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 TEMPLATES_ROOT = ROOT / 'tools/workshop/templates'
 
@@ -120,7 +120,11 @@ def payload(mod):
         files += [(p, p.relative_to(source).as_posix())
                   for p in sorted((source / 'Scripts').rglob('*.lua'))]
         files += [(None, 'enabled.txt')]
-    if mod == 'CustomPresets':
+    if mod == 'BetterArena':
+        schema = BUILD_ROOT / mod / 'schema'
+        files += [(schema / name, 'PalSchema/' + name)
+                  for name in ('raw/arena_rewards.json', 'blueprints/arena_points.json')]
+    elif mod == 'CustomPresets':
         dll = BUILD_ROOT / mod / 'native-ascii/Game__Shipping__Win64/bin/CustomPresetsNative.dll'
         report = read_json(BUILD_ROOT / mod / 'import-audit.json')
         if digest(dll) != report['dll_sha256'] or report['imports_verified'] < 65:

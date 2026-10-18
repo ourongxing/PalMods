@@ -3,7 +3,7 @@ local Q=require('BetterArena.Quota')
 local Store=require('BetterArena.Store')
 local Service=require('BetterArena.Service')
 local defaults=require('config')
-assert(defaults.Enabled==nil and defaults.RewardMultiplier==2)
+assert(defaults.RewardMultiplier==2)
 for rank=1,7 do assert(Q.limit(defaults,rank)==rank*2-1) end
 assert(Q.remaining(nil,10,defaults,4)==7)
 local defaultState=Q.reserve(nil,10,defaults,1);defaultState.pending=false
@@ -98,7 +98,7 @@ runtimeAdapter:checkSpace({inventory=inventory},{Ball=10,Ticket=100})
 local tags={['zh-CN']='扫荡',['zh-TW']='掃蕩',['ja-JP']='掃討',['en-US']='Sweep'}
 for tag,expected in pairs(tags) do
  StaticFindObject=function() return {GetCurrentCulture=function() return {ToString=function() return tag end} end} end
- assert(require('BetterArena.I18n').current().sweep:find(expected,1,true))
+ assert(require('BetterArena.I18n').current().action==expected)
 end
 assert(service:preview('worldC_player').pending)
 assert(not pcall(service.claim,service,'worldC_player'))

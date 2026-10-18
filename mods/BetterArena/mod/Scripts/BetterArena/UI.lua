@@ -30,6 +30,7 @@ local function findWidget(menu,name)
 end
 local function report(err)
  err=tostring(err)
+ if err:find('arena rewards are initializing',1,true) then return t.loading end
  if not errors[err] then print('[BetterArena] '..err..'\n');errors[err]=true end
 end
 local function message(err,t)

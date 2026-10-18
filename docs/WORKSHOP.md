@@ -5,7 +5,13 @@
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
-## Custom Presets
+## Better Arena（发布资料准备中）
+
+四语标题与简介维护在 `mods/BetterArena/workshop/README.<language>.md`，包名 `BetterArena`，首次发布版本 `1.0.0`，依赖 UE4SSExperimentalPW 和 PalSchema。当前仅准备本地发布资料，尚未创建条目或分配 PublishedId，继续沿用本地开发安装。
+
+先运行 `python tools/build.py BetterArena`，再用 `python tools/package_workshop.py BetterArena --output-root dist/workshop-better-arena-review` 生成待验收包。包内包含 Lua、奖励基准模块及 PalSchema 补丁；修改 `Scripts/config.lua` 后重启，由 mod 进入世界后自动生成并核对倍率。依赖 PalSchema 自动重载，若原先关闭，首次运行自动开启后需再完整重启一次。最低修订号设为实测的 `102999`（Palworld 1.0.5.102999），不宣称更早版本可用；工坊安装和更新行为尚待验收。
+
+## Custom Presets 发布记录
 
 2026-10-18：`1.0.0` 已公开发布，PublishedId 为 `3822215387`，依赖 UE4SSExperimentalPW。
 
@@ -134,6 +140,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | BetterStorage | `Scripts/`、`dlls/main.dll`、`enabled.txt`、`PalSchema/blueprints/storage.json` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | AnywherePalBox | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | BetterPalSouls | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
+| BetterArena | `Scripts/`、`enabled.txt`、`PalSchema/{raw,blueprints}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | PointBlankBurstSkills | `PalSchema/raw/point_blank_burst_skills.json` | PalSchema | UE4SSExperimentalPW、PalSchema |
 | CustomPresets | [3822215387](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387) |
