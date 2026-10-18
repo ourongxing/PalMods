@@ -1,4 +1,5 @@
 #include <algorithm>
+#include <filesystem>
 #include <cstdint>
 #include <set>
 #include <vector>
@@ -6,6 +7,7 @@
 #include "PreviewImage.hpp"
 #include "PreviewArguments.hpp"
 #include "PreviewPixels.hpp"
+#include "StorageDirectory.hpp"
 #include <stdexcept>
 #include <Mod/CppUserModBase.hpp>
 #include <DynamicOutput/Output.hpp>
@@ -19,6 +21,28 @@
 using namespace RC;
 using namespace RC::Unreal;
 namespace {
+int data_directory(const LuaMadeSimple::Lua& lua) {
+    try {
+        std::wstring localAppData(32768,L'\0');
+        const auto length=GetEnvironmentVariableW(L"LOCALAPPDATA",localAppData.data(),static_cast<DWORD>(localAppData.size()));
+        if (!length || length>=localAppData.size()) throw std::runtime_error("Local application data directory unavailable");
+        localAppData.resize(length);
+        lua.set_string(CustomPresetsStorage::prepare_directory(localAppData));
+        return 1;
+    } catch (const std::exception& error) {lua.throw_error(error.what());return 0;}
+}
+int list_files(const LuaMadeSimple::Lua& lua) {
+    try {
+        const auto directory=lua.get_string(1);
+        std::string files;
+        for (const auto& entry : std::filesystem::directory_iterator(directory)) {
+            if (entry.is_regular_file() && entry.path().extension()==".preset")
+                files+=entry.path().filename().string()+"\n";
+        }
+        lua.set_string(files);
+        return 1;
+    } catch (const std::exception& error) {lua.throw_error(error.what());return 0;}
+}
 int refresh(const LuaMadeSimple::Lua& lua) {
     try {
         auto* object = lua.get_userdata<LuaType::UObject>().get_remote_cpp_object();
@@ -189,7 +213,7 @@ int capture_preview(const LuaMadeSimple::Lua& lua) {
 class Bridge final : public CppUserModBase {
 public:
     Bridge() {
-        ModName = STR("Custom Presets 自定义预设"); ModVersion = STR("0.4.6");
+        ModName = STR("Custom Presets 自定义预设"); ModVersion = STR("1.0.0");
         ModAuthors = STR("ourongxing");
         ModDescription = STR("Sized world and character preset refresh bridge");
     }
@@ -203,6 +227,8 @@ public:
             instance->register_function("CustomPresetsNativeRefresh", &refresh);
             instance->register_function("CustomPresetsNativeCharacterRefresh", &refresh_character);
             instance->register_function("CustomPresetsNativeCapturePreview", &capture_preview);
+            instance->register_function("CustomPresetsNativeDataDirectory", &data_directory);
+            instance->register_function("CustomPresetsNativeListFiles", &list_files);
         }
         Output::send(STR("[CustomPresetsNative] sized refresh API registered\n"));
     }

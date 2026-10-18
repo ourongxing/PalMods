@@ -16,8 +16,8 @@ function M.encode(values, schema)
     end
     return table.concat(lines, '\n') .. '\n'
 end
-function M.decode(data, schema)
-    assert(#data <= 65536 and data:match('^MorePresets:1\n'), 'Invalid preset format')
+function M.decode(data, schema, limit)
+    assert(#data <= (limit or 65536) and data:match('^MorePresets:1\n'), 'Invalid preset format')
     local raw, result = {}, {}
     for line in data:sub(15):gmatch('[^\n]+') do
         local key, value = line:match('^([%w%._]+)=(.*)$')
@@ -37,21 +37,23 @@ function M.decode(data, schema)
     end
     return result
 end
-function M.read(path, schema)
+function M.read(path, schema, limit)
     local file = io.open(path, 'rb')
     if not file then return nil end
-    local data = file:read(65537); file:close()
-    return M.decode(data, schema)
+    local data = file:read((limit or 65536)+1); file:close()
+    return M.decode(data, schema, limit)
 end
-function M.write(path, values, schema)
+function M.write(path, values, schema, backup, limit)
     local data = M.encode(values, schema)
+    assert(#data <= (limit or 65536), 'Preset data exceeds size limit')
+    backup = backup or path .. '.bak'
     local file = assert(io.open(path .. '.tmp', 'wb'))
     assert(file:write(data)); assert(file:close())
     -- Preserve the last valid copy if replacement is interrupted on Windows.
-    os.remove(path .. '.bak')
+    os.remove(backup)
     local existing = io.open(path, 'rb')
-    if existing then existing:close(); assert(os.rename(path, path .. '.bak')) end
+    if existing then existing:close(); assert(os.rename(path, backup)) end
     local ok, err = os.rename(path .. '.tmp', path)
-    if not ok then os.rename(path .. '.bak', path); error(err) end
+    if not ok then os.rename(backup, path); error(err) end
 end
 return M

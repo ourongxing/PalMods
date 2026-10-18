@@ -1,6 +1,6 @@
 # Custom Presets 自定义预设
 
-本地开发版 0.4.6，依赖 UE4SSExperimentalPW，包含原生刷新与预览桥接 DLL。
+Workshop 本地测试版 1.0.0，依赖 UE4SSExperimentalPW，包含原生刷新与预览桥接 DLL。
 
 ## 使用
 
@@ -17,15 +17,12 @@
 
 ## 安装与数据
 
-退出游戏，将 `dist/CustomPresets/CustomPresets-0.4.6.zip` 内的 `CustomPresets/` 放到：
+当前测试包位于 `G:/SteamLibrary/steamapps/workshop/content/1623730/3621570584/`，仅本地测试，未公开发布。启动游戏后在 Mod 管理中确认 Custom Presets 与 UE4SSExperimentalPW 已启用。本机已切换到 Workshop 格式，避免再叠加手动安装副本。
 
-`G:/SteamLibrary/steamapps/common/Palworld/Mods/NativeMods/UE4SS/Mods/`
+独立开发调试仍可使用 `dist/CustomPresets/CustomPresets-1.0.0.zip`，将其中的 `CustomPresets/` 放到游戏的 `Mods/NativeMods/UE4SS/Mods/`。不要与 Workshop 安装同时使用两套副本。包内包含 `enabled.txt`，目录名保持 ASCII。
 
-包内包含 `enabled.txt`，开发期间使用本地安装。文件夹使用 ASCII 名称，以兼容 Windows Lua 文件访问。
+Workshop 版用户数据保存在 `%LOCALAPPDATA%/Pal/Saved/CustomPresets/presets/`，独立于安装目录。开发版迁移时应复制原安装目录的整个 `presets/` 到此目录。每个世界和人物预设分别保存为 `world-N.preset` 与 `character-N.preset`，单个文件包含名称和全部参数，无需额外索引。每个人物预设只保留一张 `character-N.png` 缩略图；内部唯一标识允许重名互不覆盖。预设文件和预览图的备份统一放在旁边的 `../backups/`，不堆积在预设主目录。安装包不包含用户预设、缩略图及备份。
 
-用户数据保存在安装目录的 `presets/`，更新时保留整个目录。世界与人物使用独立目录索引和文件前缀；内部唯一标识允许重名互不覆盖。读取兼容旧 `MorePresets:1` 格式及旧版名称文件。安装包不包含用户预设、缩略图及备份。
-
-在 `Scripts/config.lua` 中设置 `Language = "auto"` 跟随游戏，或指定 `zh-Hans`、`zh-Hant`、`en`、`ja`。`Enabled = false` 可关闭功能。
 
 ## 开发与验证
 
@@ -40,3 +37,7 @@ ctest --test-dir .build/tests -C Release --output-on-failure
 Lua 测试覆盖持久化、名称验证、重名隔离、世界／人物数据隔离、新增／保存／选择／删除、失败回滚、关闭后取消排队操作、原版预设保护、布局接口、语言切换、未保存提示和缩略图生命周期。原生测试覆盖 Lua 参数消费顺序及缩略图尺寸、透明度、颜色转换和上半身裁切。实际分辨率布局和手柄导航仍需游戏内验证。
 
 世界和人物结构超过旧版 UE4SS Lua UFunction 的 512 字节参数缓冲区。桥接按运行时 `GetParmsSize()` 分配内存，校验反射签名和字段边界，并管理结构成员生命周期；缺少桥接时拒绝应用，不回退到不安全的大结构 Lua 调用。截图入口按 LuaMadeSimple 消费参数后的索引读取文件名，避免对已移除的参数取值。
+
+## Workshop 本地测试
+
+四语资料和封面位于 `workshop/`。使用 `python tools/package_workshop.py CustomPresets --output-root dist/workshop-custom-presets-next` 打包。当前仅本地测试，不创建或公开 Steam 条目。迁移目录见 `docs/WORKSHOP.md`。

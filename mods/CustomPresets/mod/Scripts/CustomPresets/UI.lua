@@ -5,6 +5,7 @@ local Library = require('CustomPresets.Library')
 local M = {}
 local source = debug.getinfo(1, 'S').source:sub(2):gsub('\\', '/')
 local directory = assert(source:match('^(.*)/Scripts/CustomPresets/UI.lua$')) .. '/presets/'
+if type(CustomPresetsNativeDataDirectory)=='function' then directory=CustomPresetsNativeDataDirectory() end
 local library = Library.new(directory)
 local characterLibrary = Library.new(directory, 'character')
 local WORLD = '/Game/Pal/Blueprint/UI/UserInterface/Title/WBP_Title_WorldSettings.WBP_Title_WorldSettings_C'

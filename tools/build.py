@@ -102,7 +102,7 @@ def main(argv=None):
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
         'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',
-        'CustomPresets': ROOT / 'dist/CustomPresets/CustomPresets-0.4.6.zip',
+        'CustomPresets': ROOT / 'dist/CustomPresets/CustomPresets-1.0.0.zip',
         'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.0.0.zip',
     }
     try:

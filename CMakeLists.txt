@@ -22,3 +22,7 @@ palmods_test(custom_presets_arguments mods/CustomPresets/tests/preview_arguments
 palmods_test(custom_presets_portrait mods/CustomPresets/tests/preview_pixels.cpp)
 target_include_directories(custom_presets_arguments PRIVATE mods/CustomPresets/native/src)
 target_include_directories(custom_presets_portrait PRIVATE mods/CustomPresets/native/src)
+if(WIN32)
+    palmods_test(custom_presets_storage mods/CustomPresets/tests/storage_directory.cpp)
+    target_include_directories(custom_presets_storage PRIVATE mods/CustomPresets/native/src)
+endif()

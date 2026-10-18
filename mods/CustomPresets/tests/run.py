@@ -19,10 +19,16 @@ with tempfile.TemporaryDirectory() as temporary:
     target = Path(temporary)
     (target / 'Scripts/CustomPresets').mkdir(parents=True)
     (target / 'presets/library').mkdir(parents=True)
+    (target / 'backups').mkdir()
+    (target / 'presets/backups').mkdir()
     (target / 'Scripts/CustomPresets/UI.lua').write_bytes((scripts / 'CustomPresets/UI.lua').read_bytes())
     lua.globals().UI_PATH = (target / 'Scripts/CustomPresets/UI.lua').as_posix()
     lua.globals().PRESETS = (target / 'presets').as_posix()
+    lua.globals().CustomPresetsNativeListFiles = lambda directory: '\n'.join(p.name for p in Path(directory).glob('*.preset'))
     lua.execute((mod / 'tests/run.lua').read_text(encoding='utf-8'))
+    active = {p.name for p in (target / 'presets').iterdir() if p.is_file()}
+    active -= {'test.preset', 'test.preset.bak'}  # Low-level Store test fixture.
+    assert all(re.fullmatch(r'(world|character)-[0-9]+\.preset', name) for name in active), active
 source = (scripts / 'CustomPresets/UI.lua').read_text(encoding='utf-8')
 assert ':GetPadding(' not in source, 'WrapBoxSlot exposes Padding as a property, not a reflected getter'
 assert 'original.Slot.Padding' in source

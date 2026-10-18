@@ -1,0 +1,10 @@
+{
+  "purpose": "Workshop cover",
+  "source": "imagegen",
+  "references": "User-provided vanilla character creation screenshot",
+  "constraints": [
+    "Existing Palworld character appearances and outfits only",
+    "No extra character customization implied"
+  ],
+  "thumbnail": "768x768 indexed PNG, under 1 MB"
+}

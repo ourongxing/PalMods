@@ -5,6 +5,22 @@
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
+## Custom Presets 本地测试包
+
+2026-10-18：Custom Presets / 自定义预设已迁移为 `1.0.0` Workshop 格式的本地测试包，**未创建 Steam 条目，未上传、未公开**。
+
+- 本地测试目录：`G:/SteamLibrary/steamapps/workshop/content/1623730/3621570584/`。`3621570584` 是本地随机目录编号，不是 PublishedId，不对应发布页面；与官方上传工具 Shift 创建本地包的方式一致。
+- 资料源：`mods/CustomPresets/workshop/Info.json`、四语 `README.<language>.md`、`cover.png` 与 768×768 `thumbnail.png`。封面人物参照游戏现有角色创建截图，说明明确不新增模型、发型或服装。
+- 依赖：`UE4SSExperimentalPW`；仅客户端安装，规则仅复制 Scripts、dlls 和 enabled.txt。预设数据不包含在工坊包和安装规则中。
+- 发布候选包：`dist/workshop-custom-presets-individual-20261018/CustomPresets/`。四语简介由 `tools/package_workshop.py` 生成，并追加公共模板。
+- 原手动安装完整备份：`G:/SteamLibrary/steamapps/common/Palworld/Mods/_LocalBackups/CustomPresets-before-workshop-20261018/`，位于 UE4SS 扫描范围外。
+- 运行目录预置为本地工坊包的安装目标文件，并在 `PalModSettings.ini` 中加入 `ActiveModList=CustomPresets`。游戏的托管安装记录仍待首次启动时生成，尚未进行迁移后的游戏内验收。
+- 原 52 个数据文件已逐文件核对并复制到 `%LOCALAPPDATA%/Pal/Saved/CustomPresets/presets/`；2 个世界预设与 2 个人物预设均可读。此目录独立于包安装，避免重装清理用户预设。
+- 预设采用一预设一文件：`world-N.preset` / `character-N.preset` 含名称与参数，人物另配 `character-N.png`。备份在相邻 `backups/`，之前的集合文件已归档。
+- 迁移、安装与数据摘要：`.build/CustomPresets/workshop-migration-complete.json`。首次进入游戏应检查 Mod 管理识别、人物和世界预设、保存后重启复用以及预览图。
+
+正式发布时创建真实条目，将验收后的包复制过去并保留工具生成的 `.workshop.json`；不要把本地目录编号当成 PublishedId。
+
 ## 已发布条目
 
 2026-10-18：UpdraftElevator 沿用 `3820050074` 发布 `1.1.1`，保留客户端规则，新增专用服务器 Lua 与 PalSchema 安装规则。四语简介版本同步更新；公开状态、封面、标签和依赖已读回核对。已通过游戏 AppID 重新下载，17 个包内文件的 SHA-256 全部匹配，并确认四条安装规则。发布包位于 `dist/workshop-updraft-server-1.1.1-20261018/`，发布记录及旧工坊包备份位于 `.build/workshop-updraft-server-1.1.1-20261018/`。专用服务器内功能仍待实机验收。

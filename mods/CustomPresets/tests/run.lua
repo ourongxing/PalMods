@@ -1,5 +1,11 @@
 package.path = SCRIPTS .. '/?.lua;' .. package.path
-require('CustomPresets.I18n').configure('zh-Hans')
+local gameCulture='zh-Hans'
+local function cultureSystem()
+    return {GetCurrentCulture=function() return {ToString=function() return gameCulture end} end}
+end
+function StaticFindObject(path)
+    if path=='/Script/Engine.Default__KismetInternationalizationLibrary' then return cultureSystem() end
+end
 local Store = require('CustomPresets.Store')
 local Schema = require('CustomPresets.Schema')
 local schema = {{'text', 'string'}, {'flag', 'boolean'}, {'value', 'number'}}
@@ -42,10 +48,7 @@ assert(lib:load(user2).ExpRate==8, 'Naming preserves saved settings')
 for _, bad in ipairs({'', '   ', 'bad\nname', string.rep('中',31)}) do
     assert(not pcall(lib.add,lib,values,bad))
 end
-Store.write(PRESETS..'/library/user-'..user2.Id..'.preset.name.preset', {Name='FString: 000012345678'}, {{'Name','string'}})
-assert(lib:name(user2)=='用户预设 '..user2.Id, 'Recover previously stored address labels')
 assert(not pcall(lib.add,lib,values,'FString: 000012345678'))
-Store.write(PRESETS..'/library/user-'..user2.Id..'.preset.name.preset', {Name='我的休闲世界'}, {{'Name','string'}})
 lib:remove(user)
 assert(#lib:list()==1 and lib:list()[1].Id==user2.Id)
 assert(not pcall(lib.save,lib,user,values) and not pcall(lib.load,lib,user))
@@ -56,6 +59,18 @@ assert(duplicateA.Id~=duplicateB.Id and lib:name(duplicateA)==lib:name(duplicate
 lib:remove(duplicateA)
 assert(lib:load(duplicateB).ExpRate==8, 'Deleting one duplicate preserves the other')
 assert(not pcall(lib.add,lib,values,''), 'Require a name before creating a preset')
+
+for i=1,40 do lib:add(values,'Bulk '..i) end
+assert(#lib:list()==42)
+lib:save(user2,values)
+local write=Store.write
+Store.write=function() error('Injected collection write failure') end
+local changed=data();changed.ExpRate=42
+assert(not pcall(lib.save,lib,user2,changed))
+Store.write=write
+assert(lib:load(user2).ExpRate==8, 'Failed writes preserve previous preset')
+local backupFile=assert(io.open(PRESETS..'/backups/world-'..user2.Id..'.preset.bak','rb'), 'Backups stay outside active library folder');backupFile:close()
+
 
 local serial, widgets, tasks=0,{},{}
 local handlers,tick,onGameThread,insideClick={},nil,false,false
@@ -178,6 +193,7 @@ function LoadAsset(path)
     loadedWidgetPath=path; titleClassReady=true
 end
 function StaticFindObject(pathname)
+    if pathname=='/Script/Engine.Default__KismetInternationalizationLibrary' then return cultureSystem() end
     local o=object('Class'); o.Path=pathname
     if pathname==titleClassPath and not titleClassReady then o.valid=false end
     function o:ImportFileAsTexture2D(_,path) local texture=object("Texture"); texture.path=path; return texture end
@@ -259,7 +275,10 @@ local function press(button)
     if button.Kind=='NativeAppearanceCard' then handlers.CardClick(ref(button)) else handlers.Click(ref(button)) end
     insideClick=false; flush()
 end
+local storageCalls=0
+function CustomPresetsNativeDataDirectory() storageCalls=storageCalls+1; return PRESETS..'/' end
 assert(loadfile(UI_PATH))().start()
+assert(storageCalls==1, 'Use native persistent Saved storage instead of the installed mod directory')
 tick(); flush()
 local save,add,delete=latest('保存当前预设'),latest('添加为新预设'),latest('删除预设')
 assert(confirm.parent==originalParent, 'Do not reparent confirm')
@@ -370,7 +389,7 @@ assert(menu.EditedWorldSetting.ExpRate==9, 'Empty library keeps current settings
 
 local i18n=require('CustomPresets.I18n')
 for _,case in ipairs({{'en-US','Save preset','Preset name'}, {'zh-CN','保存当前预设','预设名称'}, {'zh-TW','儲存目前預設','預設名稱'}, {'ja-JP','上書き保存','プリセット名'}, {'fr-FR','Save preset','Preset name'}}) do
-    i18n.configure(case[1]); tick(); flush()
+    gameCulture=case[1]; tick(); flush()
     assert(latest(case[2]) and i18n.text('title')==case[3])
     assert(lib:name(user2)=='我的休闲世界', 'Localization must not translate user names')
 end
@@ -381,10 +400,9 @@ function StaticFindObject(path)
     end
     return originalFind(path)
 end
-i18n.configure('auto')
 assert(i18n.text('save')=='儲存目前預設', 'Read game culture through FString contents')
 StaticFindObject=originalFind
-i18n.configure('zh-Hans')
+gameCulture='zh-Hans'
 
 -- Character appearance presets use the same management flow but a separate catalogue.
 function FName(value) return {ToString=function() return value end} end
@@ -402,7 +420,7 @@ local function appearance()
     return value
 end
 menu.visible=false; tick(); flush()
-i18n.configure('zh-Hans')
+gameCulture='zh-Hans'
 character=object('CharacterEditor'); character.WidgetTree={}
 titleClassReady=false -- Enter character creation after the title assets unloaded.
 character.MakeInfo=appearance(); character.SVMax=1

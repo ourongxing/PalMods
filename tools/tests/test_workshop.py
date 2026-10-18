@@ -141,8 +141,13 @@ class WorkshopTests(unittest.TestCase):
                     if mod != 'ExtraImplantDrops':
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
-                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops'):
+                if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
+                if mod == 'CustomPresets':
+                    self.assertEqual(info['Version'], '1.0.0')
+                    self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
+                    self.assertFalse(any('/presets/' in path for path in installed))
+                    self.assertTrue((package / 'Scripts/CustomPresets/UI.lua').is_file())
                 if mod in ('PalCombo', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/config.ini', installed)
                 if mod == 'ExtraImplantDrops':

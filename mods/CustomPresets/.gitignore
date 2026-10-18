@@ -3,3 +3,4 @@ mod/presets/*.bak
 mod/presets/*.tmp
 mod/presets/*.deleted
 mod/presets/*.png
+mod/presets/*.presets
