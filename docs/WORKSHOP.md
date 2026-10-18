@@ -7,6 +7,8 @@
 
 ## Better Arena
 
+2026-10-19：工坊简繁中文介绍改用游戏内“青铜／青銅至传奇／傳奇”的段位名称，移除自行添加的“杯／盃”。四语标题与正文已读回核对，内容包 23 个文件、版本、封面、标签、依赖和公开状态保持不变；记录位于 `.build/workshop-better-arena-rank-names-20261019/`。
+
 2026-10-19：`1.0.0` 已公开发布，PublishedId 为 [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613)，依赖 UE4SSExperimentalPW 和 PalSchema，最低游戏修订号为实测的 `102999`。
 
 - 正式目录：`G:/SteamLibrary/steamapps/workshop/content/1623730/3822475613/`，保留 `.workshop.json`。
