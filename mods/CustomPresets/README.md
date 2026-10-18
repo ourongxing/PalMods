@@ -11,7 +11,7 @@
 
 ## 安装与数据
 
-依赖 UE4SSExperimentalPW。当前为 Workshop 本地测试版，未公开发布，目录见 `docs/WORKSHOP.md`。
+订阅 [Steam 创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387)，启用 UE4SSExperimentalPW 和 Custom Presets，然后重启游戏。
 
 手动安装：解压 `dist/CustomPresets/CustomPresets-1.0.0.zip`，将 `CustomPresets/` 放入游戏的 `Mods/NativeMods/UE4SS/Mods/`，不要与 Workshop 副本同时使用。
 

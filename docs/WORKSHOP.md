@@ -5,21 +5,17 @@
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
-## Custom Presets 本地测试包
+## Custom Presets
 
-2026-10-18：Custom Presets / 自定义预设已迁移为 `1.0.0` Workshop 格式的本地测试包，**未创建 Steam 条目，未上传、未公开**。
+2026-10-18：`1.0.0` 已公开发布，PublishedId 为 `3822215387`，依赖 UE4SSExperimentalPW。
 
-- 本地测试目录：`G:/SteamLibrary/steamapps/workshop/content/1623730/3621570584/`。`3621570584` 是本地随机目录编号，不是 PublishedId，不对应发布页面；与官方上传工具 Shift 创建本地包的方式一致。
-- 资料源：`mods/CustomPresets/workshop/Info.json`、四语 `README.<language>.md`、`cover.png` 与 768×768 `thumbnail.png`。封面人物参照游戏现有角色创建截图，说明明确不新增模型、发型或服装。
-- 依赖：`UE4SSExperimentalPW`；仅客户端安装，规则仅复制 Scripts、dlls 和 enabled.txt。预设数据不包含在工坊包和安装规则中。
-- 发布候选包：`dist/workshop-custom-presets-individual-20261018/CustomPresets/`。四语简介由 `tools/package_workshop.py` 生成，并追加公共模板。
-- 原手动安装完整备份：`G:/SteamLibrary/steamapps/common/Palworld/Mods/_LocalBackups/CustomPresets-before-workshop-20261018/`，位于 UE4SS 扫描范围外。
-- 运行目录预置为本地工坊包的安装目标文件，并在 `PalModSettings.ini` 中加入 `ActiveModList=CustomPresets`。游戏的托管安装记录仍待首次启动时生成，尚未进行迁移后的游戏内验收。
-- 原 52 个数据文件已逐文件核对并复制到 `%LOCALAPPDATA%/Pal/Saved/CustomPresets/presets/`；2 个世界预设与 2 个人物预设均可读。此目录独立于包安装，避免重装清理用户预设。
-- 预设采用一预设一文件：`world-N.preset` / `character-N.preset` 含名称与参数，人物另配 `character-N.png`。备份在相邻 `backups/`，之前的集合文件已归档。
-- 迁移、安装与数据摘要：`.build/CustomPresets/workshop-migration-complete.json`。首次进入游戏应检查 Mod 管理识别、人物和世界预设、保存后重启复用以及预览图。
+- 正式目录：`G:/SteamLibrary/steamapps/workshop/content/1623730/3822215387/`，保留 `.workshop.json`。
+- 已读回核对四语标题、简介、封面、标签、依赖与公开状态；Steam 下载的 16 个文件哈希全部匹配。
+- 发布包：`dist/workshop-custom-presets-concise-20261018/CustomPresets/`；发布记录：`.build/workshop-custom-presets-publish-20261018/`。
+- 原本地测试目录 `3621570584` 已归档至 `Mods/_LocalBackups/CustomPresets-workshop-local-3621570584/`，避免重复加载。
+- 用户数据位于 `%LOCALAPPDATA%/Pal/Saved/CustomPresets/presets/`：每个预设一个文件，人物另配缩略图，备份位于相邻 `backups/`。
 
-正式发布时创建真实条目，将验收后的包复制过去并保留工具生成的 `.workshop.json`；不要把本地目录编号当成 PublishedId。
+下载校验不代替游戏内功能验收。
 
 ## 已发布条目
 
@@ -36,6 +32,7 @@
 | ExtraImplantDrops | [3820049962](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049962) |
 | PointBlankBurstSkills | [3820050011](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050011) |
 | UpdraftElevator | [3820050074](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050074) |
+| CustomPresets | [3822215387](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387) |
 | QuickButcher | [3821569615](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615) |
 
 2026-10-17：QuickButcher（Quick Butcher / 快速肢解）以 `1.0.0` 首次公开发布，
@@ -135,6 +132,7 @@ BetterWorkbench 打包时会检查 DLL 与 `import-audit.json` 的哈希和导�
 | BetterPalSouls | `Scripts/`、`enabled.txt` | Lua | UE4SSExperimentalPW |
 | UpdraftElevator | `Scripts/`、`enabled.txt`、`PalSchema/{buildings,paks}/` | Lua + PalSchema | UE4SSExperimentalPW、PalSchema |
 | PointBlankBurstSkills | `PalSchema/raw/point_blank_burst_skills.json` | PalSchema | UE4SSExperimentalPW、PalSchema |
+| CustomPresets | [3822215387](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387) |
 | QuickButcher | `Paks/QuickButcher_P.pak` | Paks | 无 |
 
 `Lua` 规则将选中的脚本、DLL、配置和启用标记部署到
