@@ -19,6 +19,8 @@
 
 ## 已发布条目
 
+2026-10-18：上述 9 个已发布条目沿用原 PublishedId 更新为统一风格的新封面，QuickButcher 使用用户提供的岩甲帕鲁形象。通过 Steam SDK 仅设置页面预览图，未上传内容包或修改版本；四语标题与描述、标签、依赖、公开状态和本机工坊包全部保持不变。已读回 9 张远程预览图，SHA-256 均与源码 `workshop/thumbnail.png` 一致。上传与核对记录位于 `.build/workshop-cover-update-20261018/`。PalCombo 与 BetterBulkStorage 未在本次创建或发布条目。
+
 2026-10-18：UpdraftElevator 沿用 `3820050074` 发布 `1.1.1`，保留客户端规则，新增专用服务器 Lua 与 PalSchema 安装规则。四语简介版本同步更新；公开状态、封面、标签和依赖已读回核对。已通过游戏 AppID 重新下载，17 个包内文件的 SHA-256 全部匹配，并确认四条安装规则。发布包位于 `dist/workshop-updraft-server-1.1.1-20261018/`，发布记录及旧工坊包备份位于 `.build/workshop-updraft-server-1.1.1-20261018/`。专用服务器内功能仍待实机验收。
 
 2026-10-15：以下七个包以 `1.0.0` 发布，已从 Steam 读回核对四语标题与正文、公开可见性、标签、封面和前置依赖。
