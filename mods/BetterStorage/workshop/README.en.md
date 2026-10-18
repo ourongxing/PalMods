@@ -2,18 +2,17 @@
 
 1.1.0 · ourongxing
 
-Use vanilla Easy Bulk Storage in the wilderness, increase stack limits, improve Pal transport, and add larger schematic furniture and configurable guild storage capacity.
+Send items back to base from the wilderness and fit more into each inventory slot.
 
-## Features and usage
+## Main features
 
-Open your inventory and use the standard Easy Bulk Storage button or shortcut (R by default on keyboard).
+- **Store from anywhere**: open your inventory and press R (default) to store items at your main base. Inside a base, storage uses that base. Your main base is the guild base with the most structures; ties go to the nearest.
+- **Larger stacks**: ordinary stackable items fit at least 99,999 per slot. Higher existing limits stay unchanged, as do non-stackable items such as equipment.
+- **Smarter Pal transport**: at equal transport priority, Pals prefer chests with matching stacks that have room left.
+- **Schematic storage**: the antique bookshelf and antique large cabinet become schematic-only storage with 360 slots. Rebuild existing furniture to apply this.
+- **Larger guild storage**: newly created guild inventories have 360 shared slots. Existing inventories cannot be expanded, even by rebuilding guild chests.
 
-- Destination: the current base while inside a base; otherwise your guild's base with the most structures. Ties are resolved by distance to the player.
-- Vanilla storage rules: a destination chest must already contain the same item type. New types are not placed in empty chests or chests containing only other items. Keeps eligibility highlighting, the exclusion list, and confirmation window, respecting categories, permissions, and capacity.
-- Stack limits: ordinary stackable items have a minimum per-slot limit of 99,999 across inventory, chests, and production storage. Higher vanilla limits are preserved, including the 99,999,999 coin limit. Equipment and other items that do not stack normally retain their original rules.
-- Pal transport: prefers chests with matching partial stacks within the same transport priority. Existing categories, permissions, and priorities remain in effect.
-- Schematic furniture: the antique bookshelf and antique large cabinet have 360 slots and accept schematics only. Rebuild existing copies to apply the capacity and category settings.
-- Guild storage: newly created guild storage defaults to 360 slots. All guild chests still share one inventory. Existing guild storage is not expanded, and rebuilding a guild chest does not change its capacity.
+Quick storage only uses chests that already contain the same item type. Vanilla categories, permissions, exclusions, and confirmation still apply.
 
 ## Installation
 
@@ -26,8 +25,6 @@ Open your inventory and use the standard Easy Bulk Storage button or shortcut (R
 Edit `Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json` under your Palworld installation, save your changes, then fully exit and restart the game.
 
 The two `SlotNum` settings control the bookshelf and cabinet capacities separately. `GuildChestSlotNum` sets the capacity of new guild storage.
-
-Fully restart the game or server after editing. Changes apply only to matching furniture or guild inventories created afterwards.
 
 ## Before you play
 

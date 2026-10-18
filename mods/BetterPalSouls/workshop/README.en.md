@@ -2,17 +2,21 @@
 
 1.0.0 · ourongxing
 
-Quickly choose enhancement levels in the standard Statue of Power interface and automatically convert Pal Souls for the enhancement you confirm.
+Have enough Pal Souls, but the wrong sizes? Convert them automatically when enhancing, and select the highest affordable level with one click.
 
-## Features and usage
+## How to use
 
-- ◀: clears pending enhancements for that stat and returns the selection to its current enhanced level. It does not reset stats or refund spent souls.
-- ▶: selects the highest affordable level while reserving souls for enhancements already selected for other stats.
-- Standard − / +: adjusts one level at a time. All four stats share the available souls, with costs displayed in the standard interface.
+Open Pal enhancement at the Statue of Power:
 
-Small, Medium, Large, and Giant Pal Souls are valued at 1 / 2 / 4 / 8. Previewing does not change inventory. Confirming an enhancement converts souls as needed and keeps all remaining value as Small Pal Souls.
+- **▶ Select maximum**: picks the highest affordable level for that stat, reserving souls for enhancements already selected for other stats.
+- **◀**: clears pending enhancements for that stat.
+- **− / + Adjust one level**: use the original buttons as usual, then confirm the enhancement.
 
-Uses your backpack and containers in the current base that the standard enhancement interface can access. Free backpack slots if conversion needs more space. Enhancement effects, level caps, and costs follow the game settings. The reset page works as usual.
+## Automatic soul conversion
+
+Small / Medium / Large / Giant Souls are valued at **1 / 2 / 4 / 8**. Previewing leaves inventory unchanged. Confirming converts souls to the required sizes and keeps all remaining value as Small Souls.
+
+Uses your backpack and current-base storage accessible to the vanilla enhancement screen. Conversion may need free backpack slots. Enhancement effects, caps, and costs follow the game settings.
 
 ## Installation
 
@@ -23,9 +27,6 @@ Uses your backpack and containers in the current base that the standard enhancem
 ## Configuration
 
 Edit `Mods/NativeMods/UE4SS/Mods/BetterPalSouls/Scripts/config.lua` under your Palworld installation, save your changes, then fully exit and restart the game.
-
-- `Enabled`: turns the feature on or off.
-- `Language`: defaults to `auto` to follow the game language. You can also choose `zh-Hans`, `zh-Hant`, `ja`, or `en`.
 
 ## Before you play
 

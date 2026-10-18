@@ -2,15 +2,19 @@
 
 1.0.0 · ourongxing
 
-Automatically calculates materials for missing intermediate items at the same crafting station, adds a scrollable material list, and lets you instantly disassemble finished items.
+Skip intermediate crafting steps and turn unwanted finished items back into materials.
 
-## Features and usage
+## Main features
 
-- Uses intermediate items you already own first, then resolves only the shortfall using unlocked recipes at the current station. Recipes from other stations are unavailable.
-- For example, if you need 3 ingots and own 1, a station that can craft those ingots uses the owned ingot plus the ore needed for the other 2.
-- The material list shows 5 rows by default. Scroll with the mouse wheel to see additional materials.
-- Select the owned-item count at the top right of the recipe details to switch between crafting and disassembly. Choose the number of batches and confirm to consume complete recipe batches and return all original recipe materials to your backpack.
-- Craft up to 256 batches at once. Work time follows the selected finished-item recipe; intermediate crafting does not add extra work time.
+- **Craft from raw materials**: uses intermediate items you own first, then covers the shortfall with their ingredients. Only unlocked recipes at the current station are available; recipes from other stations cannot be used.
+- **Scrollable material list**: shows 5 rows by default. Use the mouse wheel to see the rest.
+- **Instant disassembly**: consumes finished items in complete recipe batches and returns all original recipe materials to your backpack.
+
+## How to use
+
+Select a recipe and craft as usual. Click the **owned-item count** at the top right of the recipe details to switch between crafting and disassembly, then choose the batch count and confirm.
+
+Craft up to 256 batches at once. Work time follows the finished-item recipe, with no extra time added for intermediate items.
 
 ## Installation
 
@@ -21,11 +25,6 @@ Automatically calculates materials for missing intermediate items at the same cr
 ## Configuration
 
 Edit `Mods/NativeMods/UE4SS/Mods/BetterWorkbench/Scripts/config.lua` under your Palworld installation, save your changes, then fully exit and restart the game.
-
-- `Enabled`: turns the feature on or off.
-- `MaterialScroll.Enabled`, `MaterialScroll.VisibleRows`: enables material-list scrolling and sets the visible row count.
-- `Disassembly.Enabled`: enables or disables instant disassembly.
-- `Disassembly.Language`: defaults to `auto` to follow the game language. You can also choose `zh-Hans`, `zh-Hant`, `ja`, or `en`. Item names use the game's translations.
 
 ## Before you play
 
