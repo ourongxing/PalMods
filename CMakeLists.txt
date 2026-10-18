@@ -18,3 +18,7 @@ palmods_test(workbench_recipe_view mods/BetterWorkbench/tests/native/recipe_view
 palmods_test(workbench_job_schedule mods/BetterWorkbench/tests/native/job_schedule_test.cpp)
 palmods_test(better_storage_stack_limits mods/BetterStorage/tests/stack_limits.cpp)
 palmods_test(extra_implant_drops_drop_plan mods/ExtraImplantDrops/tests/drop_plan.cpp)
+palmods_test(custom_presets_arguments mods/CustomPresets/tests/preview_arguments.cpp)
+palmods_test(custom_presets_portrait mods/CustomPresets/tests/preview_pixels.cpp)
+target_include_directories(custom_presets_arguments PRIVATE mods/CustomPresets/native/src)
+target_include_directories(custom_presets_portrait PRIVATE mods/CustomPresets/native/src)

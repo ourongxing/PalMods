@@ -1,0 +1,1 @@
+Personal presets are saved here. Keep this folder when updating or uninstalling.
