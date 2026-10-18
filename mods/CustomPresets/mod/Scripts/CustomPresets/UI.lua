@@ -2,7 +2,6 @@ local I18n = require('CustomPresets.I18n')
 local t = I18n.text
 local Data = require('CustomPresets.Data')
 local Library = require('CustomPresets.Library')
-local WorldSelect = require('CustomPresets.WorldSelect')
 local M = {}
 local source = debug.getinfo(1, 'S').source:sub(2):gsub('\\', '/')
 local directory = assert(source:match('^(.*)/Scripts/CustomPresets/UI.lua$')) .. '/presets/'
@@ -583,11 +582,8 @@ local function installHooks()
     end
 end
 function M.start()
-    WorldSelect.start()
     local queued = false
     LoopAsync(750, function()
-        local worldHooked, worldFailure=pcall(WorldSelect.installHooks)
-        if not worldHooked then report(worldFailure) end
         local installed, failure = pcall(installHooks)
         if not installed then report(failure) end
         if queued then return end

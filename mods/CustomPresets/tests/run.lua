@@ -229,13 +229,11 @@ function FindAllOf(class)
         if character and character.dialog then result[#result+1]=character.dialog end
         return result
     end
-    if class=='WBP_Title_WorldSelect_CreateWorld_ListContent_C' then return {} end
     if class=='WBP_CharacterMake_C' then return character and {character} or {} end
     assert(class=='WBP_Title_WorldSettings_C'); return {menu}
 end
-function RegisterHook(pathname,fn,post)
+function RegisterHook(pathname,fn)
     assert(not onGameThread)
-    if pathname:find(':Update Local World List Content',1,true) then handlers.WorldListPre=fn; handlers.WorldListPost=post; return end
     if pathname=='/Script/Pal.PalUserWidgetStackableUI:Close' then handlers.Close=fn
     elseif pathname:find('WBP_CharaCre_PresetButton_C:',1,true) then handlers.CardClick=fn
     elseif pathname:find('WBP_CharacterMake_C:ApplyPreset',1,true) then handlers.CharacterPreset=fn
@@ -509,48 +507,3 @@ assert(capturedPreviews==2 and characters:hasPreview(selectedAppearance), 'Missi
 press(latest('删除预设'))
 assert(#characters:list()==0 and not characters:hasPreview(selectedAppearance), 'Delete archives associated preview')
 assert(#uiLib:list()==0, 'Preview generation leaves world presets untouched')
-
--- Keep the original create-world button outside the scrolling list.
-local originalFindAll=FindAllOf
-local worldCanvas=panel('CanvasPanel')
-local worldScroll=panel('ScrollBox')
-worldScroll.overflow=0
-worldScroll.fraction=0.7
-function worldScroll:ForceLayoutPrepass() end
-function worldScroll:GetScrollOffsetOfEnd() return self.overflow end
-function worldScroll:GetViewFraction() return self.fraction end
-worldCanvas:AddChildToCanvas(worldScroll)
-worldScroll.Slot:SetAnchors({Minimum={X=0,Y=0},Maximum={X=1,Y=1}})
-worldScroll.Slot:SetOffsets({Left=12,Top=20,Right=8,Bottom=10})
-local worldButton=object('CreateWorldButton')
-worldScroll:AddChild(worldButton)
-worldButton.nativeClick=function() return 'original create world' end
-function FindAllOf(class)
-    if class=='WBP_Title_WorldSelect_CreateWorld_ListContent_C' then return {worldButton} end
-    return originalFindAll(class)
-end
-local worldSelect=require('CustomPresets.WorldSelect')
-worldSelect.update()
-assert(worldButton:GetParent()==worldCanvas, 'Move native create button outside scroll box')
-assert(worldScroll.Slot.offsets.Bottom==82, 'Reserve footer space once')
-assert(worldButton.Slot.offsets.Top==-10 and worldButton.Slot.offsets.Bottom==64, 'Keep button within original bottom bounds')
-assert(worldButton.nativeClick()=='original create world', 'Preserve native click behavior')
-worldSelect.update()
-assert(worldScroll.Slot.offsets.Bottom==82, 'Repeated scans must not shrink the list again')
-local previousButton=worldButton
-handlers.WorldListPre()
-assert(previousButton.visibility==1, 'Hide previous footer before rebuilding')
-worldButton=object('CreateWorldButton'); worldScroll:AddChild(worldButton)
-handlers.WorldListPost()
-assert(worldButton.visibility==0, 'Show replacement immediately after native list rebuild')
-assert(previousButton:GetParent()==nil and worldButton:GetParent()==worldCanvas, 'Replace footer after native list rebuild')
-assert(worldScroll.Slot.offsets.Bottom==82, 'List rebuild preserves reserved space')
-worldScroll.overflow=0; worldScroll.fraction=1
-local fixed=worldButton
-worldButton=object('CreateWorldButton'); worldScroll:AddChild(worldButton)
-handlers.WorldListPre(); handlers.WorldListPost()
-assert(worldButton:GetParent()==worldScroll and fixed:GetParent()==nil, 'No fixed footer when list fits')
-assert(worldScroll.Slot.offsets.Bottom==10 and worldButton.visibility==0, 'Restore original list bounds and button')
-worldSelect.update()
-assert(worldButton:GetParent()==worldScroll, 'Keep native button in short lists')
-FindAllOf=originalFindAll
