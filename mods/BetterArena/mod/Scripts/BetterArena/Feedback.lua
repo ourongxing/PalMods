@@ -43,7 +43,9 @@ function M.show(session,result)
  -- visible above the arena menu without hiding cards or taking input focus.
  banner:StopAllAnimations()
  local text=table.concat(items,'    ')
- banner:SetInfo({Message=FText(text),AdditionalMessageTitle=FText(''),AdditionalMessage={},DisplayType=0})
+ -- Do not marshal a partial PalUICommonRewardDisplayData through UE4SS.
+ -- Only scalar widget setters are needed for this independently owned banner.
+ banner:ChangeColor(0)
  banner.Text_Title:SetText(FText(I18n.current().receipt:format(receipt.points)))
  banner.BP_PalRichTextBlock_C_99:SetText(FText(text))
  banner.Icon:SetVisibility(1)

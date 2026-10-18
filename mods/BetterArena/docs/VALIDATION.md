@@ -34,3 +34,23 @@
 Shipping 构建的 `Debug_SetArenaRankPoint` 实机无效。实现改为在房主游戏线程更新保存参数的 `ArenaRankPoint` 整数字段，并广播原生 `OnUpdateArenaRankPointDelegate`，更新显示与排名记录。
 
 多人客户端、专用服务器和真实手柄焦点导航未验收；第一版本仅开放单机／本机房主。
+
+## 统一奖励倍率与崩溃修复（2026-10-19）
+
+最终配置为整数 `RewardMultiplier = 2`（只接受 1～10）、`DailyLimits = {1, 3, 5, 7, 9, 11, 13}`，移除 `Enabled`。此前实机数据和旧额度仅代表当时版本，不是新额度的实测结果。
+
+用户报告 `UECC-Windows-7EAC497C4A210C459D46C68240414699_0000`，栈顶为 UE4SS `+0x271863` 的空指针读取。对应领取日志已写入预留和完成两条记录，不能直接按“没有发奖”重试；未取得足够符号确认精确 Lua 调用。保留原记录，没有自动补发或清空真实额度。
+
+数据层改用 PalSchema：`raw/arena_rewards.json` 修改七个段位的首通／重复物品，`blueprints/arena_points.json` 只修改 NPC 胜利基础分。删除 Lua 的原生表修改和轮询，不再持有原生奖励表结构；横幅也不再通过 Lua 构造 `PalUICommonRewardDisplayData`，改用标量控件接口更新文字、配色和动画。这是针对原生调用风险的修复，不能仅凭栈顶断言已经证明唯一根因。
+
+基准值来自本机 1.0.5 游戏的 `DT_ArenaSoloRewardTable` 解包记录；原始数量保存为 `mod/Config/arena_rewards.base.json`。普通挑战、原生预览和扫荡读取 PalSchema 应用后的同一份数据。补丁范围不含概率、失败扣分和 PVP 积分。
+
+离线验证覆盖 1～10 倍下的全部 14 组奖励、非法倍率拒绝、默认奇数额度、配置与已应用倍率不一致时拒绝启动、没有 `Enabled` 的入口启动，以及横幅不再传递原生显示结构体。本机配置工具另验证了 1 倍、10 倍、恢复 2 倍，以及拒绝 0、11、1.5。
+
+修复后的接口／路由实测使用崩溃世界的独立副本：原生 `GetSoloClearReward` 的全部 14 组首通／重复奖励与原版基准的两倍一致（包含设计图返回数量），NPC 胜利基础分为 100。通过扫荡按钮的原生点击委托领取铂金重复奖励：保存参数中的 RP 335 → 485（段位差倍率后 +150），战斗券增加 12、传奇帕鲁球增加 4，到账横幅显示同样的数量和积分；随后显式执行 Lua 垃圾回收，没有崩溃。退出后打开普通挑战页，委托仍指向原生卡片，预览显示帕鲁球 2～4、战斗券 12。普通挑战的完整实战获胜结算未在本轮重打，设计图实际入包数量也未通过本轮首通验证。
+
+证据保存在 `.build/better-arena-crash-0112/` 的 `live-test.txt`、`UE4SS-after-fix.log`、`receipt-palschema.png` 和 `normal-challenge-preview.png`。这轮不再出现此前的单次领取崩溃，但没有以一次复测宣称已经定位唯一根因。
+
+PalSchema 的数据表和蓝图加载方式参考[官方入门说明](https://okaetsu.github.io/PalSchema/docs/gettingstarted)与[Raw Table Loader 源码](https://github.com/Okaetsu/PalSchema/blob/main/src/Loader/PalRawTableLoader.cpp)；本机依赖版本为 0.6.7，保持现有本地安装方式，不修改 PalSchema 的自动重载配置。
+
+用户随后确认“ok了”。提交前移除领奖路径的临时诊断输出，合并离线测试入口的重复代码；回归测试和打包检查再次通过。此次清理没有改动结算和界面行为，没有重复执行游戏内领取。

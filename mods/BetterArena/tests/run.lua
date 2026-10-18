@@ -2,7 +2,14 @@ package.path=PROJECT_ROOT..'/mod/Scripts/?.lua;'..package.path
 local Q=require('BetterArena.Quota')
 local Store=require('BetterArena.Store')
 local Service=require('BetterArena.Service')
-local config=require('config')
+local defaults=require('config')
+assert(defaults.Enabled==nil and defaults.RewardMultiplier==2)
+for rank=1,7 do assert(Q.limit(defaults,rank)==rank*2-1) end
+assert(Q.remaining(nil,10,defaults,4)==7)
+local defaultState=Q.reserve(nil,10,defaults,1);defaultState.pending=false
+assert(Q.remaining(defaultState,10,defaults,2)==2)
+-- Keep a smaller custom quota for transaction/failure scenarios below.
+local config={DailyLimits={1,2,3,4,5,6,7}}
 local state
 for rank=1,7 do assert(Q.limit(config,rank)==rank) end
 assert(Q.remaining(nil,10,config,1)==1)

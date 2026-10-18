@@ -4,7 +4,8 @@ local function object(t) t=t or {};t.IsValid=function() return true end;return t
 local function text() return object{SetText=function(self,v) self.text=v end} end
 local function hidden() return object{SetVisibility=function(self,v) self.visibility=v end} end
 local banner=object{Text_Title=text(),BP_PalRichTextBlock_C_99=text(),Icon=hidden(),SizeBox_AddTextTitle=hidden(),VerticalBox_Add=hidden(),Anm_Open='open',Anm_Close='close',
- AddToViewport=function(_,z) assert(z==100) end,StopAllAnimations=function() end,SetInfo=function() end,
+ AddToViewport=function(_,z) assert(z==100) end,StopAllAnimations=function() end,
+ SetInfo=function() error('must not marshal native reward display structs') end,ChangeColor=function(_,kind) assert(kind==0) end,
  SetVisibility=function(self,v) self.visibility=v end,
  PlayAnimation=function(_,animation) calls[animation]=calls[animation]+1 end,
  RemoveFromParent=function() calls.removed=calls.removed+1 end}

@@ -1,0 +1,254 @@
+{
+  "DT_ArenaSoloRewardTable": {
+    "Bronze": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Giga"
+          },
+          "Rate": 100.0,
+          "Min": 20,
+          "Max": 20
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 5,
+          "Max": 5
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Giga"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 1
+        }
+      ]
+    },
+    "Silver": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "Blueprint_HandGun_Default_2"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 1
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 10,
+          "Max": 10
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Tera"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 2,
+          "Max": 2
+        }
+      ]
+    },
+    "Gold": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "Blueprint_IronArmorHeat_2"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 1
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 15,
+          "Max": 15
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Master"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 4,
+          "Max": 4
+        }
+      ]
+    },
+    "Platinum": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "Blueprint_Launcher_Meteor_5"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 1
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 20,
+          "Max": 20
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Legend"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 6,
+          "Max": 6
+        }
+      ]
+    },
+    "Diamond": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalRevive"
+          },
+          "Rate": 100.0,
+          "Min": 5,
+          "Max": 5
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 25,
+          "Max": 25
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Ultimate"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 8,
+          "Max": 8
+        }
+      ]
+    },
+    "Master": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 100,
+          "Max": 100
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Exotic"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 10,
+          "Max": 20
+        }
+      ]
+    },
+    "Legend": {
+      "FirstClearReward": [
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 200,
+          "Max": 200
+        }
+      ],
+      "RepeatClearReward": [
+        {
+          "ItemName": {
+            "Key": "PalSphere_Ancient_2"
+          },
+          "Rate": 100.0,
+          "Min": 1,
+          "Max": 2
+        },
+        {
+          "ItemName": {
+            "Key": "BattleTicket"
+          },
+          "Rate": 100.0,
+          "Min": 15,
+          "Max": 25
+        }
+      ]
+    }
+  }
+}
