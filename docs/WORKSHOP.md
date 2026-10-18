@@ -5,11 +5,16 @@
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
 封面可替换，但须与 `Thumbnail` 字段一致。
 
-## Better Arena（发布资料准备中）
+## Better Arena
 
-四语标题与简介维护在 `mods/BetterArena/workshop/README.<language>.md`，包名 `BetterArena`，首次发布版本 `1.0.0`，依赖 UE4SSExperimentalPW 和 PalSchema。当前仅准备本地发布资料，尚未创建条目或分配 PublishedId，继续沿用本地开发安装。
+2026-10-19：`1.0.0` 已公开发布，PublishedId 为 [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613)，依赖 UE4SSExperimentalPW 和 PalSchema，最低游戏修订号为实测的 `102999`。
 
-先运行 `python tools/build.py BetterArena`，再用 `python tools/package_workshop.py BetterArena --output-root dist/workshop-better-arena-review` 生成待验收包。包内包含 Lua、奖励基准模块及 PalSchema 补丁；修改 `Scripts/config.lua` 后重启，由 mod 进入世界后自动生成并核对倍率。依赖 PalSchema 自动重载，若原先关闭，首次运行自动开启后需再完整重启一次。最低修订号设为实测的 `102999`（Palworld 1.0.5.102999），不宣称更早版本可用；工坊安装和更新行为尚待验收。
+- 正式目录：`G:/SteamLibrary/steamapps/workshop/content/1623730/3822475613/`，保留 `.workshop.json`。
+- 已读回核对四语标题与介绍、公开状态、标签和两个依赖；远程封面 SHA-256 与源码一致。Steam 重新下载的 23 个包内文件哈希全部匹配。
+- 本机已订阅并启用工坊版本；原本地 Lua 和 PalSchema 数据归档至 `Mods/_LocalBackups/BetterArena-workshop-3822475613-20261019/`。官方部署的 Lua、两份补丁和管理元数据与发布包一致，完整启动后加载正常。
+- 发布包：`dist/workshop-better-arena-publish-20261019/BetterArena/`；发布及核对记录：`.build/workshop-better-arena-publish-20261019/`。
+
+修改 `Scripts/config.lua` 后重启，进入世界后自动生成并核对倍率。依赖 PalSchema 自动重载，若原先关闭，首次运行自动开启后需再完整重启一次。工坊下载和冷启动校验不代替游戏内结算验收；后者见 Better Arena 验收记录。
 
 ## Custom Presets 发布记录
 
@@ -43,6 +48,7 @@
 | PointBlankBurstSkills | [3820050011](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050011) |
 | UpdraftElevator | [3820050074](https://steamcommunity.com/sharedfiles/filedetails/?id=3820050074) |
 | CustomPresets | [3822215387](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387) |
+| BetterArena | [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613) |
 | QuickButcher | [3821569615](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615) |
 
 2026-10-17：QuickButcher（Quick Butcher / 快速肢解）以 `1.0.0` 首次公开发布，

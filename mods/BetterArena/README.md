@@ -1,6 +1,6 @@
 # Better Arena / 更好的竞技场
 
-开发版 0.1.0 · ourongxing
+1.0.0 · ourongxing
 
 竞技场主菜单选择“扫荡”，再选择已通关的难度，立即获得该档重复通关奖励和胜利 RP。每档分别首通解锁，普通挑战入口保留。领取时播放原生奖励动画与音效，显示实际道具数量和 RP。
 
@@ -29,4 +29,4 @@
 
 仓库根目录运行 `python tools/build.py BetterArena` 构建，`python mods/BetterArena/tests/run.py` 测试。关闭游戏后用 `mods/BetterArena/tools/install_local.ps1` 安装；默认保留当前配置，`-ResetConfig` 恢复默认值。
 
-工坊资料在 `workshop/`，尚未发布。功能与倍率切换的实机证据、未验收范围见 [验收记录](docs/VALIDATION.md)。
+已发布至[创意工坊](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613)，四语资料在 `workshop/`。功能与倍率切换的实机证据、未验收范围见 [验收记录](docs/VALIDATION.md)。
