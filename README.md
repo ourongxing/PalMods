@@ -5,6 +5,7 @@ Palworld mod 源码仓库。
 | 封面 | Mod | 功能 |
 | --- | --- | --- |
 | — | [PalIconInfo](mods/PalIconInfo/README.md) | 终端仅显示浓缩星级，按实际星数水平居中；含原始 Mod 地址 |
+| — | [Better Expedition / 更好的远征](mods/BetterExpedition/README.md) | 按战力和时间比例结算、手动结束的实验实现；严重掉帧未解决，已停用 |
 | — | [Better Arena / 更好的竞技场](mods/BetterArena/README.md) | 首通后选择已通关难度即时扫荡；段位决定每日次数，普通挑战与扫荡统一可配奖励倍率（默认两倍），附到账动画与音效（单机／房主开发版） |
 | <img src="mods/CustomPresets/workshop/thumbnail.png" width="160" alt="自定义预设封面"> | [Custom Presets 自定义预设](mods/CustomPresets/README.md) | 保存、切换世界规则与人物外观预设，支持缩略图、命名、更新与删除（[Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3822215387)） |
 | <img src="mods/BetterWorkbench/workshop/thumbnail.png" width="160" alt="更好的工作台封面"> | [BetterWorkbench](mods/BetterWorkbench/README.md) | 同工作台配方穿透、材料滚动、即时分解 |
@@ -45,7 +46,7 @@ python -m unittest discover -s tools/tests
 | `--rebuild-sdk` | 重新配置、编译和导出 SDK；默认复用有效共享包 |
 | `--dry-run` | 预览步骤和产物路径 |
 
-`tools/test.py --skip-native` 运行 Lua／Schema 回归；完整测试另运行三个独立 C++ 测试。
+`tools/test.py --skip-native` 运行 Lua／Schema 回归；完整测试另运行原生 C++ 回归。
 
 | 目标 | 步骤 | 主要产物 |
 | --- | --- | --- |

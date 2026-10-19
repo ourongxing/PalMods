@@ -10,8 +10,8 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena')
-SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'}
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'BetterExpedition')
+SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets', 'BetterExpedition'}
 
 
 def positive_int(value):
@@ -62,7 +62,7 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build_native.py', *options), python_script('audit_native_imports.py')]
-    if mod in ('BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'):
+    if mod in ('BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets', 'BetterExpedition'):
         options = ['--parallel', str(args.parallel)]
         if toolset:
             options.extend(['--toolset', toolset])
@@ -105,6 +105,7 @@ def main(argv=None):
         'CustomPresets': ROOT / 'dist/CustomPresets/CustomPresets-1.0.0.zip',
         'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.0.0.zip',
         'BetterArena': ROOT / 'dist/BetterArena/BetterArena-0.1.0.zip',
+        'BetterExpedition': ROOT / 'dist/BetterExpedition/BetterExpedition-0.1.0.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

@@ -17,6 +17,7 @@ def main():
     scripts.append(ROOT / 'mods/QuickButcher/tests/run.py')
     scripts.append(ROOT / 'mods/CustomPresets/tests/run.py')
     scripts.append(ROOT / 'mods/BetterArena/tests/run.py')
+    scripts.append(ROOT / 'mods/BetterExpedition/tests/check_ui.py')
     scripts.extend(ROOT / 'mods/UpdraftElevator/tests' / name for name in (
         'check_native_cost.py', 'check_native_jump.py', 'check_native_config.py',
         'check_native_package.py', 'check_native_category.py'))

@@ -20,6 +20,7 @@ palmods_test(better_storage_stack_limits mods/BetterStorage/tests/stack_limits.c
 palmods_test(extra_implant_drops_drop_plan mods/ExtraImplantDrops/tests/drop_plan.cpp)
 palmods_test(custom_presets_arguments mods/CustomPresets/tests/preview_arguments.cpp)
 palmods_test(custom_presets_portrait mods/CustomPresets/tests/preview_pixels.cpp)
+palmods_test(better_expedition_rewards mods/BetterExpedition/tests/rewards.cpp)
 target_include_directories(custom_presets_arguments PRIVATE mods/CustomPresets/native/src)
 target_include_directories(custom_presets_portrait PRIVATE mods/CustomPresets/native/src)
 if(WIN32)
