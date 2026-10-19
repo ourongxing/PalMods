@@ -238,6 +238,8 @@ function StaticConstructObject(class)
     end
     return result
 end
+local menuScans,notifications=0,{}
+function NotifyOnNewObject(path,callback) notifications[path]=callback end
 function FindAllOf(class)
     if class=='WBP_Title_WorldSettings_NameWindow_C' then
         local result={}
@@ -245,6 +247,7 @@ function FindAllOf(class)
         if character and character.dialog then result[#result+1]=character.dialog end
         return result
     end
+    menuScans=menuScans+1
     if class=='WBP_CharacterMake_C' then return character and {character} or {} end
     assert(class=='WBP_Title_WorldSettings_C'); return {menu}
 end
@@ -422,6 +425,7 @@ end
 menu.visible=false; tick(); flush()
 gameCulture='zh-Hans'
 character=object('CharacterEditor'); character.WidgetTree={}
+notifications['/Game/Pal/Blueprint/UI/CharacterMake/WBP_CharacterMake.WBP_CharacterMake_C'](character)
 titleClassReady=false -- Enter character creation after the title assets unloaded.
 character.MakeInfo=appearance(); character.SVMax=1
 character.GetOwningPlayer=menu.GetOwningPlayer; character.Push=menu.Push
@@ -525,3 +529,13 @@ assert(capturedPreviews==2 and characters:hasPreview(selectedAppearance), 'Missi
 press(latest('删除预设'))
 assert(#characters:list()==0 and not characters:hasPreview(selectedAppearance), 'Delete archives associated preview')
 assert(#uiLib:list()==0, 'Preview generation leaves world presets untouched')
+menu.visible=false; character.visible=false
+local baselineScans=menuScans
+for _=1,100 do tick(); flush() end
+assert(baselineScans==2 and menuScans==baselineScans, 'Idle polling must never repeat global menu searches')
+local invalidMenu=object('DestroyedMenu')
+notifications['/Game/Pal/Blueprint/UI/UserInterface/Title/WBP_Title_WorldSettings.WBP_Title_WorldSettings_C'](invalidMenu)
+flush()
+invalidMenu.IsValid=function() return false end
+tick(); flush()
+assert(menuScans==2, 'Destroyed tracked menus must be discarded without global scans')

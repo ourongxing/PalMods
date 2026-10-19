@@ -7,6 +7,8 @@
 
 ## Better Arena
 
+2026-10-19：沿用 PublishedId `3822475613` 发布 `1.0.1` 掉帧修复：移除空闲时反复全局搜索菜单，缓存游戏实例，减少页面重复刷新。用户已确认本地修复后明显改善；本次发布前 Lua 回归、构建及打包通过，包内清单哈希与工坊本地上传目录逐文件一致。Steam SDK 上传成功，四语标题与正文已读回核对，依赖、封面、标签与公开状态不变。发布包为 `dist/workshop-better-arena-1.0.1-20261019/BetterArena/`，发布证据与原工坊本地包备份位于 `.build/workshop-better-arena-1.0.1-20261019/`；保留原 `.workshop.json` 并更新版本。本轮未重新下载远端包。
+
 2026-10-19：工坊简繁中文介绍改用游戏内“青铜／青銅至传奇／傳奇”的段位名称，移除自行添加的“杯／盃”。四语标题与正文已读回核对，内容包 23 个文件、版本、封面、标签、依赖和公开状态保持不变；记录位于 `.build/workshop-better-arena-rank-names-20261019/`。
 
 2026-10-19：`1.0.0` 已公开发布，PublishedId 为 [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613)，依赖 UE4SSExperimentalPW 和 PalSchema，最低游戏修订号为实测的 `102999`。
@@ -19,6 +21,8 @@
 修改 `Scripts/config.lua` 后重启，进入世界后自动生成并核对倍率。依赖 PalSchema 自动重载，若原先关闭，首次运行自动开启后需再完整重启一次。工坊下载和冷启动校验不代替游戏内结算验收；后者见 Better Arena 验收记录。
 
 ## Custom Presets 发布记录
+
+2026-10-19：沿用 PublishedId `3822215387` 发布 `1.0.1`，用菜单创建通知替代每 750 ms 的两次全局菜单搜索。四语源 README、包版本及更新说明同步，Steam SDK 上传成功并读回核对四语标题／正文，依赖、封面、公开状态与原条目一致。发布包为 `dist/workshop-custom-presets-1.0.1-20261019/CustomPresets/`，证据与原本地包备份位于 `.build/workshop-custom-presets-1.0.1-20261019/`。工坊本地目录保留原 `.workshop.json` 并更新发布版本；本次未重新下载远端内容，上传前已核对本地包全部清单哈希。
 
 2026-10-18：`1.0.0` 已公开发布，PublishedId 为 `3822215387`，依赖 UE4SSExperimentalPW。
 

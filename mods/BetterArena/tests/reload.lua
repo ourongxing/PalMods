@@ -22,8 +22,9 @@ local controller=object{HasAuthority=function() return true end}
 local utility=object{GetLocalPlayerController=function() return controller end,GetPalGameStateInGame=function() return game end,
  GetArenaWorldSubsystem=function() return arena end,GetGameSetting=function() return setting end}
 local tick
+local searches=0
 local api={LoopAsync=function(ms,fn) assert(ms==500);tick=fn end,ExecuteInGameThread=function(fn) fn() end,
- StaticFindObject=function() return utility end,FindFirstOf=function() return object{} end,LoadAsset=function() end}
+ StaticFindObject=function() return utility end,FindFirstOf=function() searches=searches+1;return object{} end,LoadAsset=function() end}
 Balance.start({RewardMultiplier=3},'/mods/BetterArena',api)
 tick();assert(#writes==2 and not pcall(Balance.requireReady,world))
 tick();assert(not pcall(Balance.requireReady,world) and setting.Arena_RankPoint_WinToNPC==100)
@@ -38,6 +39,7 @@ assert(not pcall(Balance.requireReady,world) and #writes==6) -- bounded verifica
 world='world-d';factor=3
 Schema.write=function() error('disk full') end
 tick();tick();assert(not pcall(Balance.requireReady,world)) -- old values matching cannot bypass failed generation
+assert(searches==1,'persistent game instance must not be searched every tick')
 Schema.autoReload=function() return false end
 assert(not pcall(Balance.start,{RewardMultiplier=3},'/mods/BetterArena',api))
 print('PASS: startup regeneration, real-value verification, shared scalar RP, world changes, bounded timeout and one-time reload setup')

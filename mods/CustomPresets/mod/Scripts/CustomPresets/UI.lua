@@ -583,6 +583,24 @@ local function installHooks()
     end
 end
 function M.start()
+    -- Keep exact menu instances from creation notifications. World-wide
+    -- enumeration belongs only to startup reconciliation, never the timer.
+    local menus = {}
+    local function track(menu, kind)
+        if valid(menu) and not key(menu):find('Default__', 1, true) then
+            menus[key(menu)] = {Menu=menu,Kind=kind}
+        end
+    end
+    for _, spec in ipairs({
+        {'/Game/Pal/Blueprint/UI/CharacterMake/WBP_CharacterMake.WBP_CharacterMake_C','character'},
+        {WORLD,'world'},
+    }) do
+        local kind = spec[2]
+        NotifyOnNewObject(spec[1], function(menu)
+            ExecuteInGameThread(function() track(menu,kind) end)
+        end)
+    end
+    local initialized = false
     local queued = false
     LoopAsync(750, function()
         local installed, failure = pcall(installHooks)
@@ -591,11 +609,19 @@ function M.start()
         queued = true
         ExecuteInGameThread(function()
             local ok, err = pcall(function()
+                if not initialized then
+                    for _, menu in ipairs(FindAllOf('WBP_CharacterMake_C') or {}) do track(menu,'character') end
+                    for _, menu in ipairs(FindAllOf('WBP_Title_WorldSettings_C') or {}) do track(menu,'world') end
+                    initialized = true
+                end
                 for id, s in pairs(sessions) do
                     if not valid(s.Menu) or not s.Menu:IsVisible() then release(id, s) end
                 end
-                for _, menu in ipairs(FindAllOf('WBP_CharacterMake_C') or {}) do
-                    if valid(menu) and menu:IsVisible() and not key(menu):find('Default__',1,true) then
+                for id, candidate in pairs(menus) do
+                    local menu = candidate.Menu
+                    if not valid(menu) then
+                        menus[id] = nil
+                    elseif menu:IsVisible() and candidate.Kind=='character' then
                         local success, problem = pcall(attachCharacter, menu)
                         if not success then report(problem) end
                         local s=sessions[key(menu)]
@@ -603,10 +629,7 @@ function M.start()
                             local captured, failure=pcall(processPreview,s)
                             if not captured then report(failure) end
                         end
-                    end
-                end
-                for _, menu in ipairs(FindAllOf('WBP_Title_WorldSettings_C') or {}) do
-                    if valid(menu) and menu:IsVisible() and not key(menu):find('Default__',1,true) then
+                    elseif menu:IsVisible() then
                         local success, problem = pcall(attach, menu)
                         if not success then report(problem) end
                     end

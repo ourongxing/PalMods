@@ -21,12 +21,14 @@ function M.start(config,directory,api)
  local raw,points=Schema.patches(base,multiplier)
  active={ready=false};local queued=false;local errors={}
  local function valid(o) return o and o:IsValid() end
+ local utility,instance
  api.LoopAsync(500,function()
   if queued then return end;queued=true
   api.ExecuteInGameThread(function()
    local ok,err=pcall(function()
-    local u=api.StaticFindObject('/Script/Pal.Default__PalUtility')
-    local gi=api.FindFirstOf('PalGameInstance')
+    if not valid(utility) then utility=api.StaticFindObject('/Script/Pal.Default__PalUtility') end
+    if not valid(instance) then instance=api.FindFirstOf('PalGameInstance') end
+    local u,gi=utility,instance
     if not valid(u) or not valid(gi) then return end
     local controller=u:GetLocalPlayerController(gi)
     if not valid(controller) or not controller:HasAuthority() then return end

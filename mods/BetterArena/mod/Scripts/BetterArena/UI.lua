@@ -7,6 +7,7 @@ local BUTTON=BASE..'WBP_Arena_TopMenuButton.WBP_Arena_TopMenuButton_C'
 local EVENT='BndEvt__WBP_Arena_TopMenuButton_WBP_PalInvisibleButton_K2Node_ComponentBoundEvent_0_CommonButtonBaseClicked__DelegateSignature'
 local CHALLENGE='BndEvt__WBP_Arena_TopMenu_WBP_Arena_TopMenuButton_Solo_K2Node_ComponentBoundEvent_0_OnArenaButtonClicked__DelegateSignature'
 local ENTRY=BASE..'WBP_Arena_SoloEntry.WBP_Arena_SoloEntry_C'
+local TOP=BASE..'WBP_Arena_TopMenu.WBP_Arena_TopMenu_C'
 local sessions,actions,pending,errors={},{},{},{}
 local function valid(o) return o and o:IsValid() end
 local function key(o) return o:GetFullName() end
@@ -213,26 +214,51 @@ function M.start(config,service)
   end)
   if not ok then release(key(menu),s);error(err) end
  end
+ -- Creation notifications retain only the two relevant menu types. Never
+ -- enumerate the global UObject array from the recurring UI timer.
+ local menus={}
+ local function track(menu,kind)
+  if valid(menu) and not key(menu):find('Default__',1,true) then
+   menus[key(menu)]={menu=menu,kind=kind}
+  end
+ end
+ for _,spec in ipairs({{TOP,'top'},{ENTRY,'entry'}}) do
+  local kind=spec[2]
+  NotifyOnNewObject(spec[1],function(menu)
+   ExecuteInGameThread(function() track(menu,kind) end)
+  end)
+ end
+ -- Startup reconciliation runs once for widgets created before registration.
+ local initialized=false
  local queued=false
  LoopAsync(250,function()
   if queued then return end
   queued=true
   ExecuteInGameThread(function()
    local ok,err=pcall(function()
+    if not initialized then
+     for _,menu in ipairs(FindAllOf('WBP_Arena_TopMenu_C') or {}) do track(menu,'top') end
+     for _,menu in ipairs(FindAllOf('WBP_Arena_SoloEntry_C') or {}) do track(menu,'entry') end
+     initialized=true
+    end
     installHooks()
     for owner,request in pairs(pending) do if os.time()>request.expires then pending[owner]=nil end end
     for id,s in pairs(sessions) do
      if not valid(s.menu) or not s.menu:IsVisible() then release(id,s)
      else
       Feedback.tick(s,os.time())
-      if not s.errorUntil or os.time()>=s.errorUntil then refresh(s) end
+      if (not s.errorUntil or os.time()>=s.errorUntil)
+       and (not s.nextRefresh or os.time()>=s.nextRefresh) then
+       refresh(s);s.nextRefresh=os.time()+1
+      end
      end
     end
-    for _,menu in ipairs(FindAllOf('WBP_Arena_TopMenu_C') or {}) do
-     if valid(menu) and menu:IsVisible() and not key(menu):find('Default__',1,true) then attachTop(menu) end
-    end
-    for _,menu in ipairs(FindAllOf('WBP_Arena_SoloEntry_C') or {}) do
-     if valid(menu) and menu:IsVisible() and not key(menu):find('Default__',1,true) then attachEntry(menu) end
+    for id,candidate in pairs(menus) do
+     local menu=candidate.menu
+     if not valid(menu) then menus[id]=nil
+     elseif menu:IsVisible() then
+      if candidate.kind=='top' then attachTop(menu) else attachEntry(menu) end
+     end
     end
    end)
    queued=false

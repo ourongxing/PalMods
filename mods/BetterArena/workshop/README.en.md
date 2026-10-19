@@ -1,6 +1,6 @@
 # Better Arena
 
-1.0.0 · ourongxing
+1.0.1 · ourongxing
 
 Clear an Arena difficulty once, then claim its rewards instantly with daily sweeps. A higher player rank gives you more sweeps each day.
 
@@ -35,3 +35,7 @@ Supports single-player and the co-op host's own character. Joining clients and d
 Reward patches use vanilla Palworld 1.0.5 data and overwrite Arena reward entries and base NPC victory RP. Mods editing the same data may conflict. Drop probabilities, defeat penalties, and PVP RP are unchanged.
 
 Sweep usage is stored separately for each world and player in `%LOCALAPPDATA%/Pal/Saved/BetterArena/`. Include this folder when backing up or transferring your saves.
+
+## 1.0.1 update
+
+Removed repeated global menu searches while the Arena is closed, cached the valid game instance, and reduced redundant page refreshes. Reward claims still run live validation.

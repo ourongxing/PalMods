@@ -64,9 +64,11 @@ StaticFindObject=function(path)
 end
 LoadAsset=function() end;FName=name;FText=function(s) return s end
 RegisterHook=function(path,callback) hooks[path]=callback end
+local notifications,scans={},0
+NotifyOnNewObject=function(path,callback) notifications[path]=callback end
 LoopAsync=function(_,callback) UI_TICK=callback end
 ExecuteInGameThread=function(callback) queue[#queue+1]=callback end
-FindAllOf=function(class) if class=='WBP_Arena_TopMenu_C' then return {top} end;return child and {child} or {} end
+FindAllOf=function(class) scans=scans+1;if class=='WBP_Arena_TopMenu_C' then return {top} end;return child and {child} or {} end
 local service={preview=function() return {challengeRank=5,cleared={[1]=true,[5]=true},remaining=left,playerRank=3,pending=false} end,
  claim=function(_,menu,rank) assert(rank==1 or rank==5);assert(left>0);claims[#claims+1]=rank;left=left-1;return {receipt={rank=rank,items={BattleTicket=rank},points=50}} end}
 local function drain() while #queue>0 do table.remove(queue,1)() end end
@@ -98,4 +100,15 @@ assert(sweptPage.cards[1].WBP_PalInvisibleButton.OnButtonBaseClicked.bindings[1]
 assert(sweptPage.cards[2].opacity==1 and sweptPage.cards[2].enabled)
 openChallenge();child.cards[1].WBP_PalInvisibleButton.OnButtonBaseClicked:Broadcast();assert(battles==2 and #claims==3)
 top.visible=false;tick();assert(top.WBP_Arena_TopMenuButton_Solo.Slot.position.X==-380 and sweep.removed)
+-- Long idle periods never enumerate global objects again.
+for _=1,100 do tick() end
+assert(scans==2,'idle arena timer must not rescan global objects')
+-- A new menu after startup is discovered through the creation notification.
+local prior=top.GetFullName
+top.GetFullName=function() return 'new-arena-menu' end
+top.visible=true
+notifications['/Game/Pal/Blueprint/UI/UserInterface/Arena/WBP_Arena_TopMenu.WBP_Arena_TopMenu_C'](top)
+drain();tick()
+assert(top.WBP_Arena_TopMenuButton_Solo.Slot.position.X==-570 and scans==2)
+top.visible=false;tick();top.GetFullName=prior
 print('PASS: top menu > sweep difficulties, selected rewards, shared limit, double click guard and ordinary Challenge isolation')
