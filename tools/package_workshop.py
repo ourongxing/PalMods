@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'SekhmetMedicine')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 TEMPLATES_ROOT = ROOT / 'tools/workshop/templates'
 
@@ -116,7 +116,7 @@ def payload(mod):
         return [(pak, 'Paks/QuickButcher_P.pak')]
     source = MODS_ROOT / mod / 'mod'
     files = []
-    if mod != 'PointBlankBurstSkills':
+    if mod not in ('PointBlankBurstSkills', 'SekhmetMedicine'):
         files += [(p, p.relative_to(source).as_posix())
                   for p in sorted((source / 'Scripts').rglob('*.lua'))]
         files += [(None, 'enabled.txt')]
@@ -170,6 +170,9 @@ def payload(mod):
     elif mod == 'PointBlankBurstSkills':
         files += [(source / 'raw/point_blank_burst_skills.json',
                    'PalSchema/raw/point_blank_burst_skills.json')]
+    elif mod == 'SekhmetMedicine':
+        files += [(source / 'raw/sekhmet_medicine.json',
+                   'PalSchema/raw/sekhmet_medicine.json')]
     for src, dest in files:
         if src is not None:
             if not src.is_file():

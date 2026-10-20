@@ -1,0 +1,25 @@
+{
+  "ModName": "Sekhmet Medicine / 制药的塞赫麦特",
+  "PackageName": "SekhmetMedicine",
+  "Thumbnail": "thumbnail.png",
+  "Version": "1.0.0",
+  "DebugMode": false,
+  "MinRevision": 102999,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW",
+    "PalSchema"
+  ],
+  "Tags": [
+    "PalSchema",
+    "Gameplay"
+  ],
+  "InstallRule": [
+    {
+      "Type": "PalSchema",
+      "Targets": [
+        "./PalSchema/"
+      ]
+    }
+  ]
+}

@@ -10,7 +10,7 @@ import sys
 from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
-MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'BetterExpedition')
+MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'BetterExpedition', 'SekhmetMedicine')
 SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets', 'BetterExpedition'}
 
 
@@ -67,6 +67,8 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build.py', *options)]
+    if mod == 'SekhmetMedicine':
+        return [python_script('build.py')]
     if mod in ('AnywherePalBox', 'BetterPalSouls', 'QuickButcher', 'BetterArena'):
         return [python_script('build.py')]
     if mod == 'UpdraftElevator':
@@ -106,6 +108,7 @@ def main(argv=None):
         'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.0.0.zip',
         'BetterArena': ROOT / 'dist/BetterArena/BetterArena-0.1.0.zip',
         'BetterExpedition': ROOT / 'dist/BetterExpedition/BetterExpedition-0.1.0.zip',
+        'SekhmetMedicine': ROOT / 'dist/SekhmetMedicine/SekhmetMedicine-0.1.0.zip',
     }
     try:
         if 'sdk' in selected or selected & SDK_MODS:

@@ -1,5 +1,11 @@
 # 创意工坊打包
 
+## Sekhmet Medicine
+
+2026-10-20：`Sekhmet Medicine / 制药的塞赫麦特` 已以 `1.0.0` 公开发布，PublishedId 为 [3823292428](https://steamcommunity.com/sharedfiles/filedetails/?id=3823292428)。四语标题与正文、公开状态、标签、封面存在及 UE4SSExperimentalPW／PalSchema 两个依赖已读回核对；通过游戏 AppID 下载的 8 个包内文件哈希与发布清单全部一致。
+正式目录为 `G:/SteamLibrary/steamapps/workshop/content/1623730/3823292428/`，保留 `.workshop.json`。本机已订阅并启用；原本地开发副本及启用设置备份至 `.build/workshop-sekhmet-publish-20261020/local-migration/`，下次冷启动由官方加载器部署。未自动启动游戏，实际制药行为仍由用户测试。
+发布包：`dist/workshop-sekhmet-publish-20261020/SekhmetMedicine/`；上传、远端读回与下载验收证据：`.build/workshop-sekhmet-publish-20261020/`。
+
 各 mod 有独立的 `mods/<Mod>/workshop/Info.json` 和 PNG 封面。
 作者为 `ourongxing`；包名固定为源码目录名，首次发布后不要随意修改。
 工坊包均以 `1.0.0` 首次发布，不提供历史开发版本的迁移或后向兼容。
