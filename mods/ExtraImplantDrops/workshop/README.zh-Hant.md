@@ -1,6 +1,6 @@
 # Extra Implant Drops / 植入體掉落
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 帕魯死亡或被肢解時，有機率額外掉落與其詞條對應的植入體。
 
@@ -16,6 +16,8 @@
 1. 訂閱並啟用前置 Mod：UE4SSExperimentalPW。
 2. 在遊戲的 Mod 管理中啟用本 Mod。
 3. 完全退出遊戲，再重新啟動。
+
+支援 Windows 專用伺服器。請在伺服器端安裝並啟用 UE4SSExperimentalPW 與本 Mod，再重新啟動伺服器。套件包含獨立的伺服器端 DLL，請勿以用戶端 DLL 取代。掉落機率與詞條開關以伺服器端 `config.ini` 為準。
 
 ## 設定
 

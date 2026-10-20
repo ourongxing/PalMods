@@ -174,7 +174,10 @@ class WorkshopTests(unittest.TestCase):
                     self.assertIn(lua_root + '/config.ini', installed)
                 if mod == 'ExtraImplantDrops':
                     self.assertFalse(any('/Scripts/' in path for path in installed))
-                    self.assertEqual(info['Version'], '1.0.0')
+                    self.assertEqual(info['Version'], '1.1.0')
+                    self.assertEqual(installed_by_server[True], installed_by_server[False])
+                    self.assertNotEqual((package / 'dlls/main.dll').read_bytes(),
+                                        (package / 'Server/dlls/main.dll').read_bytes())
                 if mod == 'AnywherePalBox':
                     self.assertIn(lua_root + '/Scripts/config.lua', installed)
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])

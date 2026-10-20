@@ -1,6 +1,6 @@
 # Extra Implant Drops
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 Pals can drop additional implants matching their passive skills when they die or are butchered.
 
@@ -16,6 +16,8 @@ Pals can drop additional implants matching their passive skills when they die or
 1. Subscribe to and enable the required mods: UE4SSExperimentalPW.
 2. Enable this mod in the game's Mod Management menu.
 3. Fully exit the game, then launch it again.
+
+Windows dedicated servers are supported. Install and enable UE4SSExperimentalPW and this mod on the server, then restart it. A separate server DLL is included; do not copy the client DLL to the server. Drop chance and implant switches use the server's `config.ini`.
 
 ## Configuration
 

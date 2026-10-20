@@ -2,7 +2,7 @@
   "ModName": "Extra Implant Drops / 植入体掉落",
   "PackageName": "ExtraImplantDrops",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "DebugMode": false,
   "MinRevision": 82182,
   "Author": "ourongxing",
@@ -21,6 +21,11 @@
         "./config.ini",
         "./enabled.txt"
       ]
+    },
+    {
+      "Type": "Lua",
+      "IsServer": true,
+      "Targets": ["./Server/"]
     }
   ]
 }

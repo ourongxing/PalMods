@@ -1,5 +1,11 @@
 # 创意工坊打包
 
+## Extra Implant Drops 1.1.0 服务端支持
+
+2026-10-20：沿用 PublishedId [3820049962](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049962) 发布 `1.1.0`，增加独立 Windows 服务端 DLL、服务端配置与安装规则。客户端与服务端各自使用完整程序指纹和 12 段函数字节保护；用户已确认本机服务器掉落可用。两端原生编译、各 24 个 UE4SS 导入检查、掉落规则及 15 项工坊打包测试通过。
+
+四语标题与正文已读回核对，公开状态、封面、标签和 UE4SSExperimentalPW 依赖保持不变。通过游戏 AppID 重新下载，13 个包内文件哈希全部匹配。正式目录 `G:/SteamLibrary/steamapps/workshop/content/1623730/3820049962/` 保留 `.workshop.json` 并更新发布版本。本机测试服务器停服备份后切换正式包，完整重启确认部署 DLL 哈希、掉落钩子和端口正常。证据：`.build/workshop-extraimplantdrops-server-1.1.0-20261020/`；发布包：`dist/workshop-extraimplantdrops-server-1.1.0-20261020/ExtraImplantDrops/`。
+
 ## Quick Butcher 1.1.0 服务端支持
 
 2026-10-20：沿用 PublishedId [3821569615](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615) 发布 `1.1.0`，新增独立 Windows 专用服务器 PAK 与服务端安装规则，保留客户端 PAK，无新增依赖。用户已确认本机服务器的地下肢解及耗时异常解决。四语标题／正文已读回核对，公开状态、封面、标签和依赖保持不变；通过游戏 AppID 重新下载，9 个包内文件的 SHA-256 全部匹配，服务端规则与资源存在。客户端／服务端补丁检查及 15 项工坊打包工具测试通过。

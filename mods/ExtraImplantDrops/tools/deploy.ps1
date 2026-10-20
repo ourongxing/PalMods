@@ -1,15 +1,21 @@
-param([string]$ModsDirectory)
+param([string]$ModsDirectory, [switch]$Server)
 $ErrorActionPreference = 'Stop'
 $repoRoot = (Resolve-Path (Join-Path $PSScriptRoot '../../..')).Path
 . (Join-Path $repoRoot 'tools/paths.ps1')
-if (-not $ModsDirectory) { $ModsDirectory = (Get-PalModsGamePaths).ModsDirectory }
+if (-not $ModsDirectory) {
+    if ($Server) { $ModsDirectory = 'G:\PalworldTestServer\Mods\NativeMods\UE4SS\Mods' }
+    else { $ModsDirectory = (Get-PalModsGamePaths).ModsDirectory }
+}
 $ModsDirectory = (Resolve-Path -LiteralPath $ModsDirectory).Path
-if (Get-Process -Name 'Palworld-Win64-Shipping' -ErrorAction SilentlyContinue) {
-    throw 'Close Palworld before replacing mods.'
+if (Get-Process -Name 'Palworld-Win64-Shipping','PalServer-Win64-Shipping-Cmd','PalServer-Win64-Shipping','PalServer' -ErrorAction SilentlyContinue) {
+    throw 'Close Palworld and stop the dedicated server before replacing mods.'
 }
 $stage = Join-Path $repoRoot 'dist/ExtraImplantDrops/ExtraImplantDrops'
+if ($Server) { $stage = Join-Path $repoRoot 'dist/ExtraImplantDrops/server/ExtraImplantDrops' }
 $candidate = Join-Path $stage 'dlls/main.dll'
-$audit = Get-Content -LiteralPath (Join-Path $repoRoot '.build/ExtraImplantDrops/import-audit.json') -Raw | ConvertFrom-Json
+$auditDirectory = if ($Server) { '.build/ExtraImplantDrops-server' } else { '.build/ExtraImplantDrops' }
+$audit = Get-Content -LiteralPath (Join-Path $repoRoot "$auditDirectory/import-audit.json") -Raw | ConvertFrom-Json
+if ($Server -and $audit.target -ne 'server') { throw 'Candidate was not audited for the dedicated server.' }
 if ((Get-FileHash -LiteralPath $candidate -Algorithm SHA256).Hash.ToLowerInvariant() -ne $audit.dll_sha256) {
     throw 'Candidate DLL differs from the verified build.'
 }
@@ -19,6 +25,9 @@ $existingConfigPath = Join-Path $destination 'config.ini'
 $sourceConfigPath = $existingConfigPath
 if (-not (Test-Path -LiteralPath $sourceConfigPath)) {
     $sourceConfigPath = Join-Path $legacyDirectory 'config.ini'
+}
+if ($Server -and -not (Test-Path -LiteralPath $sourceConfigPath)) {
+    $sourceConfigPath = Join-Path (Get-PalModsGamePaths).ModsDirectory 'ExtraImplantDrops/config.ini'
 }
 $existingConfig = $null
 if (Test-Path -LiteralPath $sourceConfigPath) {
@@ -78,6 +87,8 @@ if (Test-Path -LiteralPath $oldMarker) {
     # A single marker file is moved to the already-created backup; never remove the old mod.
     Move-Item -LiteralPath $oldMarker -Destination (Join-Path $backup 'ImplantHarvest-enabled.txt')
 }
+$text = [regex]::Replace($text, '(?m)^[ \t]*Keybinds[ \t]*:[ \t]*[01][ \t]*(?:\r?\n|$)', '')
+$text = $text.TrimEnd() + "`r`nKeybinds : 1`r`n"
 [System.IO.File]::WriteAllText($control, $text, [System.Text.UTF8Encoding]::new($false))
 if ($null -ne $jsonText) {
     [System.IO.File]::WriteAllText($jsonControl, $jsonText + "`r`n", [System.Text.UTF8Encoding]::new($false))

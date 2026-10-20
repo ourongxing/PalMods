@@ -153,7 +153,7 @@ static bool compatible(std::uint8_t* base) {
 class ExtraImplantDropsNative final : public CppUserModBase {
 public:
     ExtraImplantDropsNative() {
-        ModName = STR("ExtraImplantDrops"); ModVersion = STR("1.0.0");
+        ModName = STR("ExtraImplantDrops"); ModVersion = STR("1.1.0");
         ModAuthors = STR("ourongxing");
         ModDescription = STR("Implants in native Pal death drops with game quantity modifiers");
         read_config();

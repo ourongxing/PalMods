@@ -101,7 +101,7 @@ def main(argv=None):
         'BetterStorage': ROOT / 'dist/BetterStorage/BetterStorage-0.1.0.zip',
         'AnywherePalBox': ROOT / 'dist/AnywherePalBox/AnywherePalBox-1.0.0.zip',
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
-        'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',
+        'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.1.0.zip',
         'CustomPresets': ROOT / 'dist/CustomPresets/CustomPresets-1.0.0.zip',
         'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.1.0.zip',
         'BetterArena': ROOT / 'dist/BetterArena/BetterArena-0.1.0.zip',

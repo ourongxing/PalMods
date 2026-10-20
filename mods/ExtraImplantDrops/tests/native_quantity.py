@@ -18,9 +18,13 @@ from capstone import Cs, CS_ARCH_X86, CS_MODE_64
 from capstone.x86 import X86_OP_MEM, X86_REG_RIP
 
 EXPECTED = 'e590b5e7bfaa3fea40fab1a02cc72c8fc5fd6f8631ef2308e95ac56c25195837'
+start, length = 0x2e6bf70, 0x13f
+if '--server' in sys.argv:
+    GAME_EXE = Path(r'G:\PalworldTestServer\Pal\Binaries\Win64\PalServer-Win64-Shipping-Cmd.exe')
+    EXPECTED = '6f929673e7ac637d591d6f3454dbd396be7911093311cb8b24af3a152b217f49'
+    start = 0x2d16750
 assert hashlib.file_digest(GAME_EXE.open('rb'), 'sha256').hexdigest() == EXPECTED
 pe = pefile.PE(str(GAME_EXE), fast_load=True)
-start, length = 0x2e6bf70, 0x13f
 code = bytearray(pe.get_data(start, length))
 decoder = Cs(CS_ARCH_X86, CS_MODE_64)
 decoder.detail = True

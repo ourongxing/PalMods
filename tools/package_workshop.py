@@ -155,6 +155,17 @@ def payload(mod):
         if report['imports_verified'] < 24:
             raise ValueError('ExtraImplantDrops import audit is incomplete')
         files += [(source / 'config.ini', 'config.ini'), (dll, 'dlls/main.dll')]
+        server_build = BUILD_ROOT / 'ExtraImplantDrops-server'
+        server_dll = server_build / 'Game__Shipping__Win64/bin/ExtraImplantDropsNative.dll'
+        server_report = read_json(server_build / 'import-audit.json')
+        if (server_report.get('target') != 'server'
+                or digest(server_dll).lower() != server_report['dll_sha256'].lower()):
+            raise ValueError('ExtraImplantDrops server DLL differs from server import audit')
+        if server_report['imports_verified'] < 24:
+            raise ValueError('ExtraImplantDrops server import audit is incomplete')
+        files += [(source / 'config.ini', 'Server/config.ini'),
+                  (source / 'enabled.txt', 'Server/enabled.txt'),
+                  (server_dll, 'Server/dlls/main.dll')]
     elif mod == 'BetterBulkStorage':
         files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterBulkStorageNative.dll',
                    'dlls/main.dll')]
