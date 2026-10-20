@@ -2,7 +2,7 @@
   "ModName": "Better Storage / 更好的收纳",
   "PackageName": "BetterStorage",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.1.0",
+  "Version": "1.2.0",
   "DebugMode": false,
   "MinRevision": 82182,
   "Author": "ourongxing",
@@ -10,6 +10,8 @@
   "Tags": ["UE4SS", "PalSchema", "Gameplay"],
   "InstallRule": [
     {"Type": "Lua", "Targets": ["./Scripts", "./dlls", "./enabled.txt"]},
-    {"Type": "PalSchema", "Targets": ["./PalSchema/"]}
+    {"Type": "PalSchema", "Targets": ["./PalSchema/"]},
+    {"Type": "Lua", "IsServer": true, "Targets": ["./Server/"]},
+    {"Type": "PalSchema", "IsServer": true, "Targets": ["./PalSchema/"]}
   ]
 }

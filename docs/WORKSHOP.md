@@ -1,5 +1,11 @@
 # 创意工坊打包
 
+## Better Storage 1.2.0 服务端支持
+
+2026-10-20：沿用 [3820049820](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049820) 发布 `1.2.0`，加入独立 Windows 服务端 DLL 和服务器安装规则，修复野外收纳的远程库存订阅及候选读取。用户确认服务器重启后无需打开道具存储机即可收纳。两端编译、41 个接口及候选回归、15 项工坊打包测试通过。
+
+四语标题与说明已读回核对，条目身份、公开状态、依赖、标签和封面保持不变。使用须知按用户要求精简。本轮未完成远端包重新下载校验。发布包：`dist/workshop-betterstorage-server-1.2.0-20261020/BetterStorage/`；发布及最终文案证据：`.build/workshop-betterstorage-server-1.2.0-20261020/`、`.build/workshop-betterstorage-copy-exact-20261020/`。验证边界见 BetterStorage 的 `docs/VALIDATION.md`。
+
 ## Extra Implant Drops 1.1.0 服务端支持
 
 2026-10-20：沿用 PublishedId [3820049962](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049962) 发布 `1.1.0`，增加独立 Windows 服务端 DLL、服务端配置与安装规则。客户端与服务端各自使用完整程序指纹和 12 段函数字节保护；用户已确认本机服务器掉落可用。两端原生编译、各 24 个 UE4SS 导入检查、掉落规则及 15 项工坊打包测试通过。

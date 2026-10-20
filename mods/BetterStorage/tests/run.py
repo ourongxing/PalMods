@@ -9,6 +9,12 @@ from palmods import load_lua_runtime, UE4SS_ROOT, GAME_EXE
 sys.path.insert(0, str(ROOT / 'mods/BetterBulkStorage/tests'))
 from audit_interfaces import audit, INTERFACES
 INTERFACES['CollectQuickStackTargetItemInfos'] = ('Pal.PalBaseCampUtility', ['WorldContextObject', 'TargetBaseCampID', 'TargetPlayerUId', 'StaticItemIds', 'OutItemInfos'])
+INTERFACES['GetBaseCamp'] = ('Pal.PalNetworkTransmitter', [])
+INTERFACES['GetPlayerRole'] = ('Pal.PalGroupGuildBase', ['PlayerUId'])
+INTERFACES['RequestReplicateBaseCampItemStackInfo_ToServer'] = ('Pal.PalNetworkBaseCampComponent', ['BaseCampId', 'bReplicate'])
+INTERFACES['OnQuickStackItemStackInfoUpdate'] = ('/Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment.WBP_InventoryEquipment_C', ['ItemStackInfoModule'])
+from audit_interfaces import NON_GAME_METHODS
+NON_GAME_METHODS.add('GetOuter')
 
 mod = ROOT / 'mods/BetterStorage'
 source = (mod / 'mod/Scripts/main.lua').read_text(encoding='utf-8')
@@ -55,4 +61,4 @@ for address, expected in {
 # The original local-player entry delegates to this same explicit-base collector.
 call = next(Cs(CS_ARCH_X86, CS_MODE_64).disasm(pe.get_data(0x2fa0cbc, 5), 0x2fa0cbc))
 assert (call.mnemonic, call.op_str) == ('call', '0x2db0a90')
-print('PASS: scoped base selection, exact vanilla collector with selected remote base, physical-base preservation, no preview/transfer override')
+print('PASS: scoped base selection, replicated remote candidates with private/guild permissions, physical-base preservation, vanilla transfer')

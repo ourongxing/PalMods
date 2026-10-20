@@ -110,6 +110,82 @@ RegisterHook("/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID", 
     end)
 print("[BetterStorage] outside-base selection: most buildings, nearest on ties\n")
 
+-- Vanilla's local-player subscription resolves physical location in native code.
+-- Own only the extra remote subscription, through this player's RPC component.
+local remoteSession
+local replicatedBase, replicatedModule
+local traceBudget = 30
+local function trace(message)
+    if traceBudget <= 0 then return end
+    traceBudget = traceBudget - 1
+    print("[BetterStorage] sync: " .. message .. "\n")
+end
+local function releaseRemote()
+    local session = remoteSession
+    remoteSession = nil
+    if session and valid(session.network) then
+        session.network:RequestReplicateBaseCampItemStackInfo_ToServer(session.id, false)
+    end
+end
+RegisterHook("/Script/Pal.PalBaseCampUtility:RequestStartReplicateLocalPlayerBaseCampItemStackInfo", noop,
+    function(_, worldContext)
+        trace("prepare ready=" .. tostring(ready()) .. " scope=" .. tostring(inStorageScope()))
+        if not ready() or not inStorageScope() then return end
+        local world = unwrap(worldContext)
+        if not valid(world) or not world:IsA(inventoryClass) then trace("not inventory context"); return end
+        local ok, err = pcall(function()
+            local pal = StaticFindObject("/Script/Pal.Default__PalUtility")
+            if not valid(pal) then trace("utility unavailable"); return end
+            local player = pal:GetPalmi(world)
+            if not valid(player) or not valid(player.InsideBaseCampCheckComponent) then trace("player unavailable"); return end
+            local component = player.InsideBaseCampCheckComponent
+            if valid(physicalBase(component)) then trace("physical base: vanilla subscription"); return end
+            local base = largestOwnedBase(component, pal)
+            local controller = pal:GetLocalPalPlayerController(world)
+            if not valid(base) then trace("selected base unavailable"); return end
+            if not valid(controller) or not valid(controller.Transmitter) then trace("owned transmitter unavailable"); return end
+            local network = controller.Transmitter:GetBaseCamp()
+            if not valid(network) then trace("base network unavailable"); return end
+            local id = guid(base:GetId())
+            if remoteSession and valid(remoteSession.world)
+                and remoteSession.world:GetAddress() == world:GetAddress()
+                and sameGuid(remoteSession.id, id) then return end
+            releaseRemote()
+            remoteSession = {world = world, network = network, id = id, base = base}
+            network:RequestReplicateBaseCampItemStackInfo_ToServer(id, true)
+            trace("requested selected base " .. tostring(id.A) .. ":" .. tostring(id.B))
+        end)
+        if not ok then print("[BetterStorage] remote subscription failed: " .. tostring(err) .. "\n") end
+    end)
+RegisterHook("/Script/Pal.PalBaseCampUtility:RequestEndReplicateLocalPlayerBaseCampItemStackInfo", noop,
+    function(_, worldContext)
+        if remoteSession then trace("finish received") end
+        local world = unwrap(worldContext)
+        if not remoteSession or not valid(world) or not valid(remoteSession.world)
+            or world:GetAddress() ~= remoteSession.world:GetAddress() then return end
+        local ok, err = pcall(releaseRemote)
+        if not ok then print("[BetterStorage] remote unsubscribe failed: " .. tostring(err) .. "\n") end
+    end)
+RegisterHook("/Script/Pal.PalBaseCampModuleItemStackInfo:OnRep_ItemStackRepInfoArray", noop,
+    function(context)
+        local session = remoteSession
+        if session then trace("inventory replication received") end
+        if not session or not ready() or not valid(session.world) then return end
+        local ok, err = pcall(function()
+            if not session.world:IsVisible() then releaseRemote(); return end
+            local module = unwrap(context)
+            if not valid(module) or not valid(session.base) then return end
+            local owner = module:GetOuter()
+            if not valid(owner) or owner:GetAddress() ~= session.base:GetAddress() then trace("replication belongs to another model"); return end
+            replicatedBase, replicatedModule = session.base, module
+            -- Use the normal ready/update route: it recollects the selected base's
+            -- exact eligible items, then finishes this one-shot subscription.
+            session.world:OnQuickStackItemStackInfoUpdate(module)
+            trace("inventory refresh dispatched")
+        end)
+        if not ok then print("[BetterStorage] remote update failed: " .. tostring(err) .. "\n") end
+    end)
+
 -- The local-player collector reads the physical base through native calls,
 -- bypassing reflected getter hooks. Outside a base, call its exact underlying
 -- collector with the selected base ID; keep vanilla eligibility and quantities.
@@ -135,6 +211,45 @@ RegisterHook("/Script/Pal.PalItemUtility:CollectLocalPlayerQuickStackTargetItemI
             local collected = {}
             baseUtility:CollectQuickStackTargetItemInfos(world, guid(base:GetId()),
                 guid(controller:GetPlayerUId()), names, collected)
+            -- The vanilla explicit-base collector resolves concrete containers.
+            -- Those may not exist on a remote client. Use the server's replicated
+            -- chest summaries instead, with its private-lock and guild-role rules.
+            if valid(replicatedBase) and valid(replicatedModule)
+                and replicatedBase:GetAddress() == base:GetAddress() then
+                local groups = StaticFindObject("/Script/Pal.Default__PalGroupUtility")
+                local guild = valid(groups) and groups:GetLocalPlayerGuild(player)
+                if not valid(guild) then return end
+                local uid = guid(controller:GetPlayerUId())
+                local role = unwrap(guild:GetPlayerRole(uid))
+                local wanted, totals = {}, {}
+                for _, name in ipairs(names) do wanted[name:ToString()] = name end
+                each(replicatedModule.ItemStackRepInfoArray.Items, function(chest)
+                    local available, privateCount = false, 0
+                    each(chest.AvailablePlayerUIds, function(id)
+                        privateCount = privateCount + 1
+                        if sameGuid(id, uid) then available = true end
+                    end)
+                    if privateCount > 0 and not available then return end
+                    if unwrap(chest.bHasGuildSecurityRestriction) and role ~= 1 then
+                        local allowed = false
+                        each(chest.AllowedRoles, function(value) if unwrap(value) == role then allowed = true end end)
+                        if not allowed then return end
+                    end
+                    each(chest.ItemStackInfos, function(info)
+                        local name = unwrap(info.ItemId.StaticId):ToString()
+                        local count = unwrap(info.StackCount)
+                        if wanted[name] and type(count) == "number" and count > 0 then
+                            totals[name] = math.min(2147483647, (totals[name] or 0) + count)
+                        end
+                    end)
+                end)
+                collected = {}
+                for _, name in ipairs(names) do
+                    local count = totals[name:ToString()]
+                    if count then collected[#collected + 1] = {StaticItemId = name, Num = count} end
+                end
+                trace("replicated candidates=" .. tostring(#collected))
+            end
             local result = {}
             for _, value in ipairs(collected) do
                 local info = unwrap(value)

@@ -34,7 +34,7 @@ end
 assert(loadfile(SCRIPTS..'/main.lua'))()
 local count=0
 for _ in pairs(hooks) do count=count+1 end
-assert(count==3)
+assert(count==6)
 local getModel=hooks['/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampModel']
 local getId=hooks['/Script/Pal.PalInsideBaseCampCheckComponent:GetInsideBaseCampID']
 assert(getModel(param(component),param(nil))==models[3])
@@ -92,3 +92,66 @@ assert(not assigned and calls==0)
 scoped=true
 component.GetOwner=function() return object({address=11}) end
 assert(getModel(param(component),param(nil))==nil)
+
+scoped=true
+component.GetOwner=function() return player end
+local requests={}
+local network=object({RequestReplicateBaseCampItemStackInfo_ToServer=function(_,id,enabled)
+    requests[#requests+1]={id=id.A,enabled=enabled}
+end})
+local controller=object({Transmitter=object({GetBaseCamp=function() return network end})})
+utility.GetLocalPalPlayerController=function() return controller end
+local start=hooks['/Script/Pal.PalBaseCampUtility:RequestStartReplicateLocalPlayerBaseCampItemStackInfo']
+local finish=hooks['/Script/Pal.PalBaseCampUtility:RequestEndReplicateLocalPlayerBaseCampItemStackInfo']
+local replicate=hooks['/Script/Pal.PalBaseCampModuleItemStackInfo:OnRep_ItemStackRepInfoArray']
+world.address=99
+world.IsVisible=function() return true end
+local updates=0
+world.OnQuickStackItemStackInfoUpdate=function(_,module)
+    updates=updates+1
+    finish(nil,param(world))
+end
+models[3].address=103; models[1].address=101
+start(nil,param(world)); start(nil,param(world))
+assert(#requests==1 and requests[1].id==3 and requests[1].enabled)
+replicate(param(object({GetOuter=function() return models[1] end})))
+assert(updates==0 and #requests==1)
+replicate(param(object({GetOuter=function() return models[3] end})))
+assert(updates==1 and #requests==2 and not requests[2].enabled)
+replicate(param(object({GetOuter=function() return models[3] end})))
+assert(updates==1)
+start(nil,param(world)); finish(nil,param(object({address=77})))
+assert(#requests==3)
+finish(nil,param(world)); assert(#requests==4 and not requests[4].enabled)
+physical=models[1]; start(nil,param(world)); assert(#requests==4)
+physical=nil; scoped=false; start(nil,param(world)); assert(#requests==4)
+scoped=true; start(nil,param(world)); world.IsVisible=function() return false end
+replicate(param(object({GetOuter=function() return models[3] end})))
+assert(#requests==6 and not requests[6].enabled and updates==1)
+world.IsVisible=function() return true end
+local role=2
+utility.GetLocalPlayerGuild=function() return guild end
+guild.GetPlayerRole=function() return role end
+controller.GetPlayerUId=function() return guid(9) end
+local function chest(count,private,restricted,roles)
+    return {AvailablePlayerUIds=array(private or {}), bHasGuildSecurityRestriction=restricted or false,
+        AllowedRoles=array(roles or {}), ItemStackInfos=array({
+            {ItemId={StaticId=name('wood')},StackCount=count},
+            {ItemId={StaticId=name('unrequested')},StackCount=999}})}
+end
+local module=object({GetOuter=function() return models[3] end,
+    ItemStackRepInfoArray={Items=array({chest(12),chest(50,{guid(8)}),
+        chest(7,{guid(9)}),chest(100,nil,true,{3}),chest(5,nil,true,{2})})}})
+start(nil,param(world)); replicate(param(module))
+unreadable=true; assigned=nil
+collect(param(utility),param(world),param(names),out)
+assert(assigned and #assigned==1 and assigned[1].Num==24)
+role=1; collect(param(utility),param(world),param(names),out)
+assert(#assigned==1 and assigned[1].Num==124)
+-- Guild master cannot bypass another player's private lock.
+module.ItemStackRepInfoArray.Items=array({chest(50,{guid(8)})})
+collect(param(utility),param(world),param(names),out)
+assert(#assigned==0)
+module.ItemStackRepInfoArray.Items=array({chest(2147483640),chest(20),chest(0),chest(-1)})
+collect(param(utility),param(world),param(names),out)
+assert(#assigned==1 and assigned[1].Num==2147483647)

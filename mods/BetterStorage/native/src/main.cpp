@@ -256,6 +256,10 @@ public:
         RC::Output::send(transport_supported && install_transport()
             ? STR("[BetterStorage] Pal transport stack preference ready\n")
             : STR("[BetterStorage] Pal transport patch unavailable; vanilla transport retained\n"));
+        if constexpr (guard::dedicated_server) {
+            RC::Output::send(STR("[BetterStorage] dedicated-server storage patches ready\n"));
+            return;
+        }
         // Track synchronous Blueprint execution, including nested delegate calls.
         // Never pretend that the player is inside a base for unrelated gameplay.
         auto enter = [](auto&, RC::Unreal::UObject* context, RC::Unreal::FFrame&, void*) {

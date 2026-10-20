@@ -170,8 +170,18 @@ def payload(mod):
         files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterBulkStorageNative.dll',
                    'dlls/main.dll')]
     elif mod == 'BetterStorage':
-        files += [(BUILD_ROOT / mod / 'native/Game__Shipping__Win64/bin/BetterStorageNative.dll',
-                   'dlls/main.dll')]
+        client = BUILD_ROOT / mod / 'native'
+        client_dll = client / 'Game__Shipping__Win64/bin/BetterStorageNative.dll'
+        client_audit = read_json(client / 'import-audit.json')
+        if digest(client_dll) != client_audit['dll_sha256'] or client_audit['imports_verified'] < 24:
+            raise ValueError('BetterStorage client import audit mismatch or incomplete')
+        files += [(client_dll, 'dlls/main.dll')]
+        server = BUILD_ROOT / mod / 'server-native'
+        server_dll = server / 'Game__Shipping__Win64/bin/BetterStorageNative.dll'
+        audit = read_json(server / 'import-audit.json')
+        if digest(server_dll) != audit['dll_sha256'] or audit.get('target') != 'server' or audit['imports_verified'] < 24:
+            raise ValueError('BetterStorage server DLL differs from import audit')
+        files += [(server_dll, 'Server/dlls/main.dll'), (source / 'enabled.txt', 'Server/enabled.txt')]
         schema = MODS_ROOT / mod / 'schema'
         files += [(p, 'PalSchema/' + p.relative_to(schema).as_posix())
                   for p in sorted(schema.rglob('*.json'))]

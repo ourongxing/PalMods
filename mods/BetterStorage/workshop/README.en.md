@@ -1,6 +1,6 @@
 # Better Storage
 
-1.1.0 · ourongxing
+1.2.0 · ourongxing
 
 Send items back to base from the wilderness and fit more into each inventory slot.
 
@@ -28,8 +28,4 @@ The two `SlotNum` settings control the bookshelf and cabinet capacities separate
 
 ## Before you play
 
-Wilderness storage and eligibility highlighting have been tested in single-player. Multiplayer is unverified. Stack, transport, and capacity changes require host or server installation; installing only on a joining player's computer cannot change server rules. New guild storage capacity and multiplayer synchronization are also unverified.
-
-Do not enable together with BetterBulkStorage. The 360-slot furniture interface may lower frame rates; you can reduce the capacity for furniture you build afterwards.
-
-Existing separate stacks are not automatically merged. Split stacks exceeding vanilla limits before uninstalling.
+Includes a separate Windows dedicated-server DLL. Install this mod and its dependencies on both the server and clients.

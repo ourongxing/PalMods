@@ -197,7 +197,11 @@ class WorkshopTests(unittest.TestCase):
                 if mod == 'BetterStorage':
                     self.assertIn('Mods/NativeMods/UE4SS/Mods/PalSchema/mods/BetterStorage/blueprints/storage.json', installed)
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
-                    self.assertEqual(info['Version'], '1.1.0')
+                    self.assertEqual(info['Version'], '1.2.0')
+                    self.assertIn(lua_root + '/dlls/main.dll', installed_by_server[True])
+                    self.assertNotIn(lua_root + '/Scripts/main.lua', installed_by_server[True])
+                    self.assertIn(lua_root + '/Scripts/main.lua', installed_by_server[False])
+                    self.assertTrue((package / 'Server/dlls/main.dll').is_file())
                 if mod == 'QuickButcher':
                     self.assertEqual(installed, {'Pal/Content/Paks/~WorkshopMods/QuickButcher/QuickButcher_P.pak'})
                     self.assertEqual(installed_by_server[False], installed_by_server[True])
