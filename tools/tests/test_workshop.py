@@ -159,14 +159,14 @@ class WorkshopTests(unittest.TestCase):
                                 installed.add(base + '/' + relative)
                                 installed_by_server[rule.get('IsServer', False)].add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
-                if mod not in ('PointBlankBurstSkills', 'QuickButcher'):
+                if mod not in ('PointBlankBurstSkills', 'QuickButcher', 'SekhmetMedicine'):
                     if mod != 'ExtraImplantDrops':
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
                 if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'):
                     self.assertIn(lua_root + '/dlls/main.dll', installed)
                 if mod == 'CustomPresets':
-                    self.assertEqual(info['Version'], '1.0.0')
+                    self.assertEqual(info['Version'], '1.0.1')
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
                     self.assertFalse(any('/presets/' in path for path in installed))
                     self.assertTrue((package / 'Scripts/CustomPresets/UI.lua').is_file())
