@@ -1,3 +1,4 @@
+local Lifecycle = require("BetterWorkbench.Lifecycle")
 local M = {}
 local CLASS = "/Game/Pal/Blueprint/UI/UserInterface/MainMenu/InventoryEquipment/WBP_InventoryEquipment_ItemInfo_Tecnology.WBP_InventoryEquipment_ItemInfo_Tecnology_C"
 local hookIds
@@ -142,6 +143,10 @@ function M.start(config)
             function(context) update(context:get()) end)
         if ok then hookIds = { pre, post }; log("material refresh hook registered") end
     end
+    Lifecycle.onReset(function()
+        if hookIds then pcall(UnregisterHook, CLASS .. ":SetDetails", hookIds[1], hookIds[2]) end
+        hookIds = nil
+    end)
     install()
     if type(NotifyOnNewObject) == "function" then
         NotifyOnNewObject(CLASS, function()

@@ -63,7 +63,8 @@ StaticFindObject=function(path)
  return obj()
 end
 LoadAsset=function() end;FName=name;FText=function(s) return s end
-RegisterHook=function(path,callback) hooks[path]=callback end
+RegisterHook=function(path,callback) hooks[path]=callback;return 1,2 end
+UnregisterHook=function(path) hooks[path]=nil end
 local notifications,scans={},0
 NotifyOnNewObject=function(path,callback) notifications[path]=callback end
 LoopAsync=function(_,callback) UI_TICK=callback end
@@ -111,4 +112,22 @@ notifications['/Game/Pal/Blueprint/UI/UserInterface/Arena/WBP_Arena_TopMenu.WBP_
 drain();tick()
 assert(top.WBP_Arena_TopMenuButton_Solo.Slot.position.X==-570 and scans==2)
 top.visible=false;tick();top.GetFullName=prior
+-- Simulate server -> title -> single player while a click/timer is queued.
+-- A destroyed wrapper throws even on IsValid; reset must never inspect it.
+top.visible=true;tick()
+local oldClick=hooks[CLICK]
+local latest=menuCanvas.children[#menuCanvas.children]
+latest[EVENT](latest)
+UI_TICK()
+require('BetterArena.Lifecycle').reset()
+local check=top.IsValid
+top.IsValid=function() error('old world object accessed') end
+drain()
+oldClick({get=function() error('old hook context accessed') end})
+assert(not hooks[CLICK] and not hooks[ENTRY],'old blueprint hooks must be removed before travel')
+top.IsValid=check
+-- Reconcile the new world's menu and hooks instead of reusing old sessions.
+top.GetFullName=function() return 'single-player-menu' end
+tick()
+assert(hooks[CLICK] and hooks[ENTRY] and scans==4)
 print('PASS: top menu > sweep difficulties, selected rewards, shared limit, double click guard and ordinary Challenge isolation')

@@ -35,6 +35,13 @@ class WorkshopTests(unittest.TestCase):
         lua_targets = next(rule['Targets'] for rule in info['InstallRule'] if rule['Type'] == 'Lua')
         self.assertEqual(lua_targets, ['./Scripts', './enabled.txt'])
         self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW', 'PalSchema'])
+        self.assertIn('Server/server.txt', files)
+        self.assertNotIn('server.txt', files)
+        self.assertEqual(files['Server/Scripts/main.lua'], files['Scripts/main.lua'])
+        server_rules = [rule for rule in info['InstallRule'] if rule.get('IsServer')]
+        self.assertEqual(server_rules, [
+            {'Type': 'Lua', 'IsServer': True, 'Targets': ['./Server/']},
+            {'Type': 'PalSchema', 'IsServer': True, 'Targets': ['./PalSchema/']}])
 
     def test_readme_listing_conversion_and_missing_body(self):
         with tempfile.TemporaryDirectory() as temporary:
@@ -159,6 +166,14 @@ class WorkshopTests(unittest.TestCase):
                                 installed.add(base + '/' + relative)
                                 installed_by_server[rule.get('IsServer', False)].add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
+                if mod == 'BetterArena':
+                    self.assertEqual(info['Version'], '1.1.0')
+                    self.assertIn(lua_root + '/server.txt', installed_by_server[True])
+                    self.assertNotIn(lua_root + '/server.txt', installed_by_server[False])
+                    self.assertIn(lua_root + '/Scripts/main.lua', installed_by_server[True])
+                    self.assertIn(lua_root + '/Scripts/BetterArena/Lifecycle.lua', installed_by_server[True])
+                    self.assertEqual(installed_by_server[True] - {lua_root + '/server.txt'},
+                                     installed_by_server[False])
                 if mod not in ('PointBlankBurstSkills', 'QuickButcher', 'SekhmetMedicine'):
                     if mod != 'ExtraImplantDrops':
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
@@ -170,6 +185,14 @@ class WorkshopTests(unittest.TestCase):
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
                     self.assertFalse(any('/presets/' in path for path in installed))
                     self.assertTrue((package / 'Scripts/CustomPresets/UI.lua').is_file())
+                if mod == 'BetterWorkbench':
+                    self.assertEqual(info['Version'], '1.1.0')
+                    self.assertEqual(info['MinRevision'], 102999)
+                    self.assertEqual(installed_by_server[True] - {lua_root + '/server.txt'}, installed_by_server[False])
+                    self.assertNotIn(lua_root + '/server.txt', installed_by_server[False])
+                    self.assertIn(lua_root + '/server.txt', installed_by_server[True])
+                    self.assertEqual((package / 'Scripts/main.lua').read_bytes(), (package / 'Server/Scripts/main.lua').read_bytes())
+                    self.assertNotEqual((package / 'dlls/main.dll').read_bytes(), (package / 'Server/dlls/main.dll').read_bytes())
                 if mod in ('PalCombo', 'ExtraImplantDrops'):
                     self.assertIn(lua_root + '/config.ini', installed)
                 if mod == 'ExtraImplantDrops':
@@ -299,6 +322,20 @@ class WorkshopTests(unittest.TestCase):
                 'Mod': 'QuickButcher', 'PakSHA256': '0' * 64}), encoding='utf-8')
             with patch.object(workshop, 'DIST_ROOT', dist), self.assertRaisesRegex(ValueError, 'differs'):
                 workshop.payload('QuickButcher')
+
+    def test_workbench_rejects_client_audit_for_dedicated_server(self):
+        with tempfile.TemporaryDirectory() as temporary:
+            build = Path(temporary)
+            for folder, data in (('BetterWorkbench', b'client'), ('BetterWorkbench-server', b'server')):
+                root = build / folder
+                dll = root / 'native/Release/BetterWorkbenchNative.dll'
+                dll.parent.mkdir(parents=True)
+                dll.write_bytes(data)
+                (root / 'import-audit.json').write_text(json.dumps({
+                    'bridge_sha256': workshop.digest(dll), 'target': 'client', 'ue4ss_imports_verified': 73,
+                }), encoding='utf-8')
+            with patch.object(workshop, 'BUILD_ROOT', build), self.assertRaisesRegex(ValueError, 'server import audit'):
+                workshop.payload('BetterWorkbench')
 
     def test_paks_rule_rejects_missing_slash_empty_folder_and_file_target(self):
         with tempfile.TemporaryDirectory() as temporary:

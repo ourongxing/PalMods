@@ -40,6 +40,26 @@ world='world-d';factor=3
 Schema.write=function() error('disk full') end
 tick();tick();assert(not pcall(Balance.requireReady,world)) -- old values matching cannot bypass failed generation
 assert(searches==1,'persistent game instance must not be searched every tick')
+-- Dedicated server: no local player, but an authoritative mode supplies the
+-- world context. The same reward verification must still complete.
+world='server-world';factor=3
+utility.GetLocalPlayerController=function() return nil end
+api.FindFirstOf=function(name)
+ if name=='PalGameMode' then return controller end
+ return object{}
+end
+Schema.write=function(path,text) writes[#writes+1]={path,text} end
+Balance.start({RewardMultiplier=3},'/mods/BetterArena',api)
+tick();tick();Balance.requireReady(world)
+local deferred
+api.ExecuteInGameThread=function(fn) deferred=fn end
+tick()
+local oldCount=#writes
+require('BetterArena.Lifecycle').reset()
+assert(not pcall(Balance.requireReady,world))
+deferred();assert(#writes==oldCount,'queued old-world balance callback must be inert')
+api.ExecuteInGameThread=function(fn) fn() end
+world='single-after-server';tick();tick();Balance.requireReady(world)
 Schema.autoReload=function() return false end
 assert(not pcall(Balance.start,{RewardMultiplier=3},'/mods/BetterArena',api))
 print('PASS: startup regeneration, real-value verification, shared scalar RP, world changes, bounded timeout and one-time reload setup')

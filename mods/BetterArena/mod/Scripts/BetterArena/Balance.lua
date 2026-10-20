@@ -22,16 +22,29 @@ function M.start(config,directory,api)
  active={ready=false};local queued=false;local errors={}
  local function valid(o) return o and o:IsValid() end
  local utility,instance
+ local Lifecycle=require('BetterArena.Lifecycle')
+ Lifecycle.onReset(function()
+  utility=nil;instance=nil;active={ready=false};queued=false
+ end)
  api.LoopAsync(500,function()
   if queued then return end;queued=true
+  local epoch=Lifecycle.epoch
   api.ExecuteInGameThread(function()
+   if epoch~=Lifecycle.epoch then return end
    local ok,err=pcall(function()
     if not valid(utility) then utility=api.StaticFindObject('/Script/Pal.Default__PalUtility') end
     if not valid(instance) then instance=api.FindFirstOf('PalGameInstance') end
     local u,gi=utility,instance
     if not valid(u) or not valid(gi) then return end
     local controller=u:GetLocalPlayerController(gi)
-    if not valid(controller) or not controller:HasAuthority() then return end
+    if valid(controller) then
+     if not controller:HasAuthority() then return end
+    else
+     -- Dedicated servers have no local player. Use their authoritative mode
+     -- as the world context, never a remote client's settings.
+     controller=api.FindFirstOf('PalGameMode')
+     if not valid(controller) or not controller:HasAuthority() then return end
+    end
     local game=u:GetPalGameStateInGame(controller)
     local arena=u:GetArenaWorldSubsystem(controller)
     local setting=u:GetGameSetting(controller)

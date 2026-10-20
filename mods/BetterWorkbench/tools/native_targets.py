@@ -1,0 +1,53 @@
+"""Pinned client/server native locations, derived from instruction and caller checks.
+
+No blanket RVA delta: map whole functions, then retain verified interior offsets.
+See .build/betterworkbench-server-20261020 for disassembly research.
+"""
+CLIENT_SHA256 = 'e590b5e7bfaa3fea40fab1a02cc72c8fc5fd6f8631ef2308e95ac56c25195837'
+SERVER_SHA256 = '6f929673e7ac637d591d6f3454dbd396be7911093311cb8b24af3a152b217f49'
+SERVER_FUNCTIONS = {
+    0xdbe790: (0xd2fb80, 0xdbe7a8),
+    0x2981670: (0x282c1d0, 0x29817d6),
+    0x2d67dc0: (0x2c127a0, 0x2d67e56),
+    0x2e8d210: (0x2d379c0, 0x2e8d48d),
+    0x2fa0020: (0x2e4ae20, 0x2fa0357),
+    0x2fa0d00: (0x2e4bb00, 0x2fa10c5),
+    0x2fa6c00: (0x2e51980, 0x2fa6c0d),
+    0x2fa9650: (0x2e543d0, 0x2fa9b93),
+    0x2fad860: (0x2e585e0, 0x2fada95),
+    0x2fadaa0: (0x2e58820, 0x2fadbf7),
+    0x2fbc2f0: (0x2e67070, 0x2fbc7b3),
+    0x2fff160: (0x2ea97d0, 0x2fff212),
+    0x3005d80: (0x2eb03f0, 0x3006623),
+    0x3008ea0: (0x2eb3510, 0x3009189),
+    0x300ced0: (0x2eb7540, 0x300d008),
+    0x300d010: (0x2eb7680, 0x300d0b2),
+    0x300df10: (0x2eb8590, 0x300e0a8),
+    0x300e280: (0x2eb8900, 0x300e2f1),
+    0x300e300: (0x2eb8980, 0x300e3ee),
+    0x3012d70: (0x2ebd3f0, 0x3013961),
+    0x3023e70: (0x2ece4f0, 0x302422a),
+    0x3083060: (0x2f2d830, 0x3083078),
+    0x30ec350: (0x2f96a20, 0x30ec368),
+    0x30f0fb0: (0x2f9b680, 0x30f0fcc),
+    0x31cc070: (0x3076670, 0x31cc088),
+    0x326aa30: (0x3115580, 0x326ac76),
+    0x32c6e10: (0x3170e70, 0x32c700e),
+    0x32f34f0: (0x319d300, 0x32f3554),
+    0x32f4600: (0x319e410, 0x32f4618),
+    0x32f5ee0: (0x319fcf0, 0x32f5f76),
+    0x32f7e50: (0x31a1c60, 0x32f7e90),
+    0x3306f40: (0x31b0d30, 0x3306f52),
+    0x34ee990: (0x3395910, 0x34ee9a8),
+    0x36954b0: (0x353ba60, 0x36954c8),
+    0x36971b0: (0x353d760, 0x36971c8),
+    0x528e0b0: (0x4dd4180, 0x528e225),
+}
+
+def server_rva(rva):
+    if rva in SERVER_FUNCTIONS:
+        return SERVER_FUNCTIONS[rva][0]
+    for begin, (dedicated, end) in SERVER_FUNCTIONS.items():
+        if begin <= rva < end:
+            return dedicated + rva - begin
+    raise ValueError(f'Unverified BetterWorkbench server RVA: {rva:#x}')

@@ -10,6 +10,7 @@ import struct
 import subprocess
 import argparse
 import sys
+from native_targets import CLIENT_SHA256, SERVER_SHA256, server_rva
 sys.path.insert(0, str(Path(__file__).resolve().parents[3] / 'tools'))
 from palmods import GAME_EXE, UE4SS_BUILD, UE4SS_SOURCE, build_directory, ROOT as REPOSITORY_ROOT
 from build_sdk import toolset_environment
@@ -19,12 +20,18 @@ EXE = GAME_EXE
 BUILD = build_directory('BetterWorkbench')
 BUILD.mkdir(parents=True, exist_ok=True)
 parser = argparse.ArgumentParser()
+parser.add_argument('--server', action='store_true', help='Build separately guarded Windows dedicated-server DLL')
 parser.add_argument('--enable-readonly', action='store_true')
 parser.add_argument('--build-dir', type=Path, default=BUILD / 'native',
                     help='CMake output directory; use a fresh directory after moving the project')
 parser.add_argument('--toolset', help='CMake MSVC toolset, e.g. version=14.44.35207; must match cached SDK libraries')
 parser.add_argument('--parallel', type=int, default=4, help='CMake build workers (default: 4)')
 args = parser.parse_args()
+if args.server:
+    EXE = Path('G:/PalworldTestServer/Pal/Binaries/Win64/PalServer-Win64-Shipping-Cmd.exe')
+    BUILD = build_directory('BetterWorkbench-server')
+    if args.build_dir == build_directory('BetterWorkbench') / 'native':
+        args.build_dir = BUILD / 'native'
 if args.parallel < 1:
     parser.error('--parallel must be at least 1')
 if args.enable_readonly:
@@ -43,10 +50,15 @@ if args.enable_readonly:
     print(f'Pinned UE4SS 2281fa31 header audit: {matched} matches. Runtime struct validation still required.')
 data = EXE.read_bytes()
 game_hash = hashlib.sha256(data).hexdigest()
+if game_hash != (SERVER_SHA256 if args.server else CLIENT_SHA256):
+    raise SystemExit('Unsupported executable; re-analyze BetterWorkbench native interfaces')
+def mapped(rva):
+    return server_rva(rva) if args.server else rva
 pe = struct.unpack_from("<I", data, 0x3c)[0]
 sections = struct.unpack_from("<H", data, pe + 6)[0]
 optional_size = struct.unpack_from("<H", data, pe + 20)[0]
 def read_rva(rva, size):
+    rva = mapped(rva)
     for index in range(sections):
         header = pe + 24 + optional_size + index * 40
         virtual, offset, raw_size, raw_offset = struct.unpack_from("<IIII", data, header + 8)
@@ -58,9 +70,9 @@ counts_prefix = read_rva(0x2fa0020, 24)
 batch_window = read_rva(0x30060ff, 0x3006155 - 0x30060ff)
 counts_call_window = read_rva(0x30061db, 0x30061f1 - 0x30061db)
 counts_call = read_rva(0x30061ec, 5)
-assert counts_call[0] == 0xe8 and 0x30061ec + 5 + struct.unpack_from('<i', counts_call, 1)[0] == 0x2fa0020
+assert counts_call[0] == 0xe8 and mapped(0x30061ec) + 5 + struct.unpack_from('<i', counts_call, 1)[0] == mapped(0x2fa0020)
 call = read_rva(0x300611e, 5)
-assert call[0] == 0xe8 and 0x300611e + 5 + struct.unpack_from("<i", call, 1)[0] == 0x2fadaa0
+assert call[0] == 0xe8 and mapped(0x300611e) + 5 + struct.unpack_from("<i", call, 1)[0] == mapped(0x2fadaa0)
 timestamp = struct.unpack_from("<I", data, pe + 8)[0]
 image_size = struct.unpack_from("<I", data, pe + 24 + 56)[0]
 (BUILD / "binary_guard.hpp").write_text(
@@ -69,7 +81,7 @@ image_size = struct.unpack_from("<I", data, pe + 24 + 56)[0]
     + 'constexpr char expected_game_hash[] = "' + game_hash + '";\n'
     + 'struct ActiveGuard { uintptr_t rva; std::array<uint8_t,24> bytes; };\n'
     + 'constexpr std::array active_guards{\n'
-    + ',\n'.join('ActiveGuard{'+hex(rva)+', {'+','.join(hex(b) for b in read_rva(rva,24))+'}}'
+    + ',\n'.join('ActiveGuard{'+hex(mapped(rva))+', {'+','.join(hex(b) for b in read_rva(rva,24))+'}}'
         for rva in (0x2fad860,0x3012d70,0x300df10,0x32c6e10,0x32f4600,0x36971b0,0x36954b0,
                     0x32f34f0,0x2fa0d00,0x32f7e50,0x31cc070,0x326aa30,0x3306f40,0x34ee990,0x2d67dc0,0x300d010,0x528e0b0,0x32f5ee0,
                     0x2fff160,0x3083060,0x300e280,0x2e8d210,0x300ced0,0x2fa6c00,0xdbe790,0x2fa9650,
@@ -84,6 +96,24 @@ image_size = struct.unpack_from("<I", data, pe + 24 + 56)[0]
     f"constexpr std::array<uint8_t, {len(batch_window)}> expected_batch_window{{" + ",".join(hex(b) for b in batch_window) + "};\n"
     f"constexpr std::array<uint8_t, {len(counts_call_window)}> expected_counts_call_window{{" + ",".join(hex(b) for b in counts_call_window) + "};\n",
     encoding="utf-8")
+# Compile a generated target-specific copy; canonical source addresses stay
+# readable against the documented client disassembly. Only mapped code RVAs
+# are translated, never structure offsets or arbitrary numeric constants.
+source_dir = ROOT / 'native/src'
+if args.server:
+    source_dir = BUILD / 'target-src'
+    source_dir.mkdir(exist_ok=True)
+    for source in (ROOT / 'native/src').iterdir():
+        if source.suffix not in ('.cpp', '.hpp'): continue
+        text = source.read_text(encoding='utf-8')
+        def replace_address(match):
+            rva = int(match.group(), 16)
+            # Comments may mention a different instruction within a verified
+            # function. Fail on every unmapped address instead of guessing.
+            return hex(mapped(rva)) if rva < 0x10000000 else match.group()
+        text = re.sub(r'0x[0-9a-f]{5,}', replace_address, text)
+        (source_dir / source.name).write_text(text, encoding='utf-8')
+
 def quoted(value):
     return '[=[' + value.replace('\\', '/') + ']=]'
 cmake = ["cmake_minimum_required(VERSION 3.22)", "project(BetterWorkbenchNativeCandidate LANGUAGES CXX)",
@@ -91,17 +121,22 @@ cmake = ["cmake_minimum_required(VERSION 3.22)", "project(BetterWorkbenchNativeC
          "find_package(PalModsSDK CONFIG REQUIRED PATHS " + quoted(UE4SS_BUILD.as_posix()) + " NO_DEFAULT_PATH)",
          "add_executable(BetterWorkbenchViewTests " + quoted((ROOT / 'tests/native/recipe_view_test.cpp').as_posix()) + ")",
          "target_compile_features(BetterWorkbenchViewTests PRIVATE cxx_std_20)",
+         "target_compile_options(BetterWorkbenchViewTests PRIVATE /UNDEBUG)",
          "add_test(NAME recipe_view_isolation COMMAND BetterWorkbenchViewTests)",
          "add_executable(BetterWorkbenchJobTests " + quoted((ROOT / 'tests/native/job_schedule_test.cpp').as_posix()) + ")",
          "target_compile_features(BetterWorkbenchJobTests PRIVATE cxx_std_20)",
          "target_compile_options(BetterWorkbenchJobTests PRIVATE /UNDEBUG)",
          "add_test(NAME native_job_schedule COMMAND BetterWorkbenchJobTests)",
-         "add_library(BetterWorkbenchNative SHARED " + quoted((ROOT / "native/src/dllmain.cpp").as_posix()) + ")",
+         "add_executable(BetterWorkbenchWireTests " + quoted((ROOT / 'tests/native/job_wire_test.cpp').as_posix()) + ")",
+         "target_compile_features(BetterWorkbenchWireTests PRIVATE cxx_std_20)",
+         "target_compile_options(BetterWorkbenchWireTests PRIVATE /UNDEBUG)",
+         "add_test(NAME network_job_wire COMMAND BetterWorkbenchWireTests)",
+         "add_library(BetterWorkbenchNative SHARED " + quoted((source_dir / "dllmain.cpp").as_posix()) + ")",
          "target_compile_features(BetterWorkbenchNative PRIVATE cxx_std_20)",
          "set_property(TARGET BetterWorkbenchNative PROPERTY MSVC_RUNTIME_LIBRARY MultiThreadedDLL)",
          "target_compile_options(BetterWorkbenchNative PRIVATE /EHsc /Zc:__cplusplus /utf-8)",
          "target_include_directories(BetterWorkbenchNative PRIVATE " + ' '.join(quoted(p) for p in [BUILD.as_posix()]) + ")",
-         "target_compile_definitions(BetterWorkbenchNative PRIVATE " + (quoted('BETTERWORKBENCH_SDK_ABI_VERIFIED=1') if args.enable_readonly else '') + ")",
+         "target_compile_definitions(BetterWorkbenchNative PRIVATE " + (quoted('BETTERWORKBENCH_SDK_ABI_VERIFIED=1') if args.enable_readonly else '') + (' ' + quoted('BETTERWORKBENCH_DEDICATED_SERVER=1') if args.server else '') + ")",
          "target_link_libraries(BetterWorkbenchNative PRIVATE PalMods::UE4SS)"]
 (BUILD / "CMakeLists.txt").write_text('\n'.join(cmake), encoding="utf-8")
 (BUILD / "game-sha256.txt").write_text(game_hash + '\n', encoding="ascii")

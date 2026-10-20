@@ -2,7 +2,7 @@
   "ModName": "Better Arena / 更好的竞技场",
   "PackageName": "BetterArena",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.0.1",
+  "Version": "1.1.0",
   "DebugMode": false,
   "MinRevision": 102999,
   "Author": "ourongxing",
@@ -25,6 +25,20 @@
     },
     {
       "Type": "PalSchema",
+      "Targets": [
+        "./PalSchema/"
+      ]
+    },
+    {
+      "Type": "Lua",
+      "IsServer": true,
+      "Targets": [
+        "./Server/"
+      ]
+    },
+    {
+      "Type": "PalSchema",
+      "IsServer": true,
       "Targets": [
         "./PalSchema/"
       ]

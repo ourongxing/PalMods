@@ -17,12 +17,19 @@ function M.new(api)
     api=api or _G
     local self={}
     function self:read(menu,selectedRank)
+        if type(menu)=='table' and menu.controller then return self:readPlayer(menu.controller,selectedRank) end
         assert(valid(menu) and menu:IsVisible(),'arena menu closed')
         local controller=menu:GetOwningPlayer()
+        return self:readPlayer(controller,selectedRank,menu)
+    end
+    function self:readPlayer(controller,selectedRank,menu)
         assert(valid(controller) and controller:HasAuthority(),'host only')
         local u=api.StaticFindObject('/Script/Pal.Default__PalUtility')
-        local player=u:GetPalmi(controller)
+        -- GetPalmi resolves the local player, which does not exist on a
+        -- dedicated server. The inbound RPC's controller owns this pawn.
+        local player=controller.Pawn
         assert(valid(player),'player unavailable')
+        assert(valid(player.Controller) and player.Controller:GetAddress()==controller:GetAddress(),'player controller mismatch')
         local component=player:GetCharacterParameterComponent()
         assert(valid(component) and not component:IsDead(),'player unavailable')
         local parameter=component:GetIndividualParameter()
@@ -120,7 +127,7 @@ function M.new(api)
         for _,bucket in pairs(containers) do assert(bucket.empty>=bucket.required,'inventory full') end
     end
     function self:award(c,plan)
-        local current=self:read(c.menu,c.challengeRank)
+        local current=self:readPlayer(c.controller,c.challengeRank,c.menu)
         assert(current.identity==c.identity and current.day==c.day and current.points==c.points and current.challengeRank==c.challengeRank,'arena context changed')
         for id,count in pairs(plan.items) do
             if count>0 then

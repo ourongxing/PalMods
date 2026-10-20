@@ -1,11 +1,17 @@
 param([string]$GameRoot = 'G:/SteamLibrary/steamapps/common/Palworld', [switch]$ResetConfig,
       [switch]$PerformancePatchOnly)
 $ErrorActionPreference = 'Stop'
-if (Get-Process 'Palworld-Win64-Shipping' -ErrorAction SilentlyContinue) {
+if (Get-Process -Name 'Palworld','Palworld-Win64-Shipping','PalServer','PalServer-Win64-Shipping-Cmd','PalServer-Win64-Shipping' -ErrorAction SilentlyContinue) {
     throw 'Close Palworld before installing BetterArena.'
 }
 $source = [IO.Path]::GetFullPath((Join-Path $PSScriptRoot '../mod'))
 $destination = Join-Path $GameRoot 'Mods/NativeMods/UE4SS/Mods/BetterArena'
+if (Test-Path -LiteralPath $destination) {
+    $backup = Join-Path $GameRoot ('Mods/_LocalBackups/BetterArena-before-install-' + [guid]::NewGuid().ToString('N'))
+    New-Item -ItemType Directory -Path (Split-Path -Parent $backup) -Force | Out-Null
+    Copy-Item -LiteralPath $destination -Destination $backup -Recurse
+    Write-Output "Runtime backup: $backup"
+}
 if ($PerformancePatchOnly) {
     # Keep the existing Workshop installation and config; patch only the two
     # runtime modules being tested, with rollback copies outside load paths.

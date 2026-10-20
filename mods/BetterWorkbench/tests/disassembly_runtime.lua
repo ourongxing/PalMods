@@ -71,7 +71,7 @@ return function(test, equal)
             return { Recipes = { Part = { OutputItem = "Part", OutputAmount = 2,
                 Materials = { Ingot = 3, Fiber = 1 }, WorkAmount = 20 } }, Inventory = totals,
                 Context = { StationRecipes = { Part = true }, canDisassemble = function() return true end } },
-                { inventory = inventory, slots = snapshot, controller = {}, backpackTotals = backpackTotals,
+                { inventory = inventory, slots = snapshot, controller = object({ HasAuthority = function() return true end }), backpackTotals = backpackTotals,
                     sourceSlots = sourceSnapshot, sourceContainers = baseContainer and { container, baseContainer } or nil }
         end
         return backend, Service.new(backend), inventory, slots, external
@@ -224,9 +224,54 @@ return function(test, equal)
         baseContainer.Num = function() return 4097 end
         readable, mismatch = pcall(backend.read, backend, session)
         assert(not readable and mismatch:find("invalid container size", 1, true))
+        baseContainer.Num = function() return 1 end
+        baseContainer.Get = function() return baseSlot end
         controller.HasAuthority = function() return false end
-        local ok, reason = pcall(backend.read, backend, session)
-        assert(not ok and reason:find("requires the local server host", 1, true))
+        assert(backend:read(session)) -- replicated stock is a read-only preview
+        local before = inventory.adds
+        local result, reason = backend:disassemblyTransaction(session, function() error("must not build") end)
+        assert(not result and tostring(reason):find("requires server authority", 1, true))
+        equal(inventory.adds, before)
+    end)
+    test("native scope skips stale IDs only with exact original product count", function()
+        local slot = object({ ItemId = { StaticId = name("Part") }, StackCount = 6 })
+        local bag = object({ GetFullName = function() return "bag" end,
+            Num = function() return 1 end, Get = function() return slot end })
+        local inventory = object({ TryGetContainerFromInventoryType = function(_, kind, out)
+            if kind == 0 then out.OutContainer = bag; return true end
+            return false
+        end })
+        local id = name("Part"); id.type = function() return "FName" end
+        local concrete = object({ GetRecipes = function() return { id } end })
+        local pc = object({ HasAuthority = function() return true end,
+            PlayerState = { GetInventoryData = function() return inventory end } })
+        local stock = 6
+        local row = { Product_Id = name("Part"), Product_Count = 2, WorkAmount = 1 }
+        for i = 1, 5 do row["Material"..i.."_Id"], row["Material"..i.."_Count"] = name(i == 1 and "Ore" or "None"), i == 1 and 3 or 0 end
+        local utility = object({ GetItemRecipeDataTableAccess = function()
+            return object({ BP_FindRow = function(_, _, out) out.bResult = true; return row end }) end,
+            GetItemContainerManager = function()
+                return object({ GetContainer = function(_, guid)
+                    return guid.ID.A == 1 and bag or { IsValid = function() return false end }
+                end })
+            end })
+        local idStruct = object({ ForEachProperty = function(_, visit)
+            visit({ GetFName = function() return name("ID") end,
+                GetStruct = function() return object({ GetFName = function() return name("Guid") end }) end })
+        end })
+        local backend = Runtime.new({ StaticFindObject = function(path)
+            return path == "/Script/Pal.PalContainerId" and idStruct or utility end,
+            FName = function(s) return s end,
+            BetterWorkbenchNativeScope = function(model, controller, recipe)
+                assert(model == concrete and controller == pc and recipe == "Part")
+                return "00000000000000000000000000000000;00000001000000000000000000000000;", stock
+            end })
+        local session = { controller = pc, concrete = concrete, recipeId = "Part" }
+        local state, runtime = backend:read(session)
+        equal(state.Inventory.Part, 6); equal(#runtime.sourceContainers, 1)
+        stock = 7
+        local ok, problem = pcall(backend.read, backend, session)
+        assert(not ok and problem:find("production inventory scope mismatch", 1, true))
     end)
     test("disassembly UI retries lazy hooks once without polling or inventory access", function()
         local names = { "StaticConstructObject", "NotifyOnNewObject", "ExecuteInGameThread", "RegisterHook" }
@@ -335,7 +380,7 @@ return function(test, equal)
             BP_PalTextBlock_Name = label("Part"), BP_PalTextBlock_Num = label("生产数量"),
             Text_ManMonth_Value = label("20"),
             Text_ItemNumValue = label("6"),
-            GetOwningPlayer = function() return {} end, GetFullName = function() return "workspace" end })
+            GetOwningPlayer = function() return { HasAuthority = function() return true end } end, GetFullName = function() return "workspace" end })
         workspace.OnClickedRecipeSlot = function()
             workspace.Text_ItemNumValue:SetText(tostring(backend:read().Inventory.Part or 0))
         end

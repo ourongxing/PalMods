@@ -2,9 +2,9 @@
   "ModName": "Better Workbench / 更好的工作台",
   "PackageName": "BetterWorkbench",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "DebugMode": false,
-  "MinRevision": 82182,
+  "MinRevision": 102999,
   "Author": "ourongxing",
   "Dependencies": [
     "UE4SSExperimentalPW"
@@ -22,6 +22,11 @@
         "./dlls",
         "./enabled.txt"
       ]
+    },
+    {
+      "Type": "Lua",
+      "IsServer": true,
+      "Targets": ["./Server/"]
     }
   ]
 }

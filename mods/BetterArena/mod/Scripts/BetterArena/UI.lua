@@ -1,6 +1,7 @@
 local Quota=require('BetterArena.Quota')
 local I18n=require('BetterArena.I18n')
 local Feedback=require('BetterArena.Feedback')
+local Lifecycle=require('BetterArena.Lifecycle')
 local M={}
 local BASE='/Game/Pal/Blueprint/UI/UserInterface/Arena/'
 local BUTTON=BASE..'WBP_Arena_TopMenuButton.WBP_Arena_TopMenuButton_C'
@@ -31,11 +32,12 @@ local function findWidget(menu,name)
 end
 local function report(err)
  err=tostring(err)
- if err:find('arena rewards are initializing',1,true) then return t.loading end
+ if err:find('arena rewards are initializing',1,true) then return end
  if not errors[err] then print('[BetterArena] '..err..'\n');errors[err]=true end
 end
 local function message(err,t)
  err=tostring(err)
+ if err:find('arena rewards are initializing',1,true) then return t.loading end
  if err:find('host only',1,true) then return t.host end
  if err:find('inventory full',1,true) then return t.full end
  if err:find('daily limit',1,true) then return t.empty end
@@ -45,17 +47,37 @@ local function message(err,t)
 end
 function M.start(config,service)
  local clickHook,entryHook=false,false
+ local menus={}
+ local initialized=false
+ local queued=false
+ Lifecycle.onReset(function()
+  -- Do not call release(): the old widgets/delegates belong to a world
+  -- being discarded. No old-world UObject method may run during reset.
+  sessions={};actions={};pending={};menus={}
+  initialized=false;queued=false
+  for _,hook in ipairs({clickHook or {},entryHook or {}}) do
+   if hook[1] and hook[2] then pcall(UnregisterHook,hook.path,hook[1],hook[2]) end
+  end
+  clickHook=false;entryHook=false
+ end)
  local function refresh(s)
   local t=I18n.current()
   local ok,c=pcall(service.preview,service,s.menu)
+  if not ok then report(c) end
   -- Disabling the whole native widget turns its UI materials into white
   -- rectangles. Keep it enabled and reject unavailable actions in the handler.
   local ready=ok and c.challengeRank and not c.pending
-  local title=ok and ('%s · %d/%d'):format(t.action,c.remaining,Quota.limit(config,c.playerRank)) or t.action
+  local title=ok and ('%s · %d/%d'):format(t.action,c.remaining,c.limit or Quota.limit(config,c.playerRank)) or t.action
   if s.kind=='top' then
    s.button.Text_ButtonName:SetText(FText(title))
    s.button:SetIsEnabled(true)
    s.button:SetLock(not ready)
+   -- The reused native button's default lock text says multiplayer-only.
+   -- Replace it with this action's actual unavailable reason.
+   if valid(s.button.Text_Lock) then
+    local detail=not ok and message(c,t) or c.pending and t.pending or not c.challengeRank and t.locked or c.remaining==0 and t.empty or t.choose
+    s.button.Text_Lock:SetText(FText(detail))
+   end
    if s.button.IsFocused and valid(s.menu.Text_MenuGuide) then
     local detail=not ok and message(c,t) or c.pending and t.pending or not c.challengeRank and t.locked or c.remaining==0 and t.empty or t.choose
     s.menu.Text_MenuGuide:SetText(FText(detail))
@@ -144,13 +166,16 @@ function M.start(config,service)
  end
  local function installHooks()
   if not clickHook and valid(StaticFindObject(BUTTON..':'..EVENT)) then
-   RegisterHook(BUTTON..':'..EVENT,function(context)
+   local epoch=Lifecycle.epoch
+   local pre,post=RegisterHook(BUTTON..':'..EVENT,function(context)
+    if epoch~=Lifecycle.epoch then return end
     local action=actions[key(context:get())]
     if not action then return end
     local s=action.session
     if s.queued then return end
     s.queued=true
     ExecuteInGameThread(function()
+     if epoch~=Lifecycle.epoch then return end
      local ok,err=pcall(function()
       assert(valid(s.menu) and s.menu:IsVisible(),'arena menu closed')
       if s.kind=='top' then
@@ -163,11 +188,28 @@ function M.start(config,service)
       else
        local c=service:preview(s.menu)
        if not c.cleared[action.rank] or c.pending or c.remaining<=0 then refresh(s);return end
-       local result=service:claim(s.menu,action.rank)
+       local result=service:claim(s.menu,action.rank,function(remoteResult,failure)
+        if epoch~=Lifecycle.epoch then return end
+        -- A closed page receives no UI writes; the server's journal remains
+        -- authoritative even if the player leaves before the response.
+        if not valid(s.menu) or not s.menu:IsVisible() or sessions[key(s.menu)]~=s then return end
+        refresh(s)
+        if remoteResult then
+         local shown,err=pcall(Feedback.show,s,remoteResult);if not shown then report(err) end
+        else
+         local t=I18n.current()
+         for _,entry in ipairs(s.cards) do
+          if entry.rank==action.rank and valid(entry.card.BP_PalTextBlock_Reward) then entry.card.BP_PalTextBlock_Reward:SetText(FText(message(failure,t))) end
+         end
+         s.errorUntil=os.time()+3
+        end
+       end)
        refresh(s)
        -- Presentation failure must never retry or invalidate an awarded claim.
-       local shown,failure=pcall(Feedback.show,s,result)
-       if not shown then report(failure) end
+       if result then
+        local shown,failure=pcall(Feedback.show,s,result)
+        if not shown then report(failure) end
+       end
       end
      end)
      s.queued=false
@@ -183,13 +225,15 @@ function M.start(config,service)
      end
     end)
    end)
-   clickHook=true
+   clickHook={pre,post,path=BUTTON..':'..EVENT}
   end
   if not entryHook and valid(StaticFindObject(ENTRY..':Setup')) then
-   RegisterHook(ENTRY..':Setup',function(context)
+   local epoch=Lifecycle.epoch
+   local pre,post=RegisterHook(ENTRY..':Setup',function(context)
+    if epoch~=Lifecycle.epoch then return end
     local ok,err=pcall(attachEntry,context:get());if not ok then report(err) end
    end)
-   entryHook=true
+   entryHook={pre,post,path=ENTRY..':Setup'}
   end
  end
  local function attachTop(menu)
@@ -216,7 +260,6 @@ function M.start(config,service)
  end
  -- Creation notifications retain only the two relevant menu types. Never
  -- enumerate the global UObject array from the recurring UI timer.
- local menus={}
  local function track(menu,kind)
   if valid(menu) and not key(menu):find('Default__',1,true) then
    menus[key(menu)]={menu=menu,kind=kind}
@@ -225,16 +268,17 @@ function M.start(config,service)
  for _,spec in ipairs({{TOP,'top'},{ENTRY,'entry'}}) do
   local kind=spec[2]
   NotifyOnNewObject(spec[1],function(menu)
-   ExecuteInGameThread(function() track(menu,kind) end)
+   local epoch=Lifecycle.epoch
+   ExecuteInGameThread(function() if epoch==Lifecycle.epoch then track(menu,kind) end end)
   end)
  end
  -- Startup reconciliation runs once for widgets created before registration.
- local initialized=false
- local queued=false
  LoopAsync(250,function()
   if queued then return end
   queued=true
+  local epoch=Lifecycle.epoch
   ExecuteInGameThread(function()
+   if epoch~=Lifecycle.epoch then return end
    local ok,err=pcall(function()
     if not initialized then
      for _,menu in ipairs(FindAllOf('WBP_Arena_TopMenu_C') or {}) do track(menu,'top') end

@@ -25,11 +25,14 @@
 #include <Unreal/CoreUObject/UObject/UnrealType.hpp>
 #include <Unreal/Core/HAL/UnrealMemory.hpp>
 #include <LuaMadeSimple/LuaMadeSimple.hpp>
+#include <LuaType/LuaUObject.hpp>
+#include <Unreal/UnrealInitializer.hpp>
 #include <Windows.h>
 #include <polyhook2/Detour/x64Detour.hpp>
 #include "recipe_view.hpp"
 #include "job_schedule.hpp"
 #include "job_journal.hpp"
+#include "job_wire.hpp"
 #include "recipe_scope.hpp"
 #include "input_layout.hpp"
 #include "consumption_ops.hpp"
@@ -83,6 +86,7 @@ using CountsFunction = void (*)(void*, BorrowedArray*, BorrowedArray*, BorrowedA
 void active_worker(void*, int32_t, uint64_t, int32_t, bool, bool);
 #include "request_snapshot.hpp"
 #include "active_jobs.hpp"
+#include "network_api.hpp"
 
 void scoped_counts(void* world, BorrowedArray* containers, BorrowedArray* names, BorrowedArray* result) {
     const bool worker = reinterpret_cast<uintptr_t>(_ReturnAddress()) ==
@@ -230,6 +234,10 @@ public:
         for (auto* instance : instances) {
             instance->register_function("BetterWorkbenchNativeTakeSnapshot", &take_snapshot);
             instance->register_function("BetterWorkbenchNativeIsActive", &active_status);
+            instance->register_function("BetterWorkbenchNativeExportJob", &export_job);
+            instance->register_function("BetterWorkbenchNativeImportJob", &import_job);
+            instance->register_function("BetterWorkbenchNativePollJob", &poll_job);
+            instance->register_function("BetterWorkbenchNativeScope", &player_scope);
         }
         Output::send(STR("[BetterWorkbenchNative] owned snapshot API registered; no Lua state retained\n"));
     }

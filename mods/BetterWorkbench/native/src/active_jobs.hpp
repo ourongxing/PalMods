@@ -10,6 +10,13 @@ std::atomic<bool> active_ready{};
 int active_status(const LuaMadeSimple::Lua& lua) { lua.set_bool(active_ready.load()); return 1; }
 std::recursive_mutex jobs_mutex;
 std::map<std::wstring,std::shared_ptr<ActiveJob>> jobs;
+std::deque<std::wstring> network_jobs;
+std::set<std::wstring> network_requested;
+void queue_network_job(const std::wstring& alias) {
+    std::lock_guard lock(jobs_mutex);
+    if (network_jobs.size()<64 && network_requested.size()<4096 && network_requested.insert(alias).second)
+        network_jobs.push_back(alias);
+}
 std::vector<std::unique_ptr<PLH::x64Detour>> active_detours;
 uint64_t row_trampoline{}, map_trampoline{}, complete_trampoline{}, deficit_trampoline{}, max_trampoline{};
 uint64_t preview_trampoline{};
@@ -82,7 +89,7 @@ std::shared_ptr<ActiveJob> find_job(uint64_t id) {
     if(jobs.size()>=4096) throw std::runtime_error("job cache limit");
     const auto path=jobs_directory()/(name+(name.starts_with(L"SRJ_") ? L".srj" : L".bwj"));
     std::ifstream input(path,std::ios::binary|std::ios::ate);
-    if(!input) throw std::runtime_error("job journal unavailable");
+    if(!input) { queue_network_job(name); throw std::runtime_error("job journal unavailable"); }
     const auto size=input.tellg(); if(size<100 || size>262144) throw std::runtime_error("job journal size mismatch");
     std::vector<uint8_t> bytes(static_cast<std::size_t>(size)); input.seekg(0);
     if(!input.read(reinterpret_cast<char*>(bytes.data()),size)) throw std::runtime_error("job journal read failed");
@@ -122,7 +129,13 @@ const std::byte* virtual_row(void* table,uint64_t id) {
             job->row=row;
         }
         return job->row;
-    } catch(const std::exception&) { return nullptr; }
+    } catch(const std::exception&) {
+        // Replication can deliver an alias before its separate definition RPC.
+        // New aliases carry the original root so native callers always have a
+        // real recipe row while the read-only definition is being fetched.
+        const auto root=better_workbench::alias_root(FName(static_cast<int64_t>(id)).ToString());
+        return root.empty() ? nullptr : reinterpret_cast<RowFunction>(row_trampoline)(table,name_bits(root.c_str()));
+    }
 }
 #include "dynamic_inputs.hpp"
 #include "native_consumption.hpp"
@@ -257,12 +270,16 @@ void active_worker(void* model,int32_t player,uint64_t recipe,int32_t batches,bo
         job=std::make_shared<ActiveJob>(); job->root=root; job->alias=L"BWJ_";
         constexpr wchar_t hex[]=L"0123456789abcdef";
         for(auto b:std::span(reinterpret_cast<const uint8_t*>(&guid),16)) { job->alias+=hex[b>>4]; job->alias+=hex[b&15]; }
+        if (root.size()>91 || !std::all_of(root.begin(),root.end(),[](wchar_t c){return (c>=L'a'&&c<=L'z')||(c>=L'A'&&c<=L'Z')||(c>=L'0'&&c<=L'9')||c==L'_';}))
+            throw std::runtime_error("recipe identity cannot be synchronized");
+        job->alias+=L"_"+root;
         job->station=field<std::array<uint8_t,16>>(model,0xb0); job->schedule=std::move(schedule);
         if(std::all_of(job->station.begin(),job->station.end(),[](auto b){return b==0;})) throw std::runtime_error("station identity unavailable");
         { std::lock_guard lock(jobs_mutex); if(jobs.size()>=4096) throw std::runtime_error("job cache limit"); }
         persist_job(*job); // Durable definition precedes any native material mutation.
         if(job->schedule.total.size()>5) ensure_dynamic_capacity(model,job->schedule.total.size());
         { std::lock_guard lock(jobs_mutex); jobs[job->alias]=job; }
+        queue_network_job(job->alias);
     } catch(const std::exception& error) {
         const std::string message(error.what()); Output::send(STR("[BetterWorkbenchNative] PLAN_REJECTED {}: {}\n"),root,std::wstring(message.begin(),message.end()));
         original(model,player,recipe,batches,option,cancel); return;
@@ -382,6 +399,9 @@ void install_active_jobs(uintptr_t base) {
         if(!property || property->GetOffset_ForInternal()!=offset) { Output::send(STR("[BetterWorkbenchNative] active crafting disabled: model property mismatch\n")); return; }
     }
     for(const auto& hook:hooks) {
+#ifdef BETTERWORKBENCH_DEDICATED_SERVER
+        if (hook.rva==0x32f5ee0 || hook.rva==0x32c6e10) continue;
+#endif
         auto detour=std::make_unique<PLH::x64Detour>(base+hook.rva,hook.callback,hook.original);
         if(!detour->hook()) {
             for(auto& prior:active_detours) prior->unHook(); active_detours.clear();

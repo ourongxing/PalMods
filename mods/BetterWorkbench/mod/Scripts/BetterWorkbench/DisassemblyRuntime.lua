@@ -76,17 +76,22 @@ function M.new(api)
     return setmetatable({ api = api or _G, busy = false }, M)
 end
 function M:read(session)
-    assert(valid(session.workspace) and valid(session.card), "workbench closed")
-    local controller = session.workspace:GetOwningPlayer()
-    assert(valid(controller) and controller:HasAuthority(), "disassembly requires the local server host")
-    -- The workspace owns a UI UObject under this exact Blueprint field name;
-    -- authority belongs to the player controller, not this presentation model.
-    local model = session.workspace["Convert Item Model"]
-    assert(valid(model), "workbench model unavailable")
-    local recipeId = session.card.RecipeId:ToString()
-    assert(recipeId == session.recipeId, "workbench recipe changed")
-    local concrete = {}
-    assert(model:TryGetConcreteModel(concrete) and valid(concrete.Model), "current workbench unavailable")
+    local controller, concrete, recipeId
+    if session.controller then
+        controller, concrete, recipeId = session.controller, { Model = session.concrete }, session.recipeId
+        assert(valid(controller) and controller:HasAuthority(), "server authority required")
+        assert(valid(concrete.Model), "current workbench unavailable")
+    else
+        assert(valid(session.workspace) and valid(session.card), "workbench closed")
+        controller = session.workspace:GetOwningPlayer()
+        assert(valid(controller), "player unavailable")
+        local model = session.workspace["Convert Item Model"]
+        assert(valid(model), "workbench model unavailable")
+        recipeId = session.card.RecipeId:ToString()
+        assert(recipeId == session.recipeId, "workbench recipe changed")
+        concrete = {}
+        assert(model:TryGetConcreteModel(concrete) and valid(concrete.Model), "current workbench unavailable")
+    end
     local recipes = concrete.Model:GetRecipes()
     local station
     if type(recipes) == "table" then
@@ -120,31 +125,63 @@ function M:read(session)
     end
     assert(not recipe.Materials[recipe.OutputItem], "self-returning recipe unavailable")
     local slots, backpackTotals = scan(inventory)
-    local scope, storage = sourceContainers(self.api, inventory, concrete.Model, controller)
-    local sourceSlots, totals = scan(inventory, scope)
-    -- Match the production detail pane's exact collection mode. If a locked,
-    -- inaccessible or uncached chest changes the accessible count, fail before
-    -- any writes rather than presenting stock we cannot safely debit.
-    local itemUtility = self.api.StaticFindObject("/Script/Pal.Default__PalItemUtility")
-    assert(valid(itemUtility), "production inventory utility unavailable")
-    local collected = {}
-    itemUtility:CollectLocalPlayerControllableItemInfos(session.workspace,
-        { self.api.FName(recipe.OutputItem) }, collected, 2)
-    local accessible = 0
-    local function count(info)
-        if info.StaticItemId:ToString() == recipe.OutputItem then
-            accessible = accessible + Util.integer(info.Num, 0, 1000000000, "accessible product stock")
+    local scope, storage, accessible
+    if type(self.api.BetterWorkbenchNativeScope) == "function" then
+        local ids, problem = self.api.BetterWorkbenchNativeScope(concrete.Model, controller, recipeId)
+        assert(type(ids) == "string", problem or "authorized inventory unavailable")
+        accessible = Util.integer(problem, 0, 1000000000, "native accessible product stock")
+        local manager = self.api.StaticFindObject("/Script/Pal.Default__PalUtility"):GetItemContainerManager(controller)
+        assert(valid(manager), "container manager unavailable")
+        local containerId = require("BetterWorkbench.ContainerId").factory(self.api)
+        scope = {}
+        local seen = {}
+        for id in ids:gmatch("([%x]+);") do
+            assert(#id == 32 and #scope < 4096, "invalid authorized container ID")
+            if not seen[id] then
+                local guid = {}
+                for i, key in ipairs({"A", "B", "C", "D"}) do
+                    local n = tonumber(id:sub((i-1)*8+1, i*8), 16)
+                    guid[key] = n >= 0x80000000 and n-0x100000000 or n
+                end
+                local container = manager:GetContainer(containerId(guid))
+                -- The game's count function skips stale container IDs too.
+                -- Require exact product-count agreement below, so a missing
+                -- replicated container cannot become spendable phantom stock.
+                if valid(container) then scope[#scope+1], seen[id] = container, true end
+            end
         end
+        assert(#scope > 0, "authorized inventory empty")
+    else
+        assert(not session.controller, "verified server inventory bridge unavailable")
+        scope, storage = sourceContainers(self.api, inventory, concrete.Model, controller)
     end
-    local infos = collected.OutItemInfos or collected
-    if type(infos) == "table" then
-        assert(#infos <= 4096, "invalid accessible inventory")
-        for _, parameter in ipairs(infos) do
-            local kind = parameter:type()
-            count((kind == "RemoteUnrealParam" or kind == "LocalUnrealParam") and parameter:get() or parameter)
+    local sourceSlots, totals = scan(inventory, scope)
+    if accessible then assert(accessible == (totals[recipe.OutputItem] or 0), "production inventory scope mismatch") end
+    if not self.api.BetterWorkbenchNativeScope then
+        -- Match the production detail pane's exact collection mode. If a locked,
+        -- inaccessible or uncached chest changes the accessible count, fail before
+        -- any writes rather than presenting stock we cannot safely debit.
+        local itemUtility = self.api.StaticFindObject("/Script/Pal.Default__PalItemUtility")
+        assert(valid(itemUtility), "production inventory utility unavailable")
+        local collected = {}
+        itemUtility:CollectLocalPlayerControllableItemInfos(session.workspace,
+            { self.api.FName(recipe.OutputItem) }, collected, 2)
+        local accessible = 0
+        local function count(info)
+            if info.StaticItemId:ToString() == recipe.OutputItem then
+                accessible = accessible + Util.integer(info.Num, 0, 1000000000, "accessible product stock")
+            end
         end
-    else each(infos, 4096, count) end
-    assert(accessible == (totals[recipe.OutputItem] or 0), "production inventory scope mismatch")
+        local infos = collected.OutItemInfos or collected
+        if type(infos) == "table" then
+            assert(#infos <= 4096, "invalid accessible inventory")
+            for _, parameter in ipairs(infos) do
+                local kind = parameter:type()
+                count((kind == "RemoteUnrealParam" or kind == "LocalUnrealParam") and parameter:get() or parameter)
+            end
+        else each(infos, 4096, count) end
+        assert(accessible == (totals[recipe.OutputItem] or 0), "production inventory scope mismatch")
+    end
     return { Recipes = { [recipeId] = recipe }, Inventory = totals,
         Context = { StationRecipes = station, canDisassemble = function() return true end } },
         { inventory = inventory, slots = slots, controller = controller, backpackTotals = backpackTotals,
@@ -164,6 +201,7 @@ function M:disassemblyTransaction(session, build)
     self.busy = true
     local ok, plan, reason = pcall(function()
         local state, runtime = self:read(session)
+        assert(runtime.controller:HasAuthority(), "disassembly requires server authority")
         local sourceSlots = runtime.sourceSlots or runtime.slots
         local plan, problem = build(state)
         if not plan then return nil, problem end

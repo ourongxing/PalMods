@@ -1,5 +1,21 @@
 # 创意工坊打包
 
+## Better Workbench 1.1.0 服务端支持与分解修复
+
+2026-10-20：更新四语 README 与 Info.json 版本至 `1.1.0`，最低游戏修订号按本轮实测设为 `102999`。简介加入 Windows 专用服务器、任务定义同步、服务器权威分解及两端相同版本安装要求，更新分解入口、工作台定位和批量分解崩溃的修复说明；保留 Jobs 备份要求与尚未完整验证的范围。
+
+随后经用户授权，沿用 PublishedId [3820049890](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049890) 发布 `1.1.0`。包内加入独立服务器 DLL、完整 Server 脚本布局和服务器安装规则；四语标题与正文已读回核对，条目身份、公开状态、封面、标签和依赖保持不变。通过游戏 AppID 重新下载，72 个包内文件哈希全部匹配，保留 `.workshop.json`。82 项 Lua 回归、两端原生回归与各 73 个导入审核已通过，16 项打包测试及 30 项共享工具测试通过。
+
+正常关闭两端并备份运行目录、服务器 Saved 与原工坊包后更新。本机服务器已启用正式工坊包并重启，管理元数据为 `1.1.0`；用户随后取消后续操作，客户端未完成正式包冷启动核对，管理元数据仍为 `1.0.0`，下次启动由官方加载器更新。功能确认来自发布前相同代码的测试副本，不能扩大为发布后完整功能验收。发布包：`dist/workshop-betterworkbench-1.1.0-20261020/BetterWorkbench/`；发布与下载证据：`.build/workshop-betterworkbench-server-1.1.0-20261020/`。
+
+## Better Arena 1.1.0 服务端支持与切换修复
+
+2026-10-20：沿用 PublishedId [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613) 发布 `1.1.0`，加入 Windows 专用服务器扫荡、服务端权威额度与奖励回执，修复服务器返回单人后的扫荡界面崩溃。四语标题与正文已上传并读回核对，条目身份、公开状态、依赖、标签和封面保持不变。
+
+`Info.json` 新增服务端 Lua 与 PalSchema 安装规则；独立 `Server/` 布局包含完整脚本和 `server.txt` 标记，客户端不会安装该标记。15 项工坊打包测试通过。通过游戏 AppID 重新下载，44 个包内文件哈希全部匹配，正式订阅目录保留 `.workshop.json` 并记录 `1.1.0`。
+
+关闭两端并备份后部署正式包，完整重启确认客户端、服务器官方管理元数据均为 `1.1.0`，两端全部脚本与下载包一致、服务器标记隔离正确，服务端核对 14 组奖励和 NPC RP x2，UDP 8211 正常。功能与跨世界流程的用户确认来自发布前相同脚本测试；本次启动核对不扩展为完整边界验收。证据：`.build/workshop-better-arena-server-1.1.0-20261020/`；发布包：`dist/workshop-better-arena-1.1.0-preview-20261020/BetterArena/`；四语简介：`dist/workshop-listings-arena-server-20261020/BetterArena/listing.json`。
+
 ## Better Storage 1.2.0 服务端支持
 
 2026-10-20：沿用 [3820049820](https://steamcommunity.com/sharedfiles/filedetails/?id=3820049820) 发布 `1.2.0`，加入独立 Windows 服务端 DLL 和服务器安装规则，修复野外收纳的远程库存订阅及候选读取。用户确认服务器重启后无需打开道具存储机即可收纳。两端编译、41 个接口及候选回归、15 项工坊打包测试通过。

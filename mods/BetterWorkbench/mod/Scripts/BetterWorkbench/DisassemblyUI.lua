@@ -1,3 +1,5 @@
+local Lifecycle = require("BetterWorkbench.Lifecycle")
+local Remote = require("BetterWorkbench.Remote")
 local Runtime = require("BetterWorkbench.DisassemblyRuntime")
 local Service = require("BetterWorkbench.CraftService")
 local Util = require("BetterWorkbench.Util")
@@ -344,7 +346,9 @@ local function removeOldCardBadge(workspace, card)
     end
 end
 local function guarded(callback)
+    local epoch = Lifecycle.epoch
     return function(...)
+        if epoch ~= Lifecycle.epoch then return end
         local ok, reason = pcall(callback, ...)
         if not ok then
             for _, session in pairs(sessions) do pcall(close, session) end
@@ -359,7 +363,10 @@ function M.start(config)
     service = Service.new(Runtime.new())
     local function hook(path, callback)
         if hooks[path] then return end
-        local ok, pre, post = pcall(RegisterHook, path, guarded(callback))
+        local call = guarded(callback)
+        local ok, pre, post = pcall(RegisterHook, path, function(context, ...)
+            if context then return call(context, ...) end
+        end)
         if ok then hooks[path] = { pre, post } end
     end
     local entryPath = WORK .. ":OnClickedRecipeSlot"
@@ -416,9 +423,15 @@ function M.start(config)
         -- This post hook is shared by the vanilla button and controller binding.
         local batches = Util.integer(session.workspace.WBP_IngameCommonSelectNum.nowNum, 0, 256, "disassembly batches")
         if batches == 0 then feedback(session, I18n.text("failed", I18n.text("insufficient_products"))); return end
-        local ok, result, failed = pcall(service.disassemble, service, session, session.recipeId, batches)
+        if session.pending then return end
+        local epoch, recipe = Lifecycle.epoch, session.recipeId
+        local function completed(result, failed)
+        if epoch ~= Lifecycle.epoch then return end
+        session.pending = nil
+        if not valid(session.workspace) or not session.mode or session.recipeId ~= recipe then return end
+        local ok = result ~= nil
         if not ok or not result then
-            log(ok and failed or result)
+            log(failed)
             feedback(session, I18n.text("failed", reasonMessage(failed)))
             update(session)
             return
@@ -438,6 +451,15 @@ function M.start(config)
             session.workspace.WBP_IngameCommonSelectNum, current.MaxBatches, minimum)
         session.workspace.WBP_IngameCommonSelectNum:SetNum(math.max(minimum, math.min(current.MaxBatches, batches)), session.group, false)
         update(session, I18n.text("complete"))
+        end
+        if session.workspace:GetOwningPlayer():HasAuthority() then
+            local ok, result, failed = pcall(service.disassemble, service, session, recipe, batches)
+            completed(ok and result or nil, ok and failed or result)
+        else
+            session.pending = true
+            local ok, problem = pcall(Remote.instance.claim, Remote.instance, session, recipe, batches, guarded(completed))
+            if not ok then completed(nil, problem) end
+        end
     end)
     hook("/Script/UMG.UserWidget:Destruct", function(context)
         local object = context:get()
@@ -452,9 +474,18 @@ function M.start(config)
         end
     end)
     end
+    Lifecycle.onReset(function()
+        -- Drop wrappers before the engine destroys them; do not call close().
+        clicks, sessions, inputTypes = {}, {}, {}
+        for path, ids in pairs(hooks) do
+            local actual = path == "productionGuard" and "/Script/Pal.PalUIConvertItemModel:CanStartProduction" or path
+            pcall(UnregisterHook, actual, ids[1], ids[2])
+        end
+        hooks, guardReady = {}, false
+    end)
     installHooks()
-    NotifyOnNewObject(WORK, function() ExecuteInGameThread(installHooks) end)
-    NotifyOnNewObject(BUTTON, function() ExecuteInGameThread(installHooks) end)
+    NotifyOnNewObject(WORK, function() ExecuteInGameThread(guarded(installHooks)) end)
+    NotifyOnNewObject(BUTTON, function() ExecuteInGameThread(guarded(installHooks)) end)
     -- Load only the two known UI classes once, so the first workbench opening
     -- does not race its list initialization against a queued new-object hook.
     if type(LoadAsset) == "function" then

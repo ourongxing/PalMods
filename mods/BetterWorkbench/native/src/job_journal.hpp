@@ -5,8 +5,13 @@
 namespace better_workbench {
 struct Journal { std::wstring alias, root; std::array<uint8_t,16> station{}; Schedule schedule; };
 inline bool alias_text(const std::wstring& name) {
-    return name.size()==36 && (name.starts_with(L"BWJ_") || name.starts_with(L"SRJ_"))
-        && std::all_of(name.begin()+4,name.end(),[](wchar_t c){return (c>=L'0'&&c<=L'9')||(c>=L'a'&&c<=L'f');});
+    if (name.size()<36 || name.size()>128 || !(name.starts_with(L"BWJ_") || name.starts_with(L"SRJ_"))) return false;
+    if (!std::all_of(name.begin()+4,name.begin()+36,[](wchar_t c){return (c>=L'0'&&c<=L'9')||(c>=L'a'&&c<=L'f');})) return false;
+    return name.size()==36 || (name.size()>37 && name[36]==L'_' &&
+        std::all_of(name.begin()+37,name.end(),[](wchar_t c){return (c>=L'a'&&c<=L'z')||(c>=L'A'&&c<=L'Z')||(c>=L'0'&&c<=L'9')||c==L'_';}));
+}
+inline std::wstring alias_root(const std::wstring& alias) {
+    return alias_text(alias) && alias.size()>37 ? alias.substr(37) : L"";
 }
 inline uint64_t checksum(std::span<const uint8_t> bytes) {
     uint64_t value=14695981039346656037ULL;
@@ -42,6 +47,7 @@ inline Journal decode_journal(std::vector<uint8_t> bytes,const std::wstring& ali
     Journal job;job.alias=data.text();job.root=data.text();
     if(job.alias!=alias||!alias_text(alias)||job.root==L"None"||alias_text(job.root)
         ||data.position+16>data.bytes.size())throw std::runtime_error("invalid job binding");
+    if (!alias_root(alias).empty() && alias_root(alias)!=job.root) throw std::runtime_error("alias root mismatch");
     std::copy_n(data.bytes.begin()+data.position,16,job.station.begin());data.position+=16;
     if(std::all_of(job.station.begin(),job.station.end(),[](auto b){return b==0;}))throw std::runtime_error("empty job station");
     const auto batches=data.get();if(!batches||batches>256)throw std::runtime_error("invalid job batches");

@@ -127,6 +127,10 @@ def payload(mod):
                   for p in sorted((source / 'Scripts').rglob('*.lua'))]
         files += [(None, 'enabled.txt')]
     if mod == 'BetterArena':
+        # Dedicated installation gets the same Lua plus its own storage/UI
+        # mode marker. Keep that marker out of the client install targets.
+        files += [(path, 'Server/' + name) for path, name in list(files)]
+        files += [(None, 'Server/server.txt')]
         schema = BUILD_ROOT / mod / 'schema'
         files += [(schema / name, 'PalSchema/' + name)
                   for name in ('raw/arena_rewards.json', 'blueprints/arena_points.json')]
@@ -137,13 +141,21 @@ def payload(mod):
             raise ValueError('CustomPresets import audit is incomplete or DLL changed; rebuild first')
         files += [(dll, 'dlls/main.dll')]
     elif mod == 'BetterWorkbench':
-        dll = BUILD_ROOT / mod / 'native/Release/BetterWorkbenchNative.dll'
-        report = read_json(BUILD_ROOT / mod / 'import-audit.json')
-        if digest(dll).lower() != report['bridge_sha256'].lower():
-            raise ValueError('BetterWorkbench DLL differs from import audit; rebuild and audit first')
-        if report['ue4ss_imports_verified'] < 46:
-            raise ValueError('BetterWorkbench import audit is incomplete')
-        files += [(dll, 'dlls/main.dll')]
+        def audited_dll(folder, target):
+            report = read_json(folder / 'import-audit.json')
+            candidates = sorted(folder.glob('native*/Release/BetterWorkbenchNative.dll'))
+            matched = [path for path in candidates if digest(path).lower() == report['bridge_sha256'].lower()]
+            if not matched:
+                raise ValueError(f'BetterWorkbench {target} DLL differs from import audit; rebuild and audit first')
+            if report.get('target') != target or report['ue4ss_imports_verified'] < 73:
+                raise ValueError(f'BetterWorkbench {target} import audit is incomplete')
+            return matched[0]
+        dll = audited_dll(BUILD_ROOT / mod, 'client')
+        server_dll = audited_dll(BUILD_ROOT / (mod + '-server'), 'server')
+        if digest(dll) == digest(server_dll):
+            raise ValueError('BetterWorkbench server DLL must use the dedicated-server build')
+        files += [(path, 'Server/' + name) for path, name in list(files)]
+        files += [(None, 'Server/server.txt'), (dll, 'dlls/main.dll'), (server_dll, 'Server/dlls/main.dll')]
     elif mod == 'PalCombo':
         files += [(source / 'config.ini', 'config.ini'),
                   (PALCOMBO_BUILD / 'Game__Shipping__Win64/bin/PalComboFillerNative.dll', 'dlls/main.dll')]

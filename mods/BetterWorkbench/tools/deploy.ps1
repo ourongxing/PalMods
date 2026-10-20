@@ -1,6 +1,8 @@
 param(
     [string]$ModsDirectory = '',
     [string]$GameExecutable = '',
+    [string]$ServerRoot = '',
+    [string]$NativeDll = '',
     [switch]$StageWhileRunning
 )
 $ErrorActionPreference = 'Stop'
@@ -11,14 +13,20 @@ if (-not $GameExecutable) { $GameExecutable = $gamePaths.GameExecutable }
 $projectRoot = Split-Path -Parent $PSScriptRoot
 $repositoryRoot = Split-Path -Parent (Split-Path -Parent $projectRoot)
 $buildRoot = Join-Path $repositoryRoot '.build/BetterWorkbench'
-$sourceDll = Join-Path $buildRoot 'native/Release/BetterWorkbenchNative.dll'
+if ($ServerRoot) {
+    $ServerRoot = [IO.Path]::GetFullPath($ServerRoot)
+    $buildRoot = Join-Path $repositoryRoot '.build/BetterWorkbench-server'
+    $ModsDirectory = Join-Path $ServerRoot 'Mods/NativeMods/UE4SS/Mods'
+    $GameExecutable = Join-Path $ServerRoot 'Pal/Binaries/Win64/PalServer-Win64-Shipping-Cmd.exe'
+}
+$sourceDll = if ($NativeDll) { [IO.Path]::GetFullPath($NativeDll) } else { Join-Path $buildRoot 'native/Release/BetterWorkbenchNative.dll' }
 $report = Get-Content -LiteralPath (Join-Path $buildRoot 'import-audit.json') -Raw | ConvertFrom-Json
 $runtimeDll = Join-Path (Split-Path -Parent $ModsDirectory) 'UE4SS.dll'
 if ((Get-FileHash -LiteralPath $sourceDll).Hash -ne $report.bridge_sha256) { throw 'Bridge differs from audited build' }
 if ((Get-FileHash -LiteralPath $runtimeDll).Hash -ne $report.runtime_sha256) { throw 'UE4SS changed since import audit' }
 if ((Get-FileHash -LiteralPath $GameExecutable).Hash -ne (Get-Content -LiteralPath (Join-Path $buildRoot 'game-sha256.txt') -Raw).Trim()) { throw 'Game executable changed since native guard generation' }
-$running = [bool](Get-Process -Name 'Palworld-Win64-Shipping' -ErrorAction SilentlyContinue)
-if ($running) { throw 'Save and exit Palworld before deploying the unified mod, including staging' }
+$running = @(Get-Process -Name 'Palworld','Palworld-Win64-Shipping','PalServer','PalServer-Win64-Shipping-Cmd' -ErrorAction SilentlyContinue)
+if ($running.Count) { throw 'Save and exit both Palworld and PalServer before deploying, including staging' }
 $modsRoot = [IO.Path]::GetFullPath($ModsDirectory).TrimEnd([char[]]'\/')
 $targetDir = Join-Path $modsRoot 'BetterWorkbench'
 $legacyDirs = @('SmartRecipe', 'SmartRecipeNative', 'BetterWorkbenchNative') | ForEach-Object { Join-Path $modsRoot $_ }
@@ -48,9 +56,23 @@ Copy-Item -LiteralPath $modsFile -Destination (Join-Path $backupDir 'mods.txt')
 foreach ($directory in @($targetDir) + $legacyDirs) {
     if (Test-Path -LiteralPath $directory) { Copy-Item -LiteralPath $directory -Destination $backupDir -Recurse }
 }
+if ($ServerRoot) {
+    Copy-Item -LiteralPath (Join-Path $ServerRoot 'Pal/Saved') -Destination (Join-Path $backupDir 'Saved') -Recurse
+}
 $sourceDir = Join-Path $projectRoot 'mod'
 New-Item -ItemType Directory -Path $targetDir -Force | Out-Null
-Get-ChildItem -LiteralPath $sourceDir -Force | ForEach-Object { Copy-Item -LiteralPath $_.FullName -Destination $targetDir -Recurse -Force }
+foreach ($file in (Get-ChildItem -LiteralPath $sourceDir -Recurse -File)) {
+    $relative = $file.FullName.Substring($sourceDir.Length + 1)
+    $destination = Join-Path $targetDir $relative
+    if ($relative -eq 'Scripts\config.lua' -and (Test-Path -LiteralPath $destination)) { continue }
+    New-Item -ItemType Directory -Path (Split-Path -Parent $destination) -Force | Out-Null
+    Copy-Item -LiteralPath $file.FullName -Destination $destination -Force
+}
+if ($ServerRoot) {
+    [IO.File]::WriteAllText((Join-Path $targetDir 'server.txt'), '', [Text.UTF8Encoding]::new($false))
+} elseif (Test-Path -LiteralPath (Join-Path $targetDir 'server.txt')) {
+    Remove-Item -LiteralPath (Join-Path $targetDir 'server.txt')
+}
 $dllDir = Join-Path $targetDir 'dlls'
 New-Item -ItemType Directory -Path $dllDir -Force | Out-Null
 $installedDll = Join-Path $dllDir 'main.dll'
@@ -60,6 +82,7 @@ Copy-Item -LiteralPath (Join-Path $projectRoot 'docs/NATIVE.md') -Destination (J
 if ((Get-FileHash -LiteralPath $installedDll).Hash -ne $report.bridge_sha256) { throw 'Installed DLL hash mismatch' }
 foreach ($file in (Get-ChildItem -LiteralPath $sourceDir -Recurse -File)) {
     $relative = $file.FullName.Substring($sourceDir.Length + 1)
+    if ($relative -eq 'Scripts\config.lua') { continue }
     if ((Get-FileHash -LiteralPath $file.FullName).Hash -ne (Get-FileHash -LiteralPath (Join-Path $targetDir $relative)).Hash) { throw "Lua deployment mismatch: $relative" }
 }
 foreach ($file in $jobFiles) {

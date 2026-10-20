@@ -1256,4 +1256,5 @@ test("disassembly requires its own backend instead of craft transactions", funct
 end)
 
 dofile(PROJECT_ROOT .. "/tests/disassembly_runtime.lua")(test, equal)
+dofile(PROJECT_ROOT .. "/tests/remote.lua")(test, equal)
 print(string.format("\n%d tests passed (including 200 conservation scenarios).", count))
