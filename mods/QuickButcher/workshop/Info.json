@@ -2,13 +2,14 @@
   "ModName": "Quick Butcher / 快速肢解",
   "PackageName": "QuickButcher",
   "Thumbnail": "thumbnail.png",
-  "Version": "1.0.0",
+  "Version": "1.1.0",
   "DebugMode": false,
   "MinRevision": 82182,
   "Author": "ourongxing",
   "Dependencies": [],
   "Tags": ["Gameplay", "Utilities"],
   "InstallRule": [
-    {"Type": "Paks", "Targets": ["./Paks/"]}
+    {"Type": "Paks", "Targets": ["./Paks/"]},
+    {"Type": "Paks", "IsServer": true, "Targets": ["./Server/Paks/"]}
   ]
 }

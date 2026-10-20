@@ -197,8 +197,10 @@ class WorkshopTests(unittest.TestCase):
                     self.assertEqual(info['Version'], '1.1.0')
                 if mod == 'QuickButcher':
                     self.assertEqual(installed, {'Pal/Content/Paks/~WorkshopMods/QuickButcher/QuickButcher_P.pak'})
+                    self.assertEqual(installed_by_server[False], installed_by_server[True])
+                    self.assertTrue((package / 'Server/Paks/QuickButcher_P.pak').is_file())
                     self.assertEqual(info['Dependencies'], [])
-                    self.assertEqual(info['Version'], '1.0.0')
+                    self.assertEqual(info['Version'], '1.1.0')
                 manifest = workshop.read_json(package / 'package-manifest.json')
                 with zipfile.ZipFile(output / (mod + '.zip')) as archive:
                     self.assertIsNone(archive.testzip())

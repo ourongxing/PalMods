@@ -1,5 +1,11 @@
 # 创意工坊打包
 
+## Quick Butcher 1.1.0 服务端支持
+
+2026-10-20：沿用 PublishedId [3821569615](https://steamcommunity.com/sharedfiles/filedetails/?id=3821569615) 发布 `1.1.0`，新增独立 Windows 专用服务器 PAK 与服务端安装规则，保留客户端 PAK，无新增依赖。用户已确认本机服务器的地下肢解及耗时异常解决。四语标题／正文已读回核对，公开状态、封面、标签和依赖保持不变；通过游戏 AppID 重新下载，9 个包内文件的 SHA-256 全部匹配，服务端规则与资源存在。客户端／服务端补丁检查及 15 项工坊打包工具测试通过。
+
+正式订阅目录为 `G:/SteamLibrary/steamapps/workshop/content/1623730/3821569615/`，保留 `.workshop.json` 并记录发布版本。测试服务器停服后更新为正式包，再完整启动；原测试包已备份。发布包：`dist/workshop-quickbutcher-server-1.1.0-20261020/QuickButcher/`；上传、读回与下载验证证据：`.build/workshop-quickbutcher-server-1.1.0-20261020/`。更多实机验证边界见 QuickButcher 的 `docs/VALIDATION.md`。
+
 ## Sekhmet Medicine
 
 2026-10-20：`Sekhmet Medicine / 制药的塞赫麦特` 已以 `1.0.0` 公开发布，PublishedId 为 [3823292428](https://steamcommunity.com/sharedfiles/filedetails/?id=3823292428)。四语标题与正文、公开状态、标签、封面存在及 UE4SSExperimentalPW／PalSchema 两个依赖已读回核对；通过游戏 AppID 下载的 8 个包内文件哈希与发布清单全部一致。

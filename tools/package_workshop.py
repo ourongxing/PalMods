@@ -109,11 +109,17 @@ def payload(mod):
     """Explicit runtime inputs exclude local jobs, logs, SDKs and old mod names."""
     if mod == 'QuickButcher':
         folder = DIST_ROOT / mod
-        pak = folder / 'QuickButcher_P.pak'
-        report = read_json(folder / 'build-audit.json')
-        if report.get('Mod') != mod or digest(pak) != report['PakSHA256']:
-            raise ValueError('QuickButcher PAK differs from build audit; rebuild first')
-        return [(pak, 'Paks/QuickButcher_P.pak')]
+        files = []
+        for target, source, destination in (
+                ('client', folder, 'Paks/QuickButcher_P.pak'),
+                ('server', folder / 'server', 'Server/Paks/QuickButcher_P.pak')):
+            pak = source / 'QuickButcher_P.pak'
+            report = read_json(source / 'build-audit.json')
+            if (report.get('Mod') != mod or report.get('Target') != target
+                    or digest(pak) != report['PakSHA256']):
+                raise ValueError(f'QuickButcher {target} PAK differs from build audit; rebuild first')
+            files.append((pak, destination))
+        return files
     source = MODS_ROOT / mod / 'mod'
     files = []
     if mod not in ('PointBlankBurstSkills', 'SekhmetMedicine'):

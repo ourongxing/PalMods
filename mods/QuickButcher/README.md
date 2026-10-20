@@ -1,6 +1,6 @@
 # 快速肢解（Quick Butcher）
 
-1.0.0 · ourongxing
+1.1.0 · ourongxing
 
 第一个功能：使用切肉刀肢解帕鲁时，跳过玩家的肢解动画，进入原版的肢解结束流程。
 仍从原版肢解入口操作，沿用目标检查、服务端结算、掉落、肢解次数记录与角色状态恢复。
@@ -26,13 +26,13 @@ python mods/QuickButcher/tests/run.py
 将构建的 PAK 放入该目录的 `Paks/`，保留 `.workshop.json`；本地测试可将 `Info.json.DebugMode`
 设为 `true`，使游戏每次启动重新安装。正式发布的模板保持 `false`。
 
-产物：`dist/QuickButcher/QuickButcher-1.0.0.zip`；单独的 PAK 和 `build-audit.json` 也保存在该目录。
+产物：`dist/QuickButcher/QuickButcher-1.1.0.zip`；单独的 PAK 和 `build-audit.json` 也保存在该目录。
 ZIP 与 `install.ps1` 用于独立手动安装，勿与工坊副本同时加载。
 
 ## 工坊资料
 
 `workshop/` 保存工坊元数据、封面和简体中文／繁體中文／日本語／English 四语介绍。
-首次工坊版本为 `1.0.0`，PublishedId 为 `3821569615`。游戏内功能验收仍待完成。
+首次工坊版本为 `1.0.0`，PublishedId 为 `3821569615`。`1.1.0` 加入 Windows 专用服务器资源及安装规则。
 功能介绍只编辑四份本地化 README；反馈与开源部分由 `tools/workshop/templates/` 的四语公共模板自动追加，
 `listing.json` 由统一打包工具生成：
 
@@ -61,3 +61,10 @@ python tools/package_workshop.py QuickButcher --output-root dist/quickbutcher-wo
 请用可丢弃的帕鲁确认：玩家不播放肢解动画、帕鲁只移除一次、材料只结算一次，
 操作后移动／跳跃／切换武器正常，连续肢解正常。
 联机模式还需分别验证主机与客户端；当前未确认联机效果。
+
+2026-10-20 已增加独立的 Windows 专用服务器构建与本地测试安装脚本，
+使用服务器自己的 cooked 资源。构建：`python mods/QuickButcher/tools/build.py --server`；
+退出游戏并停止服务器后运行 `mods/QuickButcher/tools/install_server.ps1`。
+正式工坊包包含独立的客户端和 Windows 专用服务器 PAK；两端均需安装并启用。
+服务端更新后须重启。用户已确认本机服务器中地下肢解和耗时异常解决，
+完整验证范围见 [验证记录](docs/VALIDATION.md)。

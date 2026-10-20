@@ -103,7 +103,7 @@ def main(argv=None):
         'BetterPalSouls': ROOT / 'dist/BetterPalSouls/BetterPalSouls-1.0.0.zip',
         'ExtraImplantDrops': ROOT / 'dist/ExtraImplantDrops/ExtraImplantDrops-1.0.0.zip',
         'CustomPresets': ROOT / 'dist/CustomPresets/CustomPresets-1.0.0.zip',
-        'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.0.0.zip',
+        'QuickButcher': ROOT / 'dist/QuickButcher/QuickButcher-1.1.0.zip',
         'BetterArena': ROOT / 'dist/BetterArena/BetterArena-0.1.0.zip',
         'BetterExpedition': ROOT / 'dist/BetterExpedition/BetterExpedition-0.1.0.zip',
         'SekhmetMedicine': ROOT / 'dist/SekhmetMedicine/SekhmetMedicine-0.1.0.zip',

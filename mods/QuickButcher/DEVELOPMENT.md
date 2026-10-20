@@ -37,3 +37,19 @@ UAssetAPI 1.1.0 的 CLI 需使用已注册的 `Palworld` mapping 名称读取反
 构建不依赖解析器，而以完整源文件哈希及精确的三条压栈指令校验补丁适用性。
 
 这是静态流程证据。单机连续肢解、结算一次性、角色恢复和联机表现仍需游戏内验收。
+
+## Windows 专用服务器资源
+
+2026-10-20 本机 `Pal-WindowsServer.pak` 的同名蓝图具有独立 cooked 文件，不能使用客户端 PAK 替代。
+服务端 Ubergraph 的磁盘起点为 4409，内存字节码长度仍为 3770；三个续接地址与完成分支一致。
+原始字节码的 35 个差异均对应 NameMap 索引变化，解析后名称相同。
+服务端补丁保持自己的 `.uasset` 不变，只修改 `.uexp` 的 6683、6684 两个字节。
+完整源文件 SHA-256 另存于构建工具的 `SERVER_HASHES`。
+
+`python mods/QuickButcher/tools/build.py --server --game-root G:/PalworldTestServer`
+生成独立的 `dist/QuickButcher/server/` 产物，不覆盖客户端产物。
+退出游戏并停止服务器后执行 `mods/QuickButcher/tools/install_server.ps1`，
+将独立资源放入现有服务器工坊包副本 `Server/Paks/`，由官方加载器部署。
+安装脚本不修改订阅源目录和线上工坊，先备份包、配置和服务器存档。
+工坊 `1.1.0` 同时打包 `Paks/` 客户端资源与 `Server/Paks/` 服务端资源，
+两条安装规则分别部署到对应运行端。打包工具逐一核对两份构建审核和 PAK 哈希。
