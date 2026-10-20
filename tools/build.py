@@ -11,7 +11,7 @@ from palmods import BUILD_ROOT, MODS_ROOT, PALCOMBO_BUILD, ROOT, UE4SS_BUILD
 from build_sdk import ensure_sdk, toolset_environment
 
 MODS = ('PalCombo', 'BetterWorkbench', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'BetterExpedition', 'SekhmetMedicine')
-SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets', 'BetterExpedition'}
+SDK_MODS = {'PalCombo', 'BetterWorkbench', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'}
 
 
 def positive_int(value):
@@ -62,14 +62,12 @@ def commands_for(mod, args):
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build_native.py', *options), python_script('audit_native_imports.py')]
-    if mod in ('BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets', 'BetterExpedition'):
+    if mod in ('BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'):
         options = ['--parallel', str(args.parallel)]
         if toolset:
             options.extend(['--toolset', toolset])
         return [python_script('build.py', *options)]
-    if mod == 'SekhmetMedicine':
-        return [python_script('build.py')]
-    if mod in ('AnywherePalBox', 'BetterPalSouls', 'QuickButcher', 'BetterArena'):
+    if mod in ('AnywherePalBox', 'BetterPalSouls', 'QuickButcher', 'BetterArena', 'BetterExpedition', 'SekhmetMedicine'):
         return [python_script('build.py')]
     if mod == 'UpdraftElevator':
         return [python_script('build_native.py'), python_script('run_native_build.py'),

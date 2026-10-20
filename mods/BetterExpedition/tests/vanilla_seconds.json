@@ -1,0 +1,20 @@
+{
+  "Dungeon_Grass": 1800,
+  "Dungeon_Forest": 1800,
+  "Dungeon_Volcano": 2700,
+  "Dungeon_Desert": 2700,
+  "Dungeon_Snow": 3600,
+  "Dungeon_Sakurajima": 3600,
+  "Dungeon_DarkIsland": 3600,
+  "Dungeon_SkyIsland": 3600,
+  "Dungeon_WorldTree": 3600,
+  "Dungeon_GrassHard": 7200,
+  "Dungeon_ForestHard": 7200,
+  "Dungeon_VolcanoHard": 7200,
+  "Dungeon_DesertHard": 7200,
+  "Dungeon_SnowHard": 7200,
+  "Dungeon_SakurajimaHard": 7200,
+  "Dungeon_DarkIslandHard": 7200,
+  "Dungeon_SkyIslandHard": 7200,
+  "Dungeon_WorldTreeHard": 7200
+}

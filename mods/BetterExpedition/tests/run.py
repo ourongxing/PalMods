@@ -1,10 +1,16 @@
-"""Run the compiled reward regression through the shared native test build."""
+"""Verify patch scope against the decoded 1.0.5.102999 vanilla baseline."""
+import json
 from pathlib import Path
-import subprocess
-import runpy
-ROOT = Path(__file__).resolve().parents[3]
-runpy.run_path(str(Path(__file__).parent / 'check_ui.py'))
-BUILD = ROOT / '.build/tests'
-subprocess.run(['cmake', '-S', str(ROOT), '-B', str(BUILD)], check=True)
-subprocess.run(['cmake', '--build', str(BUILD), '--config', 'Release', '--target', 'better_expedition_rewards'], check=True)
-subprocess.run(['ctest', '--test-dir', str(BUILD), '-C', 'Release', '-R', '^better_expedition_rewards$', '--output-on-failure'], check=True)
+
+MOD = Path(__file__).resolve().parents[1]
+baseline = json.loads((MOD / 'tests/vanilla_seconds.json').read_text(encoding='utf-8-sig'))
+patch = json.loads((MOD / 'mod/raw/expedition_time.json').read_text(encoding='utf-8-sig'))
+assert set(patch) == {'DT_CharacterTeamMissionDataTable'}
+rows = patch['DT_CharacterTeamMissionDataTable']
+assert len(rows) == 18 and rows.keys() == baseline.keys()
+for name, fields in rows.items():
+    assert set(fields) == {'RequiredSeconds'}, name
+    assert type(fields['RequiredSeconds']) is int and fields['RequiredSeconds'] > 0
+    assert fields['RequiredSeconds'] * 10 == baseline[name], name
+assert {p.suffix for p in (MOD / 'mod').rglob('*') if p.is_file()} == {'.json'}
+print('PASS: 18 missions at 10% vanilla duration; only RequiredSeconds changed; no executable runtime.')
