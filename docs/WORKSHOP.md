@@ -1,5 +1,11 @@
 # 创意工坊打包
 
+## Better Arena 1.1.1 稳定性与锁定提示修复
+
+2026-10-22：沿用 PublishedId [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613) 发布 `1.1.1`。包含游戏线程定时任务、初始化成功后停止重复世界查询、一次性回调保留及新档扫荡锁定提示修正。四语更新说明放在顶部版本号下的引用块，并以 Steam 水平线与正文分隔，移除旧 `1.1.0` 独立日志章节。
+
+Steam SDK 上传完成，四语标题及完整描述已读回逐项匹配；原条目、作者、公开状态、标签、依赖与封面保持一致。31 项工具测试通过。上传包：`dist/workshop-better-arena-1.1.1-clean-notes-20261022/BetterArena/`；证据：`.build/workshop-better-arena-1.1.1-20261022/`。发布时游戏运行，直接从独立打包目录上传，未覆盖运行中的本机模组。此次未重新下载发布内容核对文件哈希，也未新增实机验收；稳定性和锁定提示结果沿用已记录的用户确认。
+
 ## Better Workbench 1.1.0 服务端支持与分解修复
 
 2026-10-20：更新四语 README 与 Info.json 版本至 `1.1.0`，最低游戏修订号按本轮实测设为 `102999`。简介加入 Windows 专用服务器、任务定义同步、服务器权威分解及两端相同版本安装要求，更新分解入口、工作台定位和批量分解崩溃的修复说明；保留 Jobs 备份要求与尚未完整验证的范围。
@@ -114,6 +120,10 @@
 本次上传目录为 `dist/workshop-publish-20261015/`，上传用预览图压缩为 768 × 768 PNG、每张小于 1 MB，源码高清封面保留。首次使用原始大图上传曾返回 `k_EResultLimitExceeded`；压缩预览图后成功。后续上传也应检查预览图大小。
 
 工具可继续从 `G:/SteamLibrary/steamapps/workshop/content/1623730/<PublishedId>/` 更新这些条目，各目录的 `.workshop.json` 已保存对应发布 ID 和上次版本。更新文件时沿用现有 ID，并提高 `Info.json.Version`，避免重复创建条目；只更新页面标题／描述时无需改变包版本或上传文件。
+
+## 更新说明格式
+
+顶部版本／作者行下方只保留当前版本的更新说明，源 README 使用 `>` 引用块，末尾单独一行 `---`，然后开始正文。生成 Steam 页面时转为 `[quote]…[/quote]` 和 `[hr][/hr]`；不把 Markdown 标记直接上传。清理旧版本的独立更新日志章节，已有功能保留在对应正文中；历史发布记录和验证证据继续保存在仓库文档中。
 
 ## 简繁中文、日英四语
 
@@ -232,3 +242,7 @@ PalCombo 随包保留已有 LICENSE。
 - [包格式](https://github.com/pocketpairjp/PalworldModUploader/blob/main/PalworldModUploader/docs/en/02-Package.md)
 - [上传工具](https://github.com/pocketpairjp/PalworldModUploader/blob/main/PalworldModUploader/docs/en/03-ModUploader.md)
 - [安装规则与版本更新](https://github.com/pocketpairjp/PalworldModUploader/blob/main/PalworldModUploader/docs/en/04-Tech.md)
+
+## 2026-10-22 更新说明统一
+
+Better Arena、Better Workbench、Custom Presets 的四语页面更新说明统一为版本号下的引用块与分割线，仅保留简短玩家文案。Better Workbench 保留专用服务器支持及分解／崩溃修复；Custom Presets 简化为后台性能优化，删除原正文末尾更新章节。两条目八份描述已通过 Steam SDK 读回匹配，版本、内容包、标题、依赖、封面和可见性均未改变。证据位于 .build/workshop-other-simple-notes-20261022/。其他没有独立更新日志的 Mod 未添加新文案。

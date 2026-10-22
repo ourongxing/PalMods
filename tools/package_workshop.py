@@ -32,14 +32,27 @@ def steam_format_markdown(text):
             return '[url=' + url + ']' + label + '[/url]'
         return re.sub(r'`([^`\n]+)`|\*\*([^*\n]+)\*\*|\[([^]\n]+)\]\(([^)\n]+)\)', replace, value)
 
-    output, list_type = [], None
+    output, list_type, quoting = [], None, False
     for line in text.strip().splitlines():
+        quote = re.fullmatch(r'>\s?(.*)', line)
+        if quoting and not quote:
+            output.append('[/quote]')
+            quoting = False
         bullet = re.fullmatch(r'[-*] (.+)', line)
         ordered = re.fullmatch(r'\d+\. (.+)', line)
         next_type = 'list' if bullet else 'olist' if ordered else None
         if list_type and next_type != list_type:
             output.append('[/' + list_type + ']')
             list_type = None
+        if quote:
+            if not quoting:
+                output.append('[quote]')
+                quoting = True
+            output.append(inline(quote.group(1)))
+            continue
+        if re.fullmatch(r'\s*(?:-{3,}|\*{3,}|_{3,})\s*', line):
+            output.append('[hr][/hr]')
+            continue
         if next_type:
             if not list_type:
                 list_type = next_type
@@ -54,6 +67,8 @@ def steam_format_markdown(text):
                 output.append(inline(line))
     if list_type:
         output.append('[/' + list_type + ']')
+    if quoting:
+        output.append('[/quote]')
     return '\n'.join(output)
 
 

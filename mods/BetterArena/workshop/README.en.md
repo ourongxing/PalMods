@@ -2,7 +2,9 @@
 
 1.1.1 · ourongxing
 
-Fixes recurring background scheduling and the locked Sweep hint before the first clear. Reward initialization stops repeated world queries once verified.
+> Fixed the locked Sweep hint and crashes.
+
+---
 
 Clear an Arena difficulty once, then claim its rewards instantly with daily sweeps. A higher player rank gives you more sweeps each day.
 
@@ -43,7 +45,3 @@ Reward patches use vanilla Palworld 1.0.5 data and overwrite Arena reward entrie
 Sweep usage is stored separately for each world and player in `%LOCALAPPDATA%/Pal/Saved/BetterArena/`. Include this folder when backing up or transferring your saves.
 
 Dedicated server usage records are stored in `Pal/Saved/BetterArena/` under the server directory, separately from client single-player records.
-
-## 1.1.0 update
-
-Added Windows dedicated-server sweeps with server-managed allowances, reward delivery, and actual reward receipts sent to clients. Fixed the sweep screen crash after returning from a server to single-player. Locked buttons now explain why sweeping is unavailable.

@@ -43,6 +43,14 @@ class WorkshopTests(unittest.TestCase):
             {'Type': 'Lua', 'IsServer': True, 'Targets': ['./Server/']},
             {'Type': 'PalSchema', 'IsServer': True, 'Targets': ['./PalSchema/']}])
 
+    def test_steam_update_quote_and_separator(self):
+        self.assertEqual(
+            workshop.steam_format_markdown('> **Fixed** timers.\n> Kept rewards.\n\n---\n\nBody'),
+            '[quote]\n[b]Fixed[/b] timers.\nKept rewards.\n[/quote]\n\n[hr][/hr]\n\nBody')
+        self.assertEqual(workshop.steam_format_markdown('> End'), '[quote]\nEnd\n[/quote]')
+        self.assertEqual(workshop.steam_format_markdown('- Item\n> Note\n---'),
+                         '[list]\n[*]Item\n[/list]\n[quote]\nNote\n[/quote]\n[hr][/hr]')
+
     def test_readme_listing_conversion_and_missing_body(self):
         with tempfile.TemporaryDirectory() as temporary:
             folder = Path(temporary)
@@ -167,7 +175,7 @@ class WorkshopTests(unittest.TestCase):
                                 installed_by_server[rule.get('IsServer', False)].add(base + '/' + relative)
                 lua_root = f'Mods/NativeMods/UE4SS/Mods/{mod}'
                 if mod == 'BetterArena':
-                    self.assertEqual(info['Version'], '1.1.0')
+                    self.assertEqual(info['Version'], '1.1.1')
                     self.assertIn(lua_root + '/server.txt', installed_by_server[True])
                     self.assertNotIn(lua_root + '/server.txt', installed_by_server[False])
                     self.assertIn(lua_root + '/Scripts/main.lua', installed_by_server[True])

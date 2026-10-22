@@ -2,6 +2,10 @@
 
 1.1.0 · ourongxing
 
+> Added dedicated server support and fixed disassembly issues and crashes.
+
+---
+
 Skip intermediate crafting steps and turn unwanted finished items back into materials.
 
 ## Main features
@@ -34,9 +38,3 @@ Edit `Mods/NativeMods/UE4SS/Mods/BetterWorkbench/Scripts/config.lua` under your 
 Supports single-player, co-op hosts, and Windows dedicated servers. Linux servers are not supported.
 
 When backing up or moving your save, also keep the `Jobs` folder inside this mod's installation folder: unfinished crafting tasks depend on its contents. For dedicated servers, back up the server's `Jobs` folder. Task cancellation, recovery after saving, and controller input still need further in-game verification.
-
-## What's new in 1.1.0
-
-- Adds Windows dedicated-server support, crafting-task definition synchronization, and remote disassembly.
-- Fixes an unclickable disassembly entry and workbench lookup failures on servers.
-- Fixes a potential server crash during batch disassembly.

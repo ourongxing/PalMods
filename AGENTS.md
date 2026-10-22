@@ -43,6 +43,16 @@
 
 ### Workshop Listings
 
+- Place localized update notes immediately below the top version/author line,
+  in a Markdown blockquote (`>`), followed by a horizontal rule (`---`) before
+  the main description. Packaging converts these to Steam BBCode
+  `[quote]...[/quote]` and `[hr][/hr]`; do not leave Markdown markers in listings.
+- Write update notes in brief player-facing language: describe the visible
+  fix or feature, without internal scheduling, callback or debugging details.
+- Keep only the latest update note in Workshop descriptions. Remove older
+  version-specific changelog sections; preserve historical validation and
+  release records in repository documentation.
+
 - Localized `mods/<Mod>/workshop/README.<language>.md` files are the source
   of Workshop listing titles and mod-specific descriptions.
 - Non-English Workshop titles must use `<English name> / <localized name>`,

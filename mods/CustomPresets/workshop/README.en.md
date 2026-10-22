@@ -2,6 +2,10 @@
 
 1.0.1 · ourongxing
 
+> Improved background performance.
+
+---
+
 Save and reuse world settings and character appearances.
 
 ## Usage
@@ -22,7 +26,3 @@ Enable UE4SSExperimentalPW and Custom Presets, then restart the game. Client onl
 Data is stored in `%LOCALAPPDATA%/Pal/Saved/CustomPresets/presets/`: one file per preset, plus character thumbnails. Backups are in the adjacent `backups/` folder. Copy the presets folder when moving computers; no automatic cloud sync.
 
 Follows the game language. Supports English, Simplified Chinese, Traditional Chinese and Japanese.
-
-## 1.0.1 update
-
-Removed repeated global menu searches during gameplay to reduce background overhead. Existing preset controls are preserved.
