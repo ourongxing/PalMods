@@ -23,23 +23,27 @@ local utility=object{GetLocalPlayerController=function() return controller end,G
  GetArenaWorldSubsystem=function() return arena end,GetGameSetting=function() return setting end}
 local tick
 local searches=0
-local api={LoopAsync=function(ms,fn) assert(ms==500);tick=fn end,ExecuteInGameThread=function(fn) fn() end,
+local api={LoopInGameThreadWithDelay=function(ms,fn) assert(ms==500);tick=fn end,ExecuteInGameThread=function(fn) fn() end,
  StaticFindObject=function() return utility end,FindFirstOf=function() searches=searches+1;return object{} end,LoadAsset=function() end}
 Balance.start({RewardMultiplier=3},'/mods/BetterArena',api)
 tick();assert(#writes==2 and not pcall(Balance.requireReady,world))
 tick();assert(not pcall(Balance.requireReady,world) and setting.Arena_RankPoint_WinToNPC==100)
 factor=3;tick();Balance.requireReady(world)
 assert(setting.Arena_RankPoint_WinToNPC==150 and setting.Arena_RankPoint_LoseToNPC==15 and setting.Arena_RankPoint_Win==90)
-tick();assert(#writes==2) -- no repeated writes after verification
-world='world-b';factor=2;tick();assert(#writes==4 and not pcall(Balance.requireReady,world))
+local oldWorldName=game.GetWorldSaveDirectoryName
+game.GetWorldSaveDirectoryName=function() error('world queried after ready') end
+for _=1,100 do tick() end
+game.GetWorldSaveDirectoryName=oldWorldName
+assert(#writes==2) -- no engine calls after verification
+require('BetterArena.Lifecycle').reset();world='world-b';factor=2;tick();assert(#writes==4 and not pcall(Balance.requireReady,world))
 factor=3;tick();Balance.requireReady(world)
-world='world-c';factor=2;tick()
+require('BetterArena.Lifecycle').reset();world='world-c';factor=2;tick()
 for _=1,35 do tick() end
 assert(not pcall(Balance.requireReady,world) and #writes==6) -- bounded verification, no free claim
-world='world-d';factor=3
+require('BetterArena.Lifecycle').reset();world='world-d';factor=3
 Schema.write=function() error('disk full') end
 tick();tick();assert(not pcall(Balance.requireReady,world)) -- old values matching cannot bypass failed generation
-assert(searches==1,'persistent game instance must not be searched every tick')
+assert(searches==4,'one game instance lookup per world')
 -- Dedicated server: no local player, but an authoritative mode supplies the
 -- world context. The same reward verification must still complete.
 world='server-world';factor=3
@@ -51,14 +55,8 @@ end
 Schema.write=function(path,text) writes[#writes+1]={path,text} end
 Balance.start({RewardMultiplier=3},'/mods/BetterArena',api)
 tick();tick();Balance.requireReady(world)
-local deferred
-api.ExecuteInGameThread=function(fn) deferred=fn end
-tick()
-local oldCount=#writes
 require('BetterArena.Lifecycle').reset()
 assert(not pcall(Balance.requireReady,world))
-deferred();assert(#writes==oldCount,'queued old-world balance callback must be inert')
-api.ExecuteInGameThread=function(fn) fn() end
 world='single-after-server';tick();tick();Balance.requireReady(world)
 Schema.autoReload=function() return false end
 assert(not pcall(Balance.start,{RewardMultiplier=3},'/mods/BetterArena',api))

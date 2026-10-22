@@ -22,7 +22,15 @@ local CLICK=BASE..'WBP_Arena_TopMenuButton.WBP_Arena_TopMenuButton_C:'..EVENT
 local ENTRY=BASE..'WBP_Arena_SoloEntry.WBP_Arena_SoloEntry_C:Setup'
 local CHALLENGE='BndEvt__WBP_Arena_TopMenu_WBP_Arena_TopMenuButton_Solo_K2Node_ComponentBoundEvent_0_OnArenaButtonClicked__DelegateSignature'
 local function button()
+ local lock=text('仅多人游玩可用')
+ lock.GetFName=function() return name('Text_Lock') end
+ local tree=canvas()
+ tree.GetFName=function() return name('ButtonRoot') end
+ tree.IsA=function() return true end
+ tree.GetChildrenCount=function() return 1 end
+ tree.GetChildAt=function() return lock end
  local b=obj{Text_ButtonName=text(),Setup=function() end,SetLock=function() end,SetRenderOpacity=function() end,SetVisibility=function() end,SetIsEnabled=function(self,v) self.enabled=v end,RemoveFromParent=function(self) self.removed=true end}
+ b.WidgetTree={RootWidget=tree};b.testLockText=lock
  b[EVENT]=function(self) hooks[CLICK]({get=function() return self end}) end
  return b
 end
@@ -67,17 +75,26 @@ RegisterHook=function(path,callback) hooks[path]=callback;return 1,2 end
 UnregisterHook=function(path) hooks[path]=nil end
 local notifications,scans={},0
 NotifyOnNewObject=function(path,callback) notifications[path]=callback end
-LoopAsync=function(_,callback) UI_TICK=callback end
+LoopInGameThreadWithDelay=function(_,callback) UI_TICK=callback end
 ExecuteInGameThread=function(callback) queue[#queue+1]=callback end
 FindAllOf=function(class) scans=scans+1;if class=='WBP_Arena_TopMenu_C' then return {top} end;return child and {child} or {} end
 local service={preview=function() return {challengeRank=5,cleared={[1]=true,[5]=true},remaining=left,playerRank=3,pending=false} end,
  claim=function(_,menu,rank) assert(rank==1 or rank==5);assert(left>0);claims[#claims+1]=rank;left=left-1;return {receipt={rank=rank,items={BattleTicket=rank},points=50}} end}
 local function drain() while #queue>0 do table.remove(queue,1)() end end
-local function tick() UI_TICK();drain() end
+local now=os.time()
+os.time=function() return now end
+local function tick() now=now+1;UI_TICK();drain() end
 require('BetterArena.UI').start({DailyLimits={1,2,3,4,5,6,7}},service)
 tick()
 local sweep=menuCanvas.children[1]
 assert(sweep.Text_ButtonName.value=='扫荡 · 3/3')
+local preview=service.preview
+service.preview=function() return {cleared={},remaining=3,playerRank=3,pending=false} end
+tick()
+assert(sweep.testLockText.value=='首次通关竞技场挑战后解锁扫荡')
+sweep[EVENT](sweep);drain();assert(not child and #claims==0)
+service.preview=preview;tick()
+assert(sweep.testLockText.value=='选择已通关的难度，立即获得奖励和积分')
 assert(top.WBP_Arena_TopMenuButton_Solo.Slot.position.X==-570)
 -- Ordinary Challenge still enters combat.
 openChallenge();child.cards[1].WBP_PalInvisibleButton.OnButtonBaseClicked:Broadcast();assert(battles==1)
@@ -119,10 +136,14 @@ local oldClick=hooks[CLICK]
 local latest=menuCanvas.children[#menuCanvas.children]
 latest[EVENT](latest)
 UI_TICK()
+local uiModule=require('BetterArena.UI')
+assert(next(uiModule.pendingCallbacks)~=nil,'queued click must retain its callback')
+collectgarbage('collect')
 require('BetterArena.Lifecycle').reset()
 local check=top.IsValid
 top.IsValid=function() error('old world object accessed') end
 drain()
+assert(next(uiModule.pendingCallbacks)==nil,'consumed callbacks must release their roots')
 oldClick({get=function() error('old hook context accessed') end})
 assert(not hooks[CLICK] and not hooks[ENTRY],'old blueprint hooks must be removed before travel')
 top.IsValid=check

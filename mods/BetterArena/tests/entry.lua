@@ -3,7 +3,7 @@ local timers={}
 local resetHook
 RegisterLoadMapPreHook=function(callback) resetHook=callback end
 NotifyOnNewObject=function() end
-LoopAsync=function(ms,callback) timers[#timers+1]={ms=ms,callback=callback} end
+LoopInGameThreadWithDelay=function(ms,callback) timers[#timers+1]={ms=ms,callback=callback} end
 local getenv=os.getenv
 os.getenv=function(name) if name=='LOCALAPPDATA' then return 'unused-test-profile' end;return getenv(name) end
 local started=false

@@ -95,3 +95,25 @@
 Better Arena `1.0.0` 已公开发布，PublishedId `3822475613`，最低游戏修订号 `102999`。四语标题／介绍、标签、公开状态、UE4SSExperimentalPW 与 PalSchema 依赖已通过 Steam SDK 读回核对；远程封面 SHA-256 一致，Steam 重新下载的 23 个文件与发布清单全部匹配。
 
 本机已订阅、启用并切换到工坊目录，原本地副本归档至 `Mods/_LocalBackups/BetterArena-workshop-3822475613-20261019/`。官方加载器部署的全部 Lua、两份 PalSchema 补丁与包内容一致；完整启动后进程响应、加载日志正常。本次未再次发奖。发布包为 `dist/workshop-better-arena-publish-20261019/BetterArena/`，核对证据在 `.build/workshop-better-arena-publish-20261019/`。
+
+## 2026-10-21 定时调度稳定性补丁（实机待验证）
+
+针对用户走路、建造、静置三次崩溃（642BF7BD、8AE18EE5、DC070C04）和 `[BetterArena] attempt to call a number value` 检查，三份转储都在 UE4SS Lua 对象访问链发生类型不匹配；尚未证明唯一根因。
+
+Balance/UI 移除 LoopAsync → ExecuteInGameThread 常驻转发，改为模块持有回调的 LoopInGameThreadWithDelay。Balance 成功或确定失败后在原生对象访问前返回；LoadMap 生命周期重置后重新初始化。UI 一次性回调显式持有至执行，不随世界重置删除，旧世界操作仍由 epoch 拒绝。两条维护任务记录 traceback。
+
+离线回归及语法通过：初始化成功后连续 100 次调用不再读取世界名；切世界、超时、写入失败拒领；回调经 Lua GC、世界重置后不访问旧对象并释放引用；部分解锁、耗尽、双击、原挑战绑定和领奖反馈逻辑回归。离线测试不能模拟 UE4SS 原生调度；长时间静置、建造、真实 UI、联机及专用服务器尚待验证。没有修改真实玩家奖励、积分、次数或存档。
+
+用户正常退出后，确认 Palworld 进程已结束，通过 install_local.ps1 -PerformancePatchOnly 备份并安装两个模块到实际部署及现有 Workshop 3822475613；三处 SHA-256 一致，保留配置及 .workshop.json。备份：Mods/_LocalBackups/BetterArena-performance-20261021-175300/。17:53 完整启动后 BetterArena 加载和生命周期通知正常，游戏进程响应正常；仅确认冷启动加载，未进入原存档或执行真实 UI、长时间稳定性验收。启动日志归档于 .build/idle-crash-20261021/patched-startup.log。
+## 2026-10-22 新档扫荡锁定文案
+
+- 用户实机反馈：新档尚未挑战竞技场，扫荡显示“仅多人游玩可用”。
+- 资源检查：`WBP_Arena_TopMenuButton` 的 `Text_Lock` 存在于控件树，但不在生成类绑定属性中；原先直接访问未替换原版锁定提示。改为使用限定按钮控件树的查找并缓存结果，保留原有通关校验。
+- 离线：BetterArena 全套回归及 Lua 语法检查通过；新增无通关记录的锁定提示、点击不打开页面或领奖，以及恢复部分通关状态提示的检查。测试时钟按 tick 前进，覆盖一秒刷新间隔。
+- 安装：用户退出后确认游戏及服务器进程均已结束，通过 install_local.ps1 -PerformancePatchOnly 更新既有本地与 Workshop 安装；两处 UI.lua 哈希与源码一致，保留配置。备份：Mods/_LocalBackups/BetterArena-performance-20261022-135716。自动启动未成功，真实 UI 复测待完成。
+- 用户实机确认：安装后用户反馈“现在显示正常了”，确认新档扫荡锁定提示恢复正常。此结果为用户验收；本次未新增实际领奖、耗尽次数或长期稳定性的实机验证。
+
+
+## 2026-10-22 用户稳定性验收
+
+用户确认安装定时调度补丁后连续数小时未再崩溃；此前三次约在启动后 10–19 分钟发生。此记录为用户实机反馈，支持补丁改善稳定性的判断，不代表已定位唯一原生故障点，也不替代竞技场全部交互、联机及专用服务器验收。

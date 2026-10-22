@@ -2,7 +2,18 @@ local Quota=require('BetterArena.Quota')
 local I18n=require('BetterArena.I18n')
 local Feedback=require('BetterArena.Feedback')
 local Lifecycle=require('BetterArena.Lifecycle')
-local M={}
+local M={pendingCallbacks={}}
+local function schedule(callback)
+ local token={}
+ M.pendingCallbacks[token]=function()
+  local fn=callback
+  M.pendingCallbacks[token]=nil
+  callback=nil
+  return fn()
+ end
+ local ok,err=pcall(ExecuteInGameThread,M.pendingCallbacks[token])
+ if not ok then M.pendingCallbacks[token]=nil;error(err,0) end
+end
 local BASE='/Game/Pal/Blueprint/UI/UserInterface/Arena/'
 local BUTTON=BASE..'WBP_Arena_TopMenuButton.WBP_Arena_TopMenuButton_C'
 local EVENT='BndEvt__WBP_Arena_TopMenuButton_WBP_PalInvisibleButton_K2Node_ComponentBoundEvent_0_CommonButtonBaseClicked__DelegateSignature'
@@ -49,12 +60,11 @@ function M.start(config,service)
  local clickHook,entryHook=false,false
  local menus={}
  local initialized=false
- local queued=false
  Lifecycle.onReset(function()
   -- Do not call release(): the old widgets/delegates belong to a world
   -- being discarded. No old-world UObject method may run during reset.
   sessions={};actions={};pending={};menus={}
-  initialized=false;queued=false
+  initialized=false
   for _,hook in ipairs({clickHook or {},entryHook or {}}) do
    if hook[1] and hook[2] then pcall(UnregisterHook,hook.path,hook[1],hook[2]) end
   end
@@ -74,9 +84,11 @@ function M.start(config,service)
    s.button:SetLock(not ready)
    -- The reused native button's default lock text says multiplayer-only.
    -- Replace it with this action's actual unavailable reason.
-   if valid(s.button.Text_Lock) then
+   -- Text_Lock is a widget-tree child, not a generated bound property.
+   s.lockText=s.lockText or findWidget(s.button,'Text_Lock')
+   if valid(s.lockText) then
     local detail=not ok and message(c,t) or c.pending and t.pending or not c.challengeRank and t.locked or c.remaining==0 and t.empty or t.choose
-    s.button.Text_Lock:SetText(FText(detail))
+    s.lockText:SetText(FText(detail))
    end
    if s.button.IsFocused and valid(s.menu.Text_MenuGuide) then
     local detail=not ok and message(c,t) or c.pending and t.pending or not c.challengeRank and t.locked or c.remaining==0 and t.empty or t.choose
@@ -174,7 +186,7 @@ function M.start(config,service)
     local s=action.session
     if s.queued then return end
     s.queued=true
-    ExecuteInGameThread(function()
+    schedule(function()
      if epoch~=Lifecycle.epoch then return end
      local ok,err=pcall(function()
       assert(valid(s.menu) and s.menu:IsVisible(),'arena menu closed')
@@ -269,17 +281,13 @@ function M.start(config,service)
   local kind=spec[2]
   NotifyOnNewObject(spec[1],function(menu)
    local epoch=Lifecycle.epoch
-   ExecuteInGameThread(function() if epoch==Lifecycle.epoch then track(menu,kind) end end)
+   schedule(function() if epoch==Lifecycle.epoch then track(menu,kind) end end)
   end)
  end
  -- Startup reconciliation runs once for widgets created before registration.
- LoopAsync(250,function()
-  if queued then return end
-  queued=true
-  local epoch=Lifecycle.epoch
-  ExecuteInGameThread(function()
-   if epoch~=Lifecycle.epoch then return end
-   local ok,err=pcall(function()
+ assert(type(LoopInGameThreadWithDelay)=='function','BetterArena requires game-thread timer support')
+ M.uiTick=function()
+   local ok,err=xpcall(function()
     if not initialized then
      for _,menu in ipairs(FindAllOf('WBP_Arena_TopMenu_C') or {}) do track(menu,'top') end
      for _,menu in ipairs(FindAllOf('WBP_Arena_SoloEntry_C') or {}) do track(menu,'entry') end
@@ -304,10 +312,9 @@ function M.start(config,service)
       if candidate.kind=='top' then attachTop(menu) else attachEntry(menu) end
      end
     end
-   end)
-   queued=false
+   end,debug.traceback)
    if not ok then report(err) end
-  end)
- end)
+ end
+ M.uiTimer=LoopInGameThreadWithDelay(250,M.uiTick)
 end
 return M

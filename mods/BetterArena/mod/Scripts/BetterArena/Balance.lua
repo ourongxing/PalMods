@@ -19,19 +19,17 @@ function M.start(config,directory,api)
  assert(Schema.autoReload(schemaRoot..'/config/config.json'),
   'PalSchema automatic reload enabled. Fully restart Palworld once to finish setup.')
  local raw,points=Schema.patches(base,multiplier)
- active={ready=false};local queued=false;local errors={}
+ active={ready=false};local errors={}
  local function valid(o) return o and o:IsValid() end
  local utility,instance
  local Lifecycle=require('BetterArena.Lifecycle')
  Lifecycle.onReset(function()
-  utility=nil;instance=nil;active={ready=false};queued=false
+  utility=nil;instance=nil;active={ready=false}
  end)
- api.LoopAsync(500,function()
-  if queued then return end;queued=true
-  local epoch=Lifecycle.epoch
-  api.ExecuteInGameThread(function()
-   if epoch~=Lifecycle.epoch then return end
-   local ok,err=pcall(function()
+ assert(type(api.LoopInGameThreadWithDelay)=='function','BetterArena requires game-thread timer support')
+ M.balanceTick=function()
+   if active.ready or active.failed then return end
+   local ok,err=xpcall(function()
     if not valid(utility) then utility=api.StaticFindObject('/Script/Pal.Default__PalUtility') end
     if not valid(instance) then instance=api.FindFirstOf('PalGameInstance') end
     local u,gi=utility,instance
@@ -77,12 +75,11 @@ function M.start(config,directory,api)
      active.failed=true
      error('PalSchema reward reload timed out; sweeps remain unavailable')
     end
-   end)
-   queued=false
+   end,debug.traceback)
    if not ok and not errors[tostring(err)] then
     errors[tostring(err)]=true;print('[BetterArena] '..tostring(err)..'\n')
    end
-  end)
- end)
+ end
+ M.balanceTimer=api.LoopInGameThreadWithDelay(500,M.balanceTick)
 end
 return M
