@@ -1,0 +1,112 @@
+# Awakening Trust / 信赖觉醒 — validation — 2026-10-22
+
+## Awakening Trust 0.3.0 首次发布
+
+2026-10-22：PublishedId [3824565140](https://steamcommunity.com/sharedfiles/filedetails/?id=3824565140)。使用第三版捣蛋猫吃羁绊宝桃封面，768×768 PNG 小于 1 MB；四语简介和完整说明来自本地化 README，附公共反馈/日志/源码说明。依赖 UE4SSExperimentalPW（3625223587）。包内分别提供客户端和 Windows 专用服务器 DLL，最低游戏修订号 102999。
+
+Steam SDK 上传成功并公开。四语标题、正文、标签、依赖与预览已读回核对；通过游戏 AppID 重新下载，11 个包内文件哈希匹配，保留 .workshop.json。正常退出两端后备份本地开发安装，启用正式包；完整启动确认两端 ManagedMods 元数据 0.3.0、部署 DLL 哈希和原生钩子日志，服务器出现实际觉醒计算。31 项共享工具测试和 3 项平衡测试通过。未新增联机伤害或觉醒操作实测，早期功能验证范围见 Mod 验收文档。
+
+发布包 `dist/workshop-awakeningtrust-publish-20261022/AwakeningTrust/`；发布、下载、迁移及冷启动证据 `.build/workshop-awakeningtrust-publish-20261022/`。客户端工坊目录 `G:/SteamLibrary/steamapps/workshop/content/1623730/3824565140/`；本机测试服务器使用 `G:/PalworldTestServer/Mods/Workshop/3824565140/`。
+
+## 2026-10-22 内部名称统一
+
+源码目录、C++ 类、构建目标、诊断开关、日志前缀、构建/测试入口、发行包与安装目录统一为 AwakeningTrust / AWAKENINGTRUST。本地旧安装已在更名时迁移完成；依照用户后续要求，安装器不再保留旧名称或 PalSchema 路径兼容分支，只处理当前 AwakeningTrust 安装。客户端和 Windows 服务端重新构建通过，均通过安装器部署并核对哈希；C++ 规则、3 项 Mod 测试和 31 项共享工具测试通过。未启动游戏或服务器复测；之前的运行验收记录保持历史性质。
+
+## 2026-10-22 撤销属性文案修改
+
+用户最终要求所有语言均不改文案。删除 MakeFriendshipRateText 的脚本回调、FText 替换及相关依赖；保留原有属性计算钩子和 450 规则。源码与客户端发行包已恢复不含文案替换的实现。用户确认退出后，已核对客户端进程不存在并通过安装器完成备份、安装和哈希校验。客户端构建恢复 20 个运行导入；C++ 规则与 3 个 Python 测试通过。未再次启动游戏实测。此前文案试验未完成真实界面验收。
+
+## 0.3.0 — Windows dedicated server
+
+- Added a separate `--server` native build for `G:/PalworldTestServer/Pal/Binaries/Win64/PalServer-Win64-Shipping-Cmd.exe`, SHA256 `6f929673e7ac637d591d6f3454dbd396be7911093311cb8b24af3a152b217f49`. Client SHA and profile remain separate. No Linux binary support. All ten server hooks and downstream calculators were located by masked instruction matching against the verified client, then asserted against their target-specific call sites/growth fields before generating exact-byte runtime guards. The HP getter verifies awakening/points offsets for both individual and save paths. Runtime still fails closed on the wrong binary or hook conflict.
+- Server hooks: HP0x2d23a70/attack0x2d26e70/defense0x2d21690; save getters0x2d23b60/0x2d26f60/0x2d21780; row getter0x2d1c9d0; option-bearing calculators0x2d23cc0/0x2d270a0/0x2d218c0. The same awakening/current-row capture flags and450 rule execute on the server, without save/table edits or object caches.
+- Before starting, server processes were absent and the existing server Saved directory was backed up under `.build/AwakeningTrust/server/before/Saved`. Used the existing dedicated-server test-world copy B6FC599AEB02496A9EF1E420FD1C41DF; no client single-player save copied back or overwritten. Original local single-player world remains separate. Server time/autosave progression during the test was retained.
+- Temporary server validation build: actual server world startup invoked the hooked getters and all36 native interface comparisons passed on stack-local save-parameter copies: Lamball/Frostallion Noct, trust0/7/10, awake0/1, HP/attack/defense. Unawakened stays vanilla, awakened Lamball gains only at positive trust, Frostallion Noct stays unchanged. Example Lamball trust10: unawakened2506/388/243 unchanged; awakened vanilla2611/388/243 ->3227/479/308. No real Pal, awakening item, inventory or owning save-buffer mutation. Evidence `.build/AwakeningTrust/server/interface-validation.log`. These are native interface tests, not actual combat/awakening-item UI tests.
+- Server shut down normally via its existing console shutdown helper. Rebuilt `AWAKENINGTRUST_VALIDATION=OFF`, installed with target-root process checks/hash verification and restarted fully. Final server DLL SHA256 `ecb042d9b992c07f96c09b953d2a05dadf6673ab5855d54b9dd9cfd50ef6684f`; all20 UE4SS imports verified. Final startup20:35 confirms `dedicated_server=true` and real awakened calculation events (HP11208); no validation messages. Local UDP127.0.0.1:8211 listens normally. Evidence `.build/AwakeningTrust/server/final-cold-start.log`.
+- Client0.3.0 rebuilt successfully with its own binary guard and native rule tests; client rules are unchanged from the installed0.2.0 behavior. Existing running client was not overwritten/restarted for this server-only deployment. Distribution packages: `dist/AwakeningTrust/AwakeningTrust-0.3.0.zip` and `dist/AwakeningTrust/server/AwakeningTrust-0.3.0-server.zip`; install the appropriate build on each side for matching local UI and server authority. Three Python mod tests and31 shared-tool unit tests passed. Installer rejects an unsupported target executable before touching installation files.
+- Remaining: real remote-client panel/tooltip synchronization, controlled server combat damage comparison, multiple connected players, actual awakening transition and long-running server behavior. Successful server-native getter tests do not prove these scenarios. No Workshop publication or commit performed.
+
+Display name: Awakening Trust / 信赖觉醒. Internal identifiers now use AwakeningTrust. Historical evidence directories have been moved under .build/AwakeningTrust; saved logs retain their original contents. The balance rule is unchanged.
+
+## Dynamic eligibility follow-up
+
+- Superseding simplification: eligibility now checks only the current row's IsPal and IsUncapturable flags, after checking the individual's awakening state. Removed Palpedia index checks, FName string conversion, collaboration-name handling and normal-row lookup for bosses. Unindexed/internal rows marked capturable are deliberately no longer excluded separately, per user approval; availability remains controlled by the game. Original per-row stats and the450 balance rule are unchanged. Three Python balance/selection tests and compiled native rule tests passed; final install/restart results recorded below.
+- Simplified full-table audit:650 flag-eligible rows,640 below450; counts include unindexed internal rows and do not assert actual obtainable species. Audit `.build/AwakeningTrust/dynamic/simple-audit.csv`. After normal save/title/exit, installer confirmed no running game and installed SHA256 `E473DEA12D2BA0A059CF9877F705AEC76BCC5BC9B67C92463872438E1F6F0AC4`; all20 imports verified. Cold restart at20:27 confirms successful hook installation, log `.build/AwakeningTrust/dynamic/simple-cold-start.log`. No new numerical panel or item-consumption test claimed for this final eligibility-only simplification. No party edits or save-file manipulation; ordinary save/time progression retained.
+
+- Removed data/eligible.json and generated eligible.hpp from the runtime/build dependency. Eligibility now reads verified current row fields IsPal0x28, ZukanIndex0x34 and IsUncapturable0x190. Indexed capturable Pals qualify directly; unindexed boss variants resolve their current normal row through the original row getter; the existing Yakushima collaboration family convention remains supported. No fixed per-species IDs or numeric FName cache are retained. Placeholder, police and special servant exclusions remain.
+- Native getters check awakening first. Only their exact row-call contexts consult eligibility; the original row stays immutable. Unknown future indexed Pals and conventional boss variants no longer require regenerating a whitelist. Binary/layout compatibility protection still applies; this is not a promise that arbitrary future game binaries work unchanged.
+- Offline synthetic future-species/boss and invalid-row selection checks added; current full-table balance audit retains598 eligible/589 enhanced rows. Native build and rule tests passed. Live installation/recheck recorded after completion below. Earlier whitelist descriptions and numeric counts in historical logs refer to prior builds.
+- Installed while all game processes were absent; installer verified final DLL SHA256 `B1199AFF35742E147AE06C8CF90D0FD64702F1818DA8AE2DAE39035D0DA1EB92`. All23 UE4SS imports verified. Full restart at20:10 reports `dynamic eligibility`; entered the user's current world successfully, opened party and existing Bushi Noct detail (trust10, HP17510/attack4062/defense2175), with user input interleaved. Awakening enhancement events are present during world loading (HP14544); this establishes live guarded eligibility execution, not a fresh controlled before/after measurement or actual future-species test. No items used, no party edits or save-file edits. Normal world time progression retained. Log `.build/AwakeningTrust/dynamic/cold-start-world.log`. Game left open on the detail page.
+
+## 0.2.0 follow-up — native UI friendship breakdown
+
+- User reported an awakened CatVampire still showing attack friendship +150. Real UI confirmed level80, alpha, trust7, IV96/98/99, four stars, souls+40, HP14544/attack2800/defense3305. Attack tooltip showed base1098, friendship+150, awakening+97, souls+39%, passive+41%. The existing final-stat hooks were active, but the tooltip uses separate option-bearing native calculators, so its friendship contribution remained vanilla.
+- Added three guarded option-bearing calculator hooks (HP0x2e794e0/attack0x2e7c8f0/defense0x2e770e0). Exact row-return sites0x2e79509/0x2e7c919/0x2e77109 use the same awakening context and scalar-row copy. All three original exclusion bytes are passed through unchanged; the game derives base/friendship/awakening differences with its own rounding. No second buff is added to final stats.
+- Build asserts the added row-call sites, growth offsets and exclusion-flag branch; code bytes guarded at runtime. C++ rule tests and both Python full-table tests passed. Game saved/returned to title and closed normally; installer ran only after all client processes exited. Installed DLL SHA256 `6D6975DB895448DDB9D0B4CF758835774A271EE1AED7B7189D0D90FC60BFA655`; validation code OFF. Cold startup at19:10 confirms hook installation. Real UI follow-up recorded below after verification.
+- Real UI recheck in the same world and same awakened owned CatVampire: attack friendship now+234 (previous tooltip+150), awakening still+97, base1098/final2800 unchanged. Defense base1087, friendship+223, awakening+102, souls+51%, passives+55%, final3305. HP base8498, friendship+1948, awakening+742, souls+30%, final14544. These breakdowns reconcile with final stats after native integer rounding. This confirms the previous final-stat boost was already active and the reported discrepancy was the separate vanilla UI breakdown path. Screenshot `.build/AwakeningTrust/awakening/catvampire-attack-fixed.jpg`, startup/runtime log `.build/AwakeningTrust/awakening/detail-fixed.log`. No item consumed, no save edits, no party changes; normal elapsed-time progression retained. Game left open on the Pal detail page.
+
+## 0.2.0 awakening gate (historical stage; current eligibility supersedes its filters)
+
+- Final rule: unawakened Pals retain vanilla friendship growth; awakened Pals below450 vanilla trust10 total gain the proportional uplift. Already450+ rows remain vanilla. Original awakening stat multiplier is preserved separately and excluded from the450 target.
+- Replaced the global PalSchema patch with a guarded native module. It wraps the native HP/shot-attack/defense getters for both IndividualParameter and save-parameter paths. A stack-owned, thread-local call context returns an adjusted copy of the verified0x80 scalar row prefix only to the six exact native call sites. No shared row, UObject, save buffer, owning arrays or locks are mutated/copied as owning objects. Nested contexts restore the previous pointer on return; no object cache or timer.
+- Supported client SHA256 `e590b5e7bfaa3fea40fab1a02cc72c8fc5fd6f8631ef2308e95ac56c25195837`, version1.0.5.102999, UE4SS2281fa31. Build asserts the row-field offsets and downstream native calculator calls. Runtime checks PE timestamp/image size/FName size plus guarded code bytes before installation. Unsupported or conflicting binary leaves vanilla behavior.
+- First implementation attempted hooks on the low-level calculators; HP calculator detour failed at index6, so all previously installed hooks were rolled back. No world was entered in those failed sessions. Replaced that approach with the scalar-row getter path; cold-start log confirmed all seven hooks installed successfully.
+- Offline: Python full-table eligibility/target tests, compiled C++ rule tests, full non-native repository regressions, and31 shared-tool unit tests passed. Native module compilation and all21 UE4SS imports verified.
+- Native interface validation: temporary diagnostic build exercised36 cases on stack-local copies of an existing Pal's0x370 save-parameter data: two species (Lamball/Frostallion Noct), trust0/7/10, awake0/1, HP/attack/defense. All36 comparisons passed. Unawakened values equal the original native function, awakened Lamball gains only for positive trust, Frostallion Noct unchanged throughout. Copies only change their local character ID/awakening byte/friendship points; source save data and inventory remain untouched. This is interface validation, not real UI use of an awakening item or genuine trust progression.
+- Interface examples from the sampled level/equipment/passive template: Lamball trust10 unawakened HP2506 ->2506, attack388 ->388, defense243 ->243; awakened HP2611 ->3227, attack388 ->479, defense243 ->308. These are template-derived diagnostic values, not a real owned Lamball panel. Full log: `.build/AwakeningTrust/awakening/interface-validation.log`.
+- Real UI smoke: loaded the user's recent world `遵守规矩` (A7C560A94C9CEB80AE85EBB062088591), opened party and existing焰巫狐 detail (level61/trust1, HP9615/attack2287/defense1486), navigated back and saved/returned to title normally. No items used, no manual awakening/trait/stat changes, no rewards or quota calls, no party changes. Normal elapsed-time/autosave progression was not rolled back. Screenshot `.build/AwakeningTrust/awakening/unawakened-party-detail.jpg`.
+- Legacy own PalSchema directory archived while game processes were absent; active character-table log dropped from590 updates to the existing Sekhmet patch's1 row. Native installation: `G:/SteamLibrary/steamapps/common/Palworld/Mods/NativeMods/UE4SS/Mods/AwakeningTrust/`. No other mod disabled or migrated. Installer backs up its own prior copies and mods.txt, rejects running client/server processes, and verifies file hashes.
+- Final distribution is built with `AWAKENINGTRUST_VALIDATION=OFF`; diagnostic code is compiled out. On 2026-10-22 at 19:00, confirmed all game processes absent, rebuilt and installed with the guarded installer. Installed DLL SHA256 matches final staged DLL: `81488F79224B1B848117162A75F07F6DB157F51AD5333C7D7B0F32C910661789`. Full restart reached the title screen; log confirms `installed awakening gate; target=450, eligible=589`, with no validation diagnostic messages. Legacy PalSchema directory is absent; its unrelated one-row character-table update remains. Evidence: `.build/AwakeningTrust/awakening/final-cold-start.log`. Game left at title; no world entered during this final startup check.
+- Still unverified: using an actual awakening item and its animation/feedback, a genuine already-awakened owned Pal's before/after panel, combat damage, multiplayer/remote-server authority, and dedicated server binary. Earlier0.1.0 panel confirmations do not establish0.2.0 awakening-transition coverage. The earlier1-point defense discrepancy used a simplified external formula; this implementation delegates native rounding to the unchanged game calculator.
+
+## 0.1.0 historical validation
+
+The sections below describe the earlier unconditional PalSchema implementation, not the current native release.
+
+### Environment and scope
+
+- Steam BuildID 25246127; real title screen displays `v1.0.5.102999`.
+- UE4SS v3.0.1 Beta, SHA 2281fa31; installed PalSchema metadata version 0.6.7.
+- Baseline extracted from the current installed `Pal-Windows.pak`; UAssetAPI export: `.build/trust-stat-audit/parameters-current.json`.
+- Character table hashes: uasset `2E13B291B12016D47DA9F728EEF4CA7EA58E8533647CBADF5CDDF1B5B907A5B6`; uexp `FED4E62046EB0082B169014EE5FF72324276C92CF13F09B98DF3C43D247BE3ED`.
+- Selected 598 character rows: 298 positive-index capturable Pal rows (includes some alternate quest rows, not a claim of 298 unique species), 288 corresponding capturable boss rows, 12 Terraria rows. A row existing does not independently verify its spawn path. Uncapturable characters, unnumbered placeholders, police and the special KingWhale otomo row are excluded.
+- 589 rows changed, 9 rows omitted because original trust-10 total is already at least 450. Only the three Friendship fields are included in the runtime patch.
+
+### Offline — passed
+
+- Generated patch compared exactly against independently loaded vanilla export; every selected row below 450 reaches 450 with its original trust-10 ratios, all original values at/above 450 remain omitted and unchanged.
+- Balance tests cover 0..10 trust levels, no stat reduction, threshold equality, unchanged Frostallion Noct/Panthalus, finite numeric payload and float32 storage tolerance. Float32 totals may differ by less than 0.0001; final game panels have their own integer rounding.
+- Lamball: 125/107/107 -> approximately 165.9292/142.0354/142.0354. Frostallion Noct: 160/150/146 remains unchanged.
+- `tools/build.py AwakeningTrust`, `tools/test.py --skip-native` and all 31 shared tooling unit tests passed. No native code changed or native verification claimed.
+- Local balance audit: `.build/AwakeningTrust/balance-audit.csv`.
+
+### Installation and cold startup — passed
+
+- Confirmed no Palworld processes before installation. Used `tools/install_local.ps1`; it rejects running client/server processes, backs up prior installation when present, and verifies hashes against staged output.
+- Historical installation used this mod’s former PalSchema directory. The current native installation is documented above.
+- No runtime hot reload, Lua probe or persistent save edits were used. Existing other mods were not removed or disabled. No Workshop migration/publication.
+- First launch via launcher exposed a Steam custom-argument confirmation; accepted requested launch, then launched the Shipping executable when no game window appeared. Actual game subsequently reached the title screen normally.
+- New UE4SS log at 18:08 shows the historical module loading; shared character table applied `590 rows updated, 0 rows added, 0 rows deleted, 0 errors`. This is an aggregate with the existing one-row Sekhmet Medicine patch, not 590 changes from this mod. It confirms loader application, not independent field readback.
+- Real UI navigation from title to world selection and back succeeded. No existing world was entered; all listed worlds lacked an unambiguous task-isolated test identity. Title-screen exit used after validation.
+- Log evidence: `.build/AwakeningTrust/evidence/UE4SS-cold-start.log`.
+
+### Remaining validation
+
+- User confirmation (2026-10-22): user opened the game and reported that the mod appeared to have an effect. Recorded as user-observed apparent effectiveness; no specific Pal, trust rank, panel values or before/after comparison was supplied. This does not establish exact 450 totals, unchanged strong Pals or multiplayer behavior.
+
+- Real panel checks are recorded below. Combat damage, controlled trust progression, full trust-10, unchanged strong Pals, save reload and removal/reversion behavior remain unverified in a world.
+- No runtime field-readback test was installed. Baseline formula and intended effects remain supported by data/known mechanics, not a newly traced native stat calculation.
+- Multiplayer clients, hosting and dedicated servers are unverified. User feedback above is limited to apparent effectiveness, not full numerical acceptance.
+- No new UI, unlock gating, resource consumption or reward settlement exists, so those SOP matrices do not apply.
+
+### 2026-10-22 — live existing-world panel inspection
+
+- User explicitly requested checking the running game after reporting apparent effectiveness. Read the existing Palbox and detail panels using computer-use; no runtime files were changed, no probe injected, no consumables used, and no save file edited. A party selection click temporarily swapped slots 1/3; the original order (MonochromeQueen, Orserk, CactusDoll, CactusDoll_Dark, FireKirin) was restored and visually confirmed. The world and game were left open, back in the Palbox.
+- Observed a level-77 alpha Jelliette (display name 梦沐姬), trust 0, zero stars/souls, IV61/71/52, HP4984/attack695/defense517. This is a recorded zero-trust panel, not a controlled before/after verification.
+- Main numerical sample: normal CactusDoll, level80, trust7, IV82/72/100, four stars, souls+0. HP9295, attack1643, defense1443. No awakening badge was visible. Observed passives include 特殊体质 (defense+25%) and 不死之身 (attack+15%); attack tooltip reports aggregate passive bonus+31%.
+- HP tooltip: base5565 -> final9295, trust contribution+3730. New HP growth8.91025658790777 gives floor(floor(900+(75+7*g)*40*1.246)*1.2)=9295, matching the real panel. Vanilla growth5.3 predicts7784 under the same calculation. This is concrete evidence the buff affects actual stats on an existing partially bonded Pal.
+- Attack tooltip: base864 -> final1643, trust contribution+390, passive+31%. The new growth6.37179468891847 predicts pre-passive trust contribution390.504..., consistent with displayed integer+390. This does not establish every intermediate rounding operation of the native final-attack formula.
+- Defense tooltip: base715 -> final1443, trust contribution+439, passive+25%. Simple continuous calculation from new growth6.71794872317376 predicts trust contribution440.160...; about one point of mismatch remains in the component. Native rounding/order is not traced; do not claim exact defense formula validation or silently treat the discrepancy as proven rounding.
+- Patch-projected trust10 CactusDoll effective values are164.102565879/148.717946889/137.179487232 (sum450). This projection is offline, not a live trust10 observation; no peaches were consumed to alter the user's Pal.
+- Current installed patch SHA256 matches source: `8817EA52D43A0AA1C03EEE050CC21968E9B59D3EC6FCFE3348BD7129B45E2D48`. New startup log at18:20 again shows the historical module loading and aggregate590 character rows updated with zero errors.
+- Screenshot evidence: `.build/AwakeningTrust/evidence/cactus-trust7-hp.jpg`, `cactus-trust7-attack.jpg`, `cactus-trust7-defense.jpg`.

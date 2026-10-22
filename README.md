@@ -4,6 +4,7 @@ Palworld mod 源码仓库。
 
 | 封面 | Mod | 功能 |
 | --- | --- | --- |
+| <img src="mods/AwakeningTrust/workshop/thumbnail.png" width="160" alt="信赖觉醒封面"> | [Awakening Trust / 信赖觉醒](mods/AwakeningTrust/README.md) | 觉醒后强化信赖度成长，缩小种族值差距；支持 Windows 专用服务器（[Workshop](https://steamcommunity.com/sharedfiles/filedetails/?id=3824565140)） |
 | — | [PalIconInfo](mods/PalIconInfo/README.md) | 终端仅显示浓缩星级，按实际星数水平居中；含原始 Mod 地址 |
 | — | [Better Expedition / 更好的远征](mods/BetterExpedition/README.md) | 仅将远征基础耗时降为 10%（十倍速度），保留原版流程；其他实验功能已归档 |
 | — | [Better Arena / 更好的竞技场](mods/BetterArena/README.md) | 首通后选择已通关难度即时扫荡；段位决定每日次数，普通挑战与扫荡统一可配奖励倍率（默认两倍），附到账动画与音效（单机／房主开发版） |

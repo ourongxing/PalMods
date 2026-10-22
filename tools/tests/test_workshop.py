@@ -183,7 +183,7 @@ class WorkshopTests(unittest.TestCase):
                     self.assertEqual(installed_by_server[True] - {lua_root + '/server.txt'},
                                      installed_by_server[False])
                 if mod not in ('PointBlankBurstSkills', 'QuickButcher', 'SekhmetMedicine'):
-                    if mod != 'ExtraImplantDrops':
+                    if mod not in ('ExtraImplantDrops', 'AwakeningTrust'):
                         self.assertIn(lua_root + '/Scripts/main.lua', installed)
                     self.assertIn(lua_root + '/enabled.txt', installed)
                 if mod in ('BetterWorkbench', 'PalCombo', 'BetterBulkStorage', 'BetterStorage', 'ExtraImplantDrops', 'CustomPresets'):
@@ -193,6 +193,13 @@ class WorkshopTests(unittest.TestCase):
                     self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
                     self.assertFalse(any('/presets/' in path for path in installed))
                     self.assertTrue((package / 'Scripts/CustomPresets/UI.lua').is_file())
+                if mod == 'AwakeningTrust':
+                    self.assertEqual(info['Dependencies'], ['UE4SSExperimentalPW'])
+                    self.assertEqual(installed_by_server[True], installed_by_server[False])
+                    self.assertIn(lua_root + '/dlls/main.dll', installed_by_server[True])
+                    self.assertFalse(any('/Scripts/' in path for path in installed))
+                    self.assertNotEqual((package / 'dlls/main.dll').read_bytes(),
+                                        (package / 'Server/dlls/main.dll').read_bytes())
                 if mod == 'BetterWorkbench':
                     self.assertEqual(info['Version'], '1.1.0')
                     self.assertEqual(info['MinRevision'], 102999)

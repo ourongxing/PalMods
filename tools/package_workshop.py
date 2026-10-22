@@ -11,7 +11,7 @@ import zipfile
 
 from palmods import ROOT, MODS_ROOT, BUILD_ROOT, DIST_ROOT, PALCOMBO_BUILD
 
-MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'SekhmetMedicine')
+MODS = ('BetterWorkbench', 'PalCombo', 'UpdraftElevator', 'PointBlankBurstSkills', 'BetterBulkStorage', 'BetterStorage', 'AnywherePalBox', 'BetterPalSouls', 'ExtraImplantDrops', 'QuickButcher', 'CustomPresets', 'BetterArena', 'SekhmetMedicine', 'AwakeningTrust')
 LANGUAGES = ('zh-Hans', 'zh-Hant', 'ja', 'en')
 TEMPLATES_ROOT = ROOT / 'tools/workshop/templates'
 
@@ -141,7 +141,18 @@ def payload(mod):
         files += [(p, p.relative_to(source).as_posix())
                   for p in sorted((source / 'Scripts').rglob('*.lua'))]
         files += [(None, 'enabled.txt')]
-    if mod == 'BetterArena':
+    if mod == 'AwakeningTrust':
+        for build, destination in [('native', 'dlls/main.dll'), ('server-native', 'Server/dlls/main.dll')]:
+            folder = BUILD_ROOT / mod / build
+            dll = folder / 'Game__Shipping__Win64/bin/AwakeningTrustNative.dll'
+            audit = read_json(folder / 'import-audit.json')
+            profile = read_json(folder / 'analysis.json')
+            if (digest(dll) != audit['dll_sha256'] or audit['verified_imports'] < 20
+                    or profile['target'] != ('server' if build == 'server-native' else 'client')):
+                raise ValueError(f'AwakeningTrust {build} audit mismatch or incomplete')
+            files.append((dll, destination))
+        files.append((None, 'Server/enabled.txt'))
+    elif mod == 'BetterArena':
         # Dedicated installation gets the same Lua plus its own storage/UI
         # mode marker. Keep that marker out of the client install targets.
         files += [(path, 'Server/' + name) for path, name in list(files)]

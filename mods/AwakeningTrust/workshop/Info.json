@@ -1,0 +1,32 @@
+{
+  "ModName": "Awakening Trust / 信赖觉醒",
+  "PackageName": "AwakeningTrust",
+  "Thumbnail": "thumbnail.png",
+  "Version": "0.3.0",
+  "DebugMode": false,
+  "MinRevision": 102999,
+  "Author": "ourongxing",
+  "Dependencies": [
+    "UE4SSExperimentalPW"
+  ],
+  "Tags": [
+    "UE4SS",
+    "Gameplay"
+  ],
+  "InstallRule": [
+    {
+      "Type": "Lua",
+      "Targets": [
+        "./dlls",
+        "./enabled.txt"
+      ]
+    },
+    {
+      "Type": "Lua",
+      "IsServer": true,
+      "Targets": [
+        "./Server/"
+      ]
+    }
+  ]
+}

@@ -1,5 +1,13 @@
 # 创意工坊打包
 
+## Awakening Trust 0.3.0 首次发布
+
+2026-10-22：PublishedId [3824565140](https://steamcommunity.com/sharedfiles/filedetails/?id=3824565140)。使用第三版捣蛋猫吃羁绊宝桃封面，768×768 PNG 小于 1 MB；四语简介和完整说明来自本地化 README，附公共反馈/日志/源码说明。依赖 UE4SSExperimentalPW（3625223587）。包内分别提供客户端和 Windows 专用服务器 DLL，最低游戏修订号 102999。
+
+Steam SDK 上传成功并公开。四语标题、正文、标签、依赖与预览已读回核对；通过游戏 AppID 重新下载，11 个包内文件哈希匹配，保留 .workshop.json。正常退出两端后备份本地开发安装，启用正式包；完整启动确认两端 ManagedMods 元数据 0.3.0、部署 DLL 哈希和原生钩子日志，服务器出现实际觉醒计算。31 项共享工具测试和 3 项平衡测试通过。未新增联机伤害或觉醒操作实测，早期功能验证范围见 Mod 验收文档。
+
+发布包 `dist/workshop-awakeningtrust-publish-20261022/AwakeningTrust/`；发布、下载、迁移及冷启动证据 `.build/workshop-awakeningtrust-publish-20261022/`。客户端工坊目录 `G:/SteamLibrary/steamapps/workshop/content/1623730/3824565140/`；本机测试服务器使用 `G:/PalworldTestServer/Mods/Workshop/3824565140/`。
+
 ## Better Arena 1.1.1 稳定性与锁定提示修复
 
 2026-10-22：沿用 PublishedId [3822475613](https://steamcommunity.com/sharedfiles/filedetails/?id=3822475613) 发布 `1.1.1`。包含游戏线程定时任务、初始化成功后停止重复世界查询、一次性回调保留及新档扫荡锁定提示修正。四语更新说明放在顶部版本号下的引用块，并以 Steam 水平线与正文分隔，移除旧 `1.1.0` 独立日志章节。
