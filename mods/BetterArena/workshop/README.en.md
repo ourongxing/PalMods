@@ -1,6 +1,8 @@
 # Better Arena
 
-1.1.0 · ourongxing
+1.1.1 · ourongxing
+
+Fixes recurring background scheduling and the locked Sweep hint before the first clear. Reward initialization stops repeated world queries once verified.
 
 Clear an Arena difficulty once, then claim its rewards instantly with daily sweeps. A higher player rank gives you more sweeps each day.
 
